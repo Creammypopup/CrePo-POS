@@ -1,0 +1,13 @@
+{
+  "name": "crepo-pos-runner",
+  "version": "1.0.0",
+  "description": "Main runner for CrePo POS application",
+  "scripts": {
+    "dev": "concurrently \"npm:server\" \"npm:client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

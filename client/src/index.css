@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NEW: Aurora/Watercolor Gradient Background 
+  This creates soft, blended blobs of color that dissolve into each other.
+*/
+body {
+  @apply bg-theme-bg;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(253, 58%, 86%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 98% 13%, hsla(208, 77%, 82%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 79% 83%, hsla(304, 77%, 89%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 99% 99%, hsla(48, 94%, 79%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 22% 80%, hsla(128, 77%, 83%, 0.4) 0px, transparent 50%);
+  font-family: 'system-ui', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom styles for react-big-calendar to match the theme */
+.rbc-toolbar button {
+    @apply text-text-primary rounded-lg px-4 py-2 transition-all;
+}
+
+.rbc-toolbar button:hover, .rbc-toolbar button:focus {
+    @apply bg-theme-surface shadow-clay;
+}
+
+.rbc-toolbar button.rbc-active {
+    @apply bg-theme-primary text-white shadow-clay-button-active;
+}
+
+.rbc-event {
+    @apply p-1 text-sm;
+}
