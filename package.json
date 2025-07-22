@@ -1,13 +1,18 @@
 {
   "name": "crepo-pos-runner",
   "version": "1.0.0",
-  "description": "Main runner for CrePo POS application",
+  "description": "Main runner for CrePo-POS",
+  "main": "index.js",
   "scripts": {
+    "server": "npm run server --prefix server",
+    "client": "npm run dev --prefix client",
     "dev": "concurrently \"npm:server\" \"npm:client\"",
-    "server": "npm run dev --prefix server",
-    "client": "npm run dev --prefix client"
+    "data:import": "npm run data:import --prefix server",
+    "data:destroy": "npm run data:destroy --prefix server"
   },
-  "devDependencies": {
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
     "concurrently": "^8.2.2"
   }
 }

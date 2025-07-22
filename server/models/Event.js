@@ -1,33 +1,37 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const eventSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: [true, 'กรุณาใส่ชื่อกิจกรรม'],
-    trim: true,
+const eventSchema = mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    start: {
+      type: Date,
+      required: true,
+    },
+    end: {
+      type: Date,
+    },
+    allDay: {
+      type: Boolean,
+      default: true,
+    },
+    color: {
+      type: String,
+    },
   },
-  start: {
-    type: Date,
-    required: true,
-  },
-  end: {
-    type: Date,
-    required: true,
-  },
-  allDay: {
-    type: Boolean,
-    default: true,
-  },
-  isHoliday: { // To mark Buddhist Holy Days
-    type: Boolean,
-    default: false,
-  },
-  user: { // Optional: Link event to a user
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true,
-});
+);
 
-module.exports = mongoose.model('Event', eventSchema);
+const Event = mongoose.model('Event', eventSchema);
+
+// This is the fix: Changed from CommonJS to ES Module export
+export default Event;

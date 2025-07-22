@@ -1,126 +1,69 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import calendarService from './calendarService';
+import path from 'path';
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import morgan from 'morgan';
+import connectDB from './config/db.js';
 
-const initialState = {
-  events: [],
-  isError: false,
-  isSuccess: false,
-  isLoading: false,
-  message: '',
-};
+// Middleware
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
-// Get user events
-export const getEvents = createAsyncThunk('calendar/getAll', async (_, thunkAPI) => {
-  try {
-    const token = thunkAPI.getState().auth.user.token;
-    return await calendarService.getEvents(token);
-  } catch (error) {
-    const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-    return thunkAPI.rejectWithValue(message);
-  }
-});
+// Routes
+import userRoutes from './routes/userRoutes.js';
+import roleRoutes from './routes/roleRoutes.js';
+// Correctly import the named 'router' export from calendarRoutes.js
+import { router as calendarRoutes } from './routes/calendarRoutes.js';
+// import productRoutes from './routes/productRoutes.js';
+// import customerRoutes from './routes/customerRoutes.js';
+// import saleRoutes from './routes/saleRoutes.js';
 
-// Create new event
-export const createEvent = createAsyncThunk('calendar/create', async (eventData, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await calendarService.createEvent(eventData, token);
-    } catch (error) {
-      const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
+dotenv.config();
+
+connectDB();
+
+const app = express();
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
+app.use(cors());
+app.use(express.json());
+
+// --- API Routes ---
+app.use('/api/users', userRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/calendar', calendarRoutes);
+// app.use('/api/products', productRoutes);
+// app.use('/api/customers', customerRoutes);
+// app.use('/api/sales', saleRoutes);
+
+
+// --- Production Build Configuration ---
+const __dirname = path.resolve();
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/client/dist')));
+
+  app.get('*', (req, res) =>
+    res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html'))
+  );
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running....');
+  });
+}
+
+
+// --- Custom Error Handling ---
+// This must be BELOW all the API routes
+app.use(notFound);
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(
+  PORT,
+  console.log(
+    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+  )
 );
-
-// Update event
-export const updateEvent = createAsyncThunk('calendar/update', async (eventData, thunkAPI) => {
-    try {
-        const token = thunkAPI.getState().auth.user.token;
-        return await calendarService.updateEvent(eventData._id, eventData, token);
-    } catch (error) {
-        const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-        return thunkAPI.rejectWithValue(message);
-    }
-});
-
-// Delete event
-export const deleteEvent = createAsyncThunk('calendar/delete', async (id, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await calendarService.deleteEvent(id, token);
-    } catch (error) {
-      const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
-export const calendarSlice = createSlice({
-  name: 'calendar',
-  initialState,
-  reducers: {
-    reset: (state) => initialState,
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(getEvents.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(getEvents.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.events = action.payload;
-      })
-      .addCase(getEvents.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      })
-      .addCase(createEvent.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(createEvent.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.events.push(action.payload);
-      })
-      .addCase(createEvent.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      })
-      .addCase(updateEvent.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(updateEvent.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.events = state.events.map((event) =>
-          event._id === action.payload._id ? action.payload : event
-        );
-      })
-      .addCase(updateEvent.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      })
-      .addCase(deleteEvent.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(deleteEvent.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.events = state.events.filter(
-          (event) => event._id !== action.payload.id
-        );
-      })
-      .addCase(deleteEvent.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      });
-  },
-});
-
-export const { reset } = calendarSlice.actions;
-export default calendarSlice.reducer;

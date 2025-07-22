@@ -1,25 +1,18 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const {
+import {
   getEvents,
   createEvent,
   updateEvent,
   deleteEvent,
-} = require('../controllers/calendarController');
-const { protect } = require('../middleware/authMiddleware');
+} from '../controllers/calendarController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-// --- กำหนดเส้นทาง API สำหรับจัดการกิจกรรม ---
+router.route('/').get(protect, getEvents).post(protect, createEvent);
+router
+  .route('/:id')
+  .put(protect, updateEvent)
+  .delete(protect, deleteEvent);
 
-// GET /api/calendar/ -> ดึงกิจกรรมทั้งหมดของผู้ใช้ที่ล็อกอินอยู่
-router.get('/', protect, getEvents);
-
-// POST /api/calendar/ -> สร้างกิจกรรมใหม่
-router.post('/', protect, createEvent);
-
-// PUT /api/calendar/:id -> แก้ไขกิจกรรมตาม ID
-router.put('/:id', protect, updateEvent);
-
-// DELETE /api/calendar/:id -> ลบกิจกรรมตาม ID
-router.delete('/:id', protect, deleteEvent);
-
-module.exports = router;
+// Changed from 'export default' to a named export for better compatibility.
+export { router };

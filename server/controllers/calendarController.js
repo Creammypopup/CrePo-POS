@@ -1,88 +1,88 @@
-const asyncHandler = require('express-async-handler');
-const Event = require('../models/Event');
-const User = require('../models/User');
+import asyncHandler from 'express-async-handler';
+import Event from '../models/Event.js';
 
-// @desc    Get all events for a user
-// @route   GET /api/calendar
+// @desc    Fetch all events
+// @route   GET /api/calendar/events
 // @access  Private
 const getEvents = asyncHandler(async (req, res) => {
-  // ค้นหากิจกรรมทั้งหมดที่ 'user' field ตรงกับ id ของผู้ใช้ที่ล็อกอินอยู่
-  const events = await Event.find({ user: req.user.id });
-  res.status(200).json(events);
+  // We're fetching events for the logged-in user
+  const events = await Event.find({ user: req.user._id });
+  res.json(events);
 });
 
-// @desc    Create a new event
-// @route   POST /api/calendar
+// @desc    Create an event
+// @route   POST /api/calendar/events
 // @access  Private
 const createEvent = asyncHandler(async (req, res) => {
-  const { title, start, end, allDay, type } = req.body;
+  const { title, start, end, allDay, color } = req.body;
 
-  if (!title || !start || !end) {
+  if (!title || !start) {
     res.status(400);
-    throw new Error('Please provide all required fields: title, start, end');
+    throw new Error('กรุณาใส่ชื่อกิจกรรมและวันเริ่มต้น');
   }
 
-  const event = await Event.create({
-    user: req.user.id,
+  const event = new Event({
+    user: req.user._id, // Associate event with the logged-in user
     title,
-    start: new Date(start),
-    end: new Date(end),
-    allDay: allDay || false,
-    type: type || 'user', // ถ้าไม่ระบุ ให้เป็น 'user' โดยอัตโนมัติ
+    start,
+    end,
+    allDay,
+    color,
   });
 
-  res.status(201).json(event);
+  const createdEvent = await event.save();
+  res.status(201).json(createdEvent);
 });
 
 // @desc    Update an event
-// @route   PUT /api/calendar/:id
+// @route   PUT /api/calendar/events/:id
 // @access  Private
 const updateEvent = asyncHandler(async (req, res) => {
+  const { title, start, end, allDay, color } = req.body;
+
   const event = await Event.findById(req.params.id);
 
-  if (!event) {
-    res.status(404);
-    throw new Error('Event not found');
-  }
-
-  // ตรวจสอบว่าเป็นเจ้าของ event หรือไม่
-  if (event.user.toString() !== req.user.id) {
+  // Check if the event belongs to the user
+  if (event.user.toString() !== req.user._id.toString()) {
     res.status(401);
-    throw new Error('User not authorized');
+    throw new Error('ไม่ได้รับอนุญาตให้แก้ไขกิจกรรมนี้');
   }
 
-  const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, {
-    new: true, // ส่งข้อมูลที่อัปเดตแล้วกลับไป
-  });
+  if (event) {
+    event.title = title || event.title;
+    event.start = start || event.start;
+    event.end = end || event.end;
+    event.allDay = allDay === undefined ? event.allDay : allDay;
+    event.color = color || event.color;
 
-  res.status(200).json(updatedEvent);
+    const updatedEvent = await event.save();
+    res.json(updatedEvent);
+  } else {
+    res.status(404);
+    throw new Error('ไม่พบกิจกรรมนี้');
+  }
 });
 
 // @desc    Delete an event
-// @route   DELETE /api/calendar/:id
+// @route   DELETE /api/calendar/events/:id
 // @access  Private
 const deleteEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
 
-  if (!event) {
-    res.status(404);
-    throw new Error('Event not found');
-  }
-
-  // ตรวจสอบว่าเป็นเจ้าของ event หรือไม่
-  if (event.user.toString() !== req.user.id) {
+  // Check if the event belongs to the user
+  if (event && event.user.toString() !== req.user._id.toString()) {
     res.status(401);
-    throw new Error('User not authorized');
+    throw new Error('ไม่ได้รับอนุญาตให้ลบกิจกรรมนี้');
   }
 
-  await event.deleteOne();
-
-  res.status(200).json({ id: req.params.id, message: 'Event removed' });
+  if (event) {
+    await event.deleteOne();
+    // This is the line that was fixed. Added the closing })
+    res.json({ message: 'Event removed' });
+  } else {
+    res.status(404);
+    throw new Error('ไม่พบกิจกรรมนี้');
+  }
 });
 
-module.exports = {
-  getEvents,
-  createEvent,
-  updateEvent,
-  deleteEvent,
-};
+export { getEvents, createEvent, updateEvent, deleteEvent };
