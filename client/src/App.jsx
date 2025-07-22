@@ -45,7 +45,6 @@ const DashboardLayout = () => {
   const handleMainContentClick = () => { if (isSidebarOpen) { setSidebarOpen(false); } };
 
   return (
-    // พื้นหลังส่วนนี้จะถูกควบคุมโดย body ใน index.css โดยตรง
     <div className='flex h-screen font-sans'>
       <Sidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div ref={mainContentRef} onClick={handleMainContentClick} className='flex-1 flex flex-col overflow-hidden'>

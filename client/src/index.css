@@ -19,7 +19,7 @@ body {
   @apply text-gray-600 rounded-lg px-4 py-2 transition-all duration-300 hover:bg-white hover:shadow-md;
 }
 .rbc-toolbar button.rbc-active {
-  @apply bg-pastel-purple text-white shadow-lg;
+  @apply bg-purple-500 text-white shadow-lg;
 }
 .rbc-event {
   @apply p-1 text-sm;

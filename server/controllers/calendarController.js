@@ -1,88 +1,85 @@
-import asyncHandler from 'express-async-handler';
-import Event from '../models/Event.js';
+const asyncHandler = require('express-async-handler');
+const Event = require('../models/Event');
+const User = require('../models/User');
 
-// @desc    Fetch all events
-// @route   GET /api/calendar/events
+// @desc    Get all events for a user
+// @route   GET /api/calendar
 // @access  Private
 const getEvents = asyncHandler(async (req, res) => {
-  // We're fetching events for the logged-in user
-  const events = await Event.find({ user: req.user._id });
-  res.json(events);
+  const events = await Event.find({ user: req.user.id });
+  res.status(200).json(events);
 });
 
-// @desc    Create an event
-// @route   POST /api/calendar/events
+// @desc    Create a new event
+// @route   POST /api/calendar
 // @access  Private
 const createEvent = asyncHandler(async (req, res) => {
-  const { title, start, end, allDay, color } = req.body;
+  const { title, start, end, allDay, type } = req.body;
 
-  if (!title || !start) {
+  if (!title || !start || !end) {
     res.status(400);
-    throw new Error('กรุณาใส่ชื่อกิจกรรมและวันเริ่มต้น');
+    throw new Error('Please provide all required fields: title, start, end');
   }
 
-  const event = new Event({
-    user: req.user._id, // Associate event with the logged-in user
+  const event = await Event.create({
+    user: req.user.id,
     title,
-    start,
-    end,
-    allDay,
-    color,
+    start: new Date(start),
+    end: new Date(end),
+    allDay: allDay || false,
+    type: type || 'user',
   });
 
-  const createdEvent = await event.save();
-  res.status(201).json(createdEvent);
+  res.status(201).json(event);
 });
 
 // @desc    Update an event
-// @route   PUT /api/calendar/events/:id
+// @route   PUT /api/calendar/:id
 // @access  Private
 const updateEvent = asyncHandler(async (req, res) => {
-  const { title, start, end, allDay, color } = req.body;
-
   const event = await Event.findById(req.params.id);
 
-  // Check if the event belongs to the user
-  if (event.user.toString() !== req.user._id.toString()) {
-    res.status(401);
-    throw new Error('ไม่ได้รับอนุญาตให้แก้ไขกิจกรรมนี้');
-  }
-
-  if (event) {
-    event.title = title || event.title;
-    event.start = start || event.start;
-    event.end = end || event.end;
-    event.allDay = allDay === undefined ? event.allDay : allDay;
-    event.color = color || event.color;
-
-    const updatedEvent = await event.save();
-    res.json(updatedEvent);
-  } else {
+  if (!event) {
     res.status(404);
-    throw new Error('ไม่พบกิจกรรมนี้');
+    throw new Error('Event not found');
   }
+
+  if (event.user.toString() !== req.user.id) {
+    res.status(401);
+    throw new Error('User not authorized');
+  }
+
+  const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+
+  res.status(200).json(updatedEvent);
 });
 
 // @desc    Delete an event
-// @route   DELETE /api/calendar/events/:id
+// @route   DELETE /api/calendar/:id
 // @access  Private
 const deleteEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
 
-  // Check if the event belongs to the user
-  if (event && event.user.toString() !== req.user._id.toString()) {
-    res.status(401);
-    throw new Error('ไม่ได้รับอนุญาตให้ลบกิจกรรมนี้');
+  if (!event) {
+    res.status(404);
+    throw new Error('Event not found');
   }
 
-  if (event) {
-    await event.deleteOne();
-    // This is the line that was fixed. Added the closing })
-    res.json({ message: 'Event removed' });
-  } else {
-    res.status(404);
-    throw new Error('ไม่พบกิจกรรมนี้');
+  if (event.user.toString() !== req.user.id) {
+    res.status(401);
+    throw new Error('User not authorized');
   }
+
+  await event.deleteOne();
+
+  res.status(200).json({ id: req.params.id, message: 'Event removed' });
 });
 
-export { getEvents, createEvent, updateEvent, deleteEvent };
+module.exports = {
+  getEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+};

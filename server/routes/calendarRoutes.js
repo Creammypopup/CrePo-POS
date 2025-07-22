@@ -1,18 +1,23 @@
-import express from 'express';
+const express = require('express');
 const router = express.Router();
-import {
+const {
   getEvents,
   createEvent,
   updateEvent,
   deleteEvent,
-} from '../controllers/calendarController.js';
-import { protect } from '../middleware/authMiddleware.js';
+} = require('../controllers/calendarController');
+const { protect } = require('../middleware/authMiddleware');
 
-router.route('/').get(protect, getEvents).post(protect, createEvent);
-router
-  .route('/:id')
-  .put(protect, updateEvent)
-  .delete(protect, deleteEvent);
+// GET /api/calendar/ -> ดึงกิจกรรมทั้งหมด
+router.get('/', protect, getEvents);
 
-// Changed from 'export default' to a named export for better compatibility.
-export { router };
+// POST /api/calendar/ -> สร้างกิจกรรมใหม่
+router.post('/', protect, createEvent);
+
+// PUT /api/calendar/:id -> แก้ไขกิจกรรม
+router.put('/:id', protect, updateEvent);
+
+// DELETE /api/calendar/:id -> ลบกิจกรรม
+router.delete('/:id', protect, deleteEvent);
+
+module.exports = router;

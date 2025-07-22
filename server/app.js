@@ -1,69 +1,41 @@
-import path from 'path';
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import morgan from 'morgan';
-import connectDB from './config/db.js';
-
-// Middleware
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-
-// Routes
-import userRoutes from './routes/userRoutes.js';
-import roleRoutes from './routes/roleRoutes.js';
-// Correctly import the named 'router' export from calendarRoutes.js
-import { router as calendarRoutes } from './routes/calendarRoutes.js';
-// import productRoutes from './routes/productRoutes.js';
-// import customerRoutes from './routes/customerRoutes.js';
-// import saleRoutes from './routes/saleRoutes.js';
-
-dotenv.config();
+const express = require('express');
+const path = require('path');
+const dotenv = require('dotenv').config();
+const { errorHandler } = require('./middleware/errorMiddleware');
+const connectDB = require('./config/db');
+const port = process.env.PORT || 5000;
+const cors = require('cors');
+const notificationService = require('./services/notificationService');
 
 connectDB();
 
 const app = express();
 
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
-
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// --- API Routes ---
-app.use('/api/users', userRoutes);
-app.use('/api/roles', roleRoutes);
-app.use('/api/calendar', calendarRoutes);
-// app.use('/api/products', productRoutes);
-// app.use('/api/customers', customerRoutes);
-// app.use('/api/sales', saleRoutes);
+// --- Routes ---
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/customers', require('./routes/customerRoutes'));
+app.use('/api/sales', require('./routes/saleRoutes'));
+app.use('/api/roles', require('./routes/roleRoutes'));
+app.use('/api/calendar', require('./routes/calendarRoutes')); // ใช้ require ตามปกติ
 
-
-// --- Production Build Configuration ---
-const __dirname = path.resolve();
+// Serve Frontend
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '/client/dist')));
-
-  app.get('*', (req, res) =>
-    res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html'))
-  );
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running....');
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../', 'client', 'dist', 'index.html'));
   });
+} else {
+    app.get('/', (req, res) => {
+        res.status(200).json({ message: 'Welcome to the CrePo POS API' });
+    });
 }
 
-
-// --- Custom Error Handling ---
-// This must be BELOW all the API routes
-app.use(notFound);
 app.use(errorHandler);
+notificationService.start();
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(
-  PORT,
-  console.log(
-    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
-  )
-);
+app.listen(port, () => console.log(`Server is running with 3D power on Port ${port}`));
