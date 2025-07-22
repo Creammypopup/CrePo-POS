@@ -2,38 +2,56 @@ import axios from 'axios';
 
 const API_URL = '/api/calendar/';
 
-const getToken = () => JSON.parse(localStorage.getItem('user'))?.token;
-
-const getConfig = () => ({
-  headers: {
-    Authorization: `Bearer ${getToken()}`,
-  },
-});
-
-// Get all calendar events
-const getEvents = async () => {
-  const response = await axios.get(API_URL, getConfig());
-  // Convert date strings from ISO format to Date objects
-  return response.data.map(event => ({
-    ...event,
-    start: new Date(event.start),
-    end: new Date(event.end),
-  }));
-};
-
-// Create a new event
-const createEvent = async (eventData) => {
-  const response = await axios.post(API_URL, eventData, getConfig());
-  return {
-    ...response.data,
-    start: new Date(response.data.start),
-    end: new Date(response.data.end),
+// Get user events
+const getEvents = async (token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
+  const response = await axios.get(API_URL, config);
+  return response.data;
 };
+
+// Create new event
+const createEvent = async (eventData, token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  const response = await axios.post(API_URL, eventData, config);
+  return response.data;
+};
+
+// Update event
+const updateEvent = async (eventId, eventData, token) => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.put(API_URL + eventId, eventData, config);
+    return response.data;
+  };
+
+// Delete event
+const deleteEvent = async (eventId, token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  const response = await axios.delete(API_URL + eventId, config);
+  return response.data;
+};
+
 
 const calendarService = {
   getEvents,
   createEvent,
+  updateEvent,
+  deleteEvent,
 };
 
 export default calendarService;

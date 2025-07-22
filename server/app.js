@@ -1,30 +1,126 @@
-const dotenv = require('dotenv');
-const path = require('path');
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import calendarService from './calendarService';
 
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const { scheduleReminders } = require('./services/notificationService');
+const initialState = {
+  events: [],
+  isError: false,
+  isSuccess: false,
+  isLoading: false,
+  message: '',
+};
 
-connectDB();
+// Get user events
+export const getEvents = createAsyncThunk('calendar/getAll', async (_, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.user.token;
+    return await calendarService.getEvents(token);
+  } catch (error) {
+    const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+    return thunkAPI.rejectWithValue(message);
+  }
+});
 
-const app = express();
+// Create new event
+export const createEvent = createAsyncThunk('calendar/create', async (eventData, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token;
+      return await calendarService.createEvent(eventData, token);
+    } catch (error) {
+      const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+// Update event
+export const updateEvent = createAsyncThunk('calendar/update', async (eventData, thunkAPI) => {
+    try {
+        const token = thunkAPI.getState().auth.user.token;
+        return await calendarService.updateEvent(eventData._id, eventData, token);
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message);
+    }
+});
 
-// Schedule jobs for notifications
-scheduleReminders();
+// Delete event
+export const deleteEvent = createAsyncThunk('calendar/delete', async (id, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token;
+      return await calendarService.deleteEvent(id, token);
+    } catch (error) {
+      const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
 
-// API Routes
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/customers', require('./routes/customerRoutes'));
-app.use('/api/sales', require('./routes/saleRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/roles', require('./routes/roleRoutes'));
-app.use('/api/calendar', require('./routes/calendarRoutes'));
+export const calendarSlice = createSlice({
+  name: 'calendar',
+  initialState,
+  reducers: {
+    reset: (state) => initialState,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getEvents.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getEvents.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.events = action.payload;
+      })
+      .addCase(getEvents.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(createEvent.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(createEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.events.push(action.payload);
+      })
+      .addCase(createEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(updateEvent.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.events = state.events.map((event) =>
+          event._id === action.payload._id ? action.payload : event
+        );
+      })
+      .addCase(updateEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(deleteEvent.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(deleteEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.events = state.events.filter(
+          (event) => event._id !== action.payload.id
+        );
+      })
+      .addCase(deleteEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      });
+  },
+});
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server is running with 3D power on Port ${PORT}`));
+export const { reset } = calendarSlice.actions;
+export default calendarSlice.reducer;

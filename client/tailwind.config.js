@@ -7,35 +7,43 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Main Theme Colors based on your image
-        'theme-bg': '#E6E7F9',       // Light lavender background
-        'theme-surface': '#F0F1FF', // Surface of cards and modals
-        'theme-primary': '#A881D5',   // Main purple for buttons/highlights
-        'theme-secondary': '#8DD5E3', // Light blue
-        'theme-accent': '#FCE29F',    // Yellow accent
-
-        // Text Colors
-        'text-primary': '#3D3B62',   // Dark purple for main text
-        'text-secondary': '#8E8CB1', // Lighter purple for secondary text
-
-        // Specific pastel colors for other elements if needed
-        'pastel-pink': '#FFD1DC',
-        'pastel-green': '#B2F2BB',
-      },
-      borderRadius: {
-        '2xl': '24px',
-        'xl': '20px',
-        'lg': '16px',
-      },
-      boxShadow: {
-        // This creates the soft 3D / claymorphic effect
-        'clay': '7px 7px 14px #c3c4d5, -7px -7px 14px #ffffff',
-        'clay-inset': 'inset 7px 7px 14px #c3c4d5, inset -7px -7px 14px #ffffff',
-        'clay-button-active': 'inset 3px 3px 6px #c3c4d5, inset -3px -3px 6px #ffffff',
-      },
+        'pastel-purple': {
+          light: '#E9D5FF', // bg-purple-200
+          DEFAULT: '#C084FC', // bg-purple-400
+          dark: '#9333EA',  // bg-purple-600
+        },
+        'pastel-sky': {
+          light: '#BAE6FD',
+          DEFAULT: '#38BDF8',
+          dark: '#0284C7',
+        },
+        'pastel-mint': {
+          light: '#A7F3D0',
+          DEFAULT: '#34D399',
+          dark: '#059669',
+        },
+        'pastel-peach': {
+          light: '#FED7AA',
+          DEFAULT: '#FB923C',
+          dark: '#EA580C',
+        },
+        'pastel-yellow': {
+          light: '#FDE68A',
+          DEFAULT: '#FACC15',
+          dark: '#CA8A04',
+        },
+        'pastel-pink': {
+          light: '#FBCFE8',
+          DEFAULT: '#F472B6',
+          dark: '#DB2777',
+        },
+        'pastel-gray': {
+          light: '#F3F4F6', // gray-100
+          DEFAULT: '#D1D5DB', // gray-300
+          dark: '#6B7280',   // gray-500
+        },
+      }
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [],
 }

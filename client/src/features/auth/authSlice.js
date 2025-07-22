@@ -1,22 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from './authService';
 
-// Get user from localStorage
+// รับข้อมูลผู้ใช้จาก localStorage
 const user = JSON.parse(localStorage.getItem('user'));
 
 const initialState = {
   user: user ? user : null,
-  permissions: user?.role?.permissions || [],
   isError: false,
   isSuccess: false,
   isLoading: false,
-  isAuthLoading: true, // For initial auth check
   message: '',
 };
 
-// --- START OF COMPLETE FIX: Ensure all async thunks are created and exported ---
-
-// Register user
+// ลงทะเบียนผู้ใช้
 export const register = createAsyncThunk(
   'auth/register',
   async (user, thunkAPI) => {
@@ -24,7 +20,9 @@ export const register = createAsyncThunk(
       return await authService.register(user);
     } catch (error) {
       const message =
-        (error.response?.data?.message) ||
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
         error.message ||
         error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -32,36 +30,49 @@ export const register = createAsyncThunk(
   }
 );
 
-// Login user
+// เข้าสู่ระบบผู้ใช้
 export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
   try {
     return await authService.login(user);
-  } catch (error) {
+  } catch (error)
+    {
     const message =
-      (error.response?.data?.message) ||
+      (error.response && error.response.data && error.response.data.message) ||
       error.message ||
       error.toString();
     return thunkAPI.rejectWithValue(message);
   }
 });
 
-// Logout user
+// ออกจากระบบ
 export const logout = createAsyncThunk('auth/logout', async () => {
   await authService.logout();
 });
 
-// Get current user data
-export const getMe = createAsyncThunk('auth/getMe', async (_, thunkAPI) => {
+// ตรวจสอบสถานะการยืนยันตัวตน
+export const checkAuthStatus = createAsyncThunk(
+  'auth/checkStatus',
+  async (_, thunkAPI) => {
     try {
-        return await authService.getMe();
+      // ดึง token จาก state ของ auth อย่างปลอดภัย
+      const token = thunkAPI.getState().auth.user?.token;
+      if (!token) {
+        // หากไม่มี token ให้ปฏิเสธ (reject) เพื่อไปยังหน้า login
+        return thunkAPI.rejectWithValue('No token found');
+      }
+      // ส่ง token ไปให้ service เพื่อตรวจสอบกับ server
+      return await authService.getMe(token);
     } catch (error) {
-        const message = (error.response?.data?.message) || error.message || error.toString();
-        // Automatically log out if getMe fails to prevent loops
-        thunkAPI.dispatch(logout());
-        return thunkAPI.rejectWithValue(message);
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
     }
-});
-// --- END OF COMPLETE FIX ---
+  }
+);
 
 export const authSlice = createSlice({
   name: 'auth',
@@ -76,20 +87,20 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Register
       .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
+        state.user = action.payload;
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        state.user = null;
       })
-      // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
       })
@@ -97,34 +108,36 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload;
-        state.permissions = action.payload?.role?.permissions || [];
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
         state.user = null;
-        state.permissions = [];
       })
-      // Logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.permissions = [];
-        state.isAuthLoading = false; // Stop loading on logout
       })
-      // GetMe
-      .addCase(getMe.pending, (state) => {
-        state.isAuthLoading = true;
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.isLoading = true;
       })
-      .addCase(getMe.fulfilled, (state, action) => {
-          state.isAuthLoading = false;
-          state.user = action.payload;
-          state.permissions = action.payload?.role?.permissions || [];
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        // ข้อมูล user มาจากการโหลด state เริ่มต้น (จาก localStorage)
+        // action.payload คือข้อมูล user ที่อัปเดตจาก server
+        // เรารวมข้อมูลใหม่ แต่ต้องแน่ใจว่า token ไม่หายไป
+        const token = state.user.token;
+        state.user = action.payload; // ข้อมูลใหม่จาก server
+        state.user.token = token; // ใส่ token กลับเข้าไป
       })
-      .addCase(getMe.rejected, (state, action) => {
-          state.isAuthLoading = false;
-          state.user = null;
-          state.permissions = [];
+      .addCase(checkAuthStatus.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = false; // ไม่ใช่ error จริงจัง แค่ยังไม่ได้ login
+        state.message = action.payload;
+        state.user = null;
+        // สิ่งสำคัญ: ลบข้อมูลผู้ใช้ที่ไม่ถูกต้องออกจาก storage
+        localStorage.removeItem('user');
       });
   },
 });
