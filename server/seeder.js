@@ -36,10 +36,11 @@ const importData = async () => {
     });
 
     // 5. Create the Super Admin user ('Pop')
+    // The password will be hashed automatically by the pre-save hook in the User model
     await User.create({
       name: 'ชยาภรณ์ ทัศนบรรจง',
-      username: 'Pop',
-      password: 'Pop.za310', // Note: This will be hashed automatically by the model later
+      username: 'Pop', // Correct username
+      password: 'Pop.za310',
       role: adminRole._id,
     });
 
@@ -52,7 +53,15 @@ const importData = async () => {
 };
 
 const destroyData = async () => {
-    // ... (logic to destroy data if needed)
+    try {
+        await Role.deleteMany();
+        await User.deleteMany();
+        console.log('Data Destroyed!');
+        process.exit();
+    } catch(error) {
+        console.error(`Error: ${error.message}`);
+        process.exit(1);
+    }
 }
 
 if (process.argv[2] === '-d') {

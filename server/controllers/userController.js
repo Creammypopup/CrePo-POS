@@ -5,78 +5,71 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // @desc    Register a new user
-// @route   POST /api/users
-// @access  Public
+// @route   POST /api/users/register
+// @access  Private (Admin)
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, roleName } = req.body;
+    // Correctly destructure username from req.body
+    const { name, username, password, role } = req.body;
 
-  if (!name || !email || !password) {
-    res.status(400);
-    throw new Error('Please include all fields');
-  }
+    if (!name || !username || !password || !role) {
+        res.status(400);
+        throw new Error('Please include all fields: name, username, password, role');
+    }
 
-  // Find if user already exists
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    res.status(400);
-    throw new Error('User already exists');
-  }
+    const userExists = await User.findOne({ username });
 
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+    if (userExists) {
+        res.status(400);
+        throw new Error('Username already exists');
+    }
 
-  // Find role by name, or default to 'user'
-  let userRole = await Role.findOne({ name: roleName || 'User' });
-  if (!userRole) {
-    userRole = await Role.create({ name: 'User', permissions: [] });
-  }
-
-  // Create user
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    role: userRole._id,
-  });
-
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: userRole.name,
-      token: generateToken(user._id),
+    // Password will be hashed by the pre-save hook in User.js
+    const user = await User.create({
+        name,
+        username,
+        password,
+        role,
     });
-  } else {
-    res.status(400);
-    throw new Error('Invalid user data');
-  }
+
+    if (user) {
+        // Don't send token on registration from admin panel
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            username: user.username,
+            role: user.role,
+        });
+    } else {
+        res.status(400);
+        throw new Error('Invalid user data');
+    }
 });
+
 
 // @desc    Login a user
 // @route   POST /api/users/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
-  // --- เปลี่ยนจาก email เป็น name ---
-  const { name, password } = req.body;
+  // --- START OF EDIT ---
+  const { username, password } = req.body;
 
-  // --- ค้นหาผู้ใช้ด้วย name แทน email ---
-  const user = await User.findOne({ name }).populate('role');
+  // Find user by username
+  const user = await User.findOne({ username }).populate('role');
+  // --- END OF EDIT ---
 
   // Check user and passwords match
   if (user && (await bcrypt.compare(password, user.password))) {
     res.status(200).json({
       _id: user._id,
       name: user.name,
-      email: user.email,
+      username: user.username, 
       role: user.role ? user.role.name : 'No role assigned',
       permissions: user.role ? user.role.permissions : [],
       token: generateToken(user._id),
     });
   } else {
     res.status(401);
-    throw new Error('Invalid credentials');
+    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
 });
 
@@ -84,11 +77,12 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   GET /api/users/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user.id).populate('role');
+    // req.user is populated with role from the 'protect' middleware
+    const user = req.user;
     if (user) {
         res.status(200).json({
             id: user._id,
-            email: user.email,
+            username: user.username,
             name: user.name,
             role: user.role ? user.role.name : 'No role assigned',
             permissions: user.role ? user.role.permissions : [],
@@ -98,6 +92,7 @@ const getMe = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 });
+
 
 // Generate token
 const generateToken = (id) => {
