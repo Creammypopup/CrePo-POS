@@ -8,9 +8,9 @@ import Spinner from '../components/Spinner';
 import { toast } from 'react-toastify';
 
 function LoginPage() {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const { email, password } = formData;
+  const { name, password } = formData;
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
@@ -27,8 +27,8 @@ function LoginPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    // ใช้ email ในการ login
-    dispatch(login({ email, password }));
+    const userData = { name, password };
+    dispatch(login(userData));
   };
 
   if (isLoading) { return <Spinner />; }
@@ -44,7 +44,7 @@ function LoginPage() {
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="relative">
             <FaUser className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400" />
-            <input type="email" id="email" name="email" value={email} onChange={onChange} placeholder="อีเมล" required className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition" />
+            <input type="text" id="name" name="name" value={name} onChange={onChange} placeholder="ชื่อผู้ใช้" required className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition" />
           </div>
           <div className="relative">
             <FaLock className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400" />

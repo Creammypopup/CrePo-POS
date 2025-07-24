@@ -1,180 +1,113 @@
-import asyncHandler from 'express-async-handler';
-import User from '../models/User.js';
-import generateToken from '../utils/generateToken.js';
-
-// @desc    Auth user & get token
-// @route   POST /api/users/login
-// @access  Public
-const authUser = asyncHandler(async (req, res) => {
-  // รับค่า username และ password จาก request
-  const { username, password } = req.body;
-
-  // ค้นหาผู้ใช้ด้วย username ในฐานข้อมูล
-  const user = await User.findOne({ username });
-
-  // ตรวจสอบว่ามีผู้ใช้และรหัสผ่านตรงกันหรือไม่
-  if (user && (await user.matchPassword(password))) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      role: user.role,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(401);
-    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-  }
-});
+const asyncHandler = require('express-async-handler');
+const User = require('../models/User');
+const Role = require('../models/Role');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, username, email, password, role } = req.body;
+  const { name, email, password, roleName } = req.body;
 
-  if (!name || !username || !email || !password) {
+  if (!name || !email || !password) {
     res.status(400);
-    throw new Error('กรุณากรอกข้อมูลให้ครบถ้วน');
+    throw new Error('Please include all fields');
   }
 
+  // Find if user already exists
   const userExists = await User.findOne({ email });
-  const usernameExists = await User.findOne({ username });
-
   if (userExists) {
     res.status(400);
-    throw new Error('อีเมลนี้มีผู้ใช้งานแล้ว');
+    throw new Error('User already exists');
   }
 
-  if (usernameExists) {
-    res.status(400);
-    throw new Error('ชื่อผู้ใช้งานนี้มีผู้ใช้งานแล้ว');
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Find role by name, or default to 'user'
+  let userRole = await Role.findOne({ name: roleName || 'User' });
+  if (!userRole) {
+    userRole = await Role.create({ name: 'User', permissions: [] });
   }
 
+  // Create user
   const user = await User.create({
     name,
-    username,
     email,
-    password,
-    role: role || 'user', // Default role
+    password: hashedPassword,
+    role: userRole._id,
   });
 
   if (user) {
     res.status(201).json({
       _id: user._id,
       name: user.name,
-      username: user.username,
       email: user.email,
-      isAdmin: user.isAdmin,
-      role: user.role,
+      role: userRole.name,
       token: generateToken(user._id),
     });
   } else {
     res.status(400);
-    throw new Error('ข้อมูลผู้ใช้ไม่ถูกต้อง');
+    throw new Error('Invalid user data');
   }
 });
 
+// @desc    Login a user
+// @route   POST /api/users/login
+// @access  Public
+const loginUser = asyncHandler(async (req, res) => {
+  // --- เปลี่ยนจาก email เป็น name ---
+  const { name, password } = req.body;
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private
-const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  // --- ค้นหาผู้ใช้ด้วย name แทน email ---
+  const user = await User.findOne({ name }).populate('role');
 
-  if (user) {
-    res.json({
+  // Check user and passwords match
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.status(200).json({
       _id: user._id,
       name: user.name,
-      username: user.username,
       email: user.email,
-      isAdmin: user.isAdmin,
-      role: user.role,
+      role: user.role ? user.role.name : 'No role assigned',
+      permissions: user.role ? user.role.permissions : [],
+      token: generateToken(user._id),
     });
   } else {
-    res.status(404);
-    throw new Error('ไม่พบข้อมูลผู้ใช้');
+    res.status(401);
+    throw new Error('Invalid credentials');
   }
 });
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private/Admin
-const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}).populate('role', 'name');
-  res.json(users);
-});
-
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private/Admin
-const deleteUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-
-  if (user) {
-    await user.deleteOne();
-    res.json({ message: 'ลบผู้ใช้เรียบร้อยแล้ว' });
-  } else {
-    res.status(404);
-    throw new Error('ไม่พบข้อมูลผู้ใช้');
-  }
-});
-
-// @desc    Get user by ID
-// @route   GET /api/users/:id
-// @access  Private/Admin
-const getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select('-password').populate('role');
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404);
-    throw new Error('ไม่พบข้อมูลผู้ใช้');
-  }
-});
-
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private/Admin
-const updateUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    user.username = req.body.username || user.username;
-    user.isAdmin = req.body.isAdmin;
-    user.role = req.body.role || user.role;
-
-    if (req.body.password) {
-      user.password = req.body.password;
+// @desc    Get current user
+// @route   GET /api/users/me
+// @access  Private
+const getMe = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id).populate('role');
+    if (user) {
+        res.status(200).json({
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role ? user.role.name : 'No role assigned',
+            permissions: user.role ? user.role.permissions : [],
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
     }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      username: updatedUser.username,
-      isAdmin: updatedUser.isAdmin,
-      role: updatedUser.role,
-    });
-  } else {
-    res.status(404);
-    throw new Error('ไม่พบข้อมูลผู้ใช้');
-  }
 });
 
+// Generate token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
+};
 
-export {
-  authUser,
+module.exports = {
   registerUser,
-  getUserProfile,
-  getUsers,
-  deleteUser,
-  getUserById,
-  updateUser,
+  loginUser,
+  getMe,
 };
