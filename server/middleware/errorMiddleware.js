@@ -23,4 +23,5 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-export { notFound, errorHandler };
+// Use module.exports for CommonJS compatibility
+module.exports = { notFound, errorHandler };

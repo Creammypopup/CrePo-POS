@@ -1,14 +1,29 @@
 const asyncHandler = require('express-async-handler');
 const Event = require('../models/Event');
-const User = require('../models/User');
+const { getPublicHolidays } = require('../utils/holidayHelper'); // Updated import
 
-// @desc    Get all events for a user
+// @desc    Get all events for a user, including public holidays
 // @route   GET /api/calendar
 // @access  Private
 const getEvents = asyncHandler(async (req, res) => {
-  const events = await Event.find({ user: req.user.id });
-  res.status(200).json(events);
+  // 1. Get user-specific events
+  const userEvents = await Event.find({ user: req.user.id });
+
+  // 2. Get public holidays (for now, using our helper)
+  const currentYear = new Date().getFullYear();
+  const holidays = getPublicHolidays(currentYear);
+
+  // You can easily add next year's holidays too
+  const nextYearHolidays = getPublicHolidays(currentYear + 1);
+
+  // 3. Combine them all
+  const allEvents = [...userEvents, ...holidays, ...nextYearHolidays];
+
+  res.status(200).json(allEvents);
 });
+
+
+// ... (ส่วนที่เหลือของไฟล์ไม่ต้องแก้ไข) ...
 
 // @desc    Create a new event
 // @route   POST /api/calendar
@@ -27,7 +42,7 @@ const createEvent = asyncHandler(async (req, res) => {
     start: new Date(start),
     end: new Date(end),
     allDay: allDay || false,
-    type: type || 'user',
+    type: type || 'user', // Default type is 'user'
   });
 
   res.status(201).json(event);
@@ -44,6 +59,7 @@ const updateEvent = asyncHandler(async (req, res) => {
     throw new Error('Event not found');
   }
 
+  // Ensure user can only update their own events
   if (event.user.toString() !== req.user.id) {
     res.status(401);
     throw new Error('User not authorized');
@@ -67,6 +83,7 @@ const deleteEvent = asyncHandler(async (req, res) => {
     throw new Error('Event not found');
   }
 
+  // Ensure user can only delete their own events
   if (event.user.toString() !== req.user.id) {
     res.status(401);
     throw new Error('User not authorized');

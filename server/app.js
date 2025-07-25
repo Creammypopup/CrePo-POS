@@ -1,6 +1,11 @@
 const express = require('express');
 const path = require('path');
-const dotenv = require('dotenv').config();
+
+// --- START OF EDIT ---
+// Load environment variables explicitly from the .env file in the same directory
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+// --- END OF EDIT ---
+
 const { errorHandler } = require('./middleware/errorMiddleware');
 const connectDB = require('./config/db');
 const port = process.env.PORT || 5000;
@@ -21,7 +26,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/sales', require('./routes/saleRoutes'));
 app.use('/api/roles', require('./routes/roleRoutes'));
-app.use('/api/calendar', require('./routes/calendarRoutes')); // ใช้ require ตามปกติ
+app.use('/api/calendar', require('./routes/calendarRoutes'));
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

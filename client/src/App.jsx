@@ -8,8 +8,7 @@ import { checkAuthStatus } from './features/auth/authSlice';
 import Sidebar from './components/Sidebar';
 import Spinner from './components/Spinner';
 
-const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white/80 backdrop-blur-lg rounded-xl shadow-md border border-gray-200/80"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
-
+// Page Imports
 import Dashboard from './pages/Dashboard';
 import Login from './pages/LoginPage';
 import Register from './pages/RegisterPage';
@@ -23,9 +22,17 @@ import PurchaseOrdersPage from './pages/PurchaseOrdersPage';
 import QuotationsPage from './pages/QuotationsPage';
 import ReceiptsPage from './pages/ReceiptsPage';
 import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
 import StockAdjustmentsPage from './pages/StockAdjustmentsPage';
+// --- START OF EDIT: Import Settings Pages ---
+import SettingsPage from './pages/SettingsPage';
+import GeneralPage from './pages/settings/GeneralPage';
+import UsersPage from './pages/settings/UsersPage';
+import RolesPage from './pages/settings/RolesPage';
+import ThemePage from './pages/settings/ThemePage';
+// --- END OF EDIT ---
 
+
+const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white/80 backdrop-blur-lg rounded-xl shadow-md border border-gray-200/80"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
 const CreditDebitNotesPage = createPlaceholderPage('เอกสารลดหนี้/เพิ่มหนี้');
 const WarehousesPage = createPlaceholderPage('คลังสินค้า');
 const FinanceOverviewPage = createPlaceholderPage('ภาพรวมการเงิน');
@@ -67,7 +74,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-          <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+          {/* Note: Register route is now inside protected area for admin */}
+          
           <Route element={<AuthWrapper />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
@@ -92,7 +100,19 @@ function App() {
               <Route path="/assets" element={<AssetsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+
+              {/* --- START OF EDIT: Nested Settings Routes --- */}
+              <Route path="/settings" element={<SettingsPage />}>
+                  <Route index element={<Navigate to="/settings/general" replace />} />
+                  <Route path="general" element={<GeneralPage />} />
+                  <Route path="users" element={<UsersPage />} />
+                  <Route path="roles" element={<RolesPage />} />
+                  <Route path="theme" element={<ThemePage />} />
+                  {/* The register page is now a sub-route of settings */}
+                  <Route path="users/register" element={<Register />} /> 
+              </Route>
+              {/* --- END OF EDIT --- */}
+              
               <Route path="*" element={<Navigate to="/" />} />
             </Route>
           </Route>

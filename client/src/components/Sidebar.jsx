@@ -43,9 +43,9 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
     const SubMenu = ({ menu, isVisible }) => (
         <AnimatePresence>
             {isVisible && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-10 bg-white/20">
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-10 bg-white/30 rounded-lg">
                     {menu.subMenus.map((subMenu) => (
-                        <NavLink key={subMenu.name} to={subMenu.path} className={({ isActive }) => `flex items-center py-2 px-2 text-sm rounded-md hover:bg-white/40 ${ isActive ? 'text-purple-800 font-semibold' : 'text-gray-700' }`}>
+                        <NavLink key={subMenu.name} to={subMenu.path} className={({ isActive }) => `flex items-center py-2 px-2 text-sm rounded-md hover:bg-white/50 ${ isActive ? 'text-purple-800 font-semibold' : 'text-gray-700' }`}>
                             <BsIcons.BsDot className="mr-2" />
                             <span>{subMenu.name}</span>
                         </NavLink>
@@ -56,9 +56,11 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
     );
 
     return (
-        <div className={`relative flex flex-col bg-gradient-to-b from-gray-50 to-purple-100 text-gray-800 shadow-2xl transition-all duration-300 ease-in-out ${ isSidebarOpen ? 'w-72' : 'w-20' }`}>
+        // --- START OF EDIT ---
+        <div className={`relative flex flex-col bg-gradient-to-b from-purple-50 via-pink-50 to-blue-50 text-gray-800 shadow-2xl transition-all duration-300 ease-in-out ${ isSidebarOpen ? 'w-72' : 'w-20' }`}>
+        {/* --- END OF EDIT --- */}
             <Tooltip id="sidebar-tooltip" place="right" className="z-20" />
-            <div className="flex items-center justify-center h-20 border-b border-gray-200">
+            <div className="flex items-center justify-center h-20 border-b border-gray-200/80">
                 <GiIcons.GiMushroomHouse className={`text-5xl text-pastel-purple-dark transition-all duration-300 ${isSidebarOpen ? 'mr-2' : ''}`} />
                 <AnimatePresence> {isSidebarOpen && ( <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-2xl font-bold whitespace-nowrap text-pastel-purple-dark"> CrePo POS </motion.h1> )} </AnimatePresence>
             </div>
@@ -75,12 +77,12 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
                     </div>
                 ))}
             </nav>
-            <div className="p-2 border-t border-gray-200">
+            <div className="p-2 border-t border-gray-200/80">
                 <div className={`flex items-center p-2 text-base font-normal rounded-lg ${!isSidebarOpen ? 'justify-center' : ''}`}>
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pastel-purple-light flex items-center justify-center border-2 border-pastel-purple"> <span className="font-bold text-pastel-purple-dark">{user?.name ? user.name.charAt(0).toUpperCase() : 'A'}</span> </div>
-                    <AnimatePresence> {isSidebarOpen && ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="ml-3 flex-1 whitespace-nowrap"> <p className="text-sm font-semibold">{user?.name || 'Admin'}</p> <p className="text-xs text-gray-500">{user?.email || ''}</p> </motion.div> )} </AnimatePresence>
+                    <AnimatePresence> {isSidebarOpen && ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="ml-3 flex-1 whitespace-nowrap"> <p className="text-sm font-semibold">{user?.name || 'Admin'}</p> <p className="text-xs text-gray-500">{user?.role || ''}</p> </motion.div> )} </AnimatePresence>
                 </div>
-                <button onClick={onLogout} data-tooltip-id="sidebar-tooltip" data-tooltip-content="ออกจากระบบ" className={`flex items-center w-full p-3 mt-2 text-base font-normal rounded-lg hover:bg-red-100 text-red-600 ${!isSidebarOpen ? 'justify-center' : ''}`}>
+                <button onClick={onLogout} data-tooltip-id="sidebar-tooltip" data-tooltip-content="ออกจากระบบ" className={`flex items-center w-full p-3 mt-2 text-base font-normal rounded-lg hover:bg-red-100/50 text-red-600 ${!isSidebarOpen ? 'justify-center' : ''}`}>
                     <FaIcons.FaSignOutAlt className="text-2xl" />
                     <AnimatePresence> {isSidebarOpen && ( <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="ml-4 whitespace-nowrap"> ออกจากระบบ </motion.span> )} </AnimatePresence>
                 </button>

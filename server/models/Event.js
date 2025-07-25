@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose'); // Corrected from import to require
 
 const eventSchema = mongoose.Schema(
   {
@@ -25,13 +25,16 @@ const eventSchema = mongoose.Schema(
     color: {
       type: String,
     },
+    // Added a type field to distinguish between user events and holidays
+    type: {
+        type: String,
+        default: 'user', // 'user', 'holiday', 'buddhist'
+    }
   },
   {
     timestamps: true,
   }
 );
 
-const Event = mongoose.model('Event', eventSchema);
-
-// This is the fix: Changed from CommonJS to ES Module export
-export default Event;
+// This is the fix: Changed from ES Module to CommonJS export
+module.exports = mongoose.model('Event', eventSchema);
