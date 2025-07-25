@@ -6,20 +6,24 @@ import moment from 'moment';
 import 'moment/locale/th';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Modal from 'react-modal';
-import { FaPlus, FaTimes, FaStar, FaChurch } from 'react-icons/fa'; // Import icons
+import { FaPlus, FaTimes, FaChurch } from 'react-icons/fa';
 import Spinner from '../components/Spinner';
 import { toast } from 'react-toastify';
 
-moment.locale('th');
+moment.locale('th'); // ตั้งค่าภาษาไทยสำหรับ Moment.js
 const localizer = momentLocalizer(moment);
 
-// --- START OF EDIT: Custom Event Component ---
+// --- START OF EDIT: ปรับปรุง Custom Event Component ---
 const CustomEvent = ({ event }) => {
+  const isBuddhistDay = event.type === 'buddhist';
+
   return (
-    <div className="flex items-center">
-      {event.type === 'buddhist' && <FaChurch className="mr-1.5" />}
-      {event.type === 'holiday' && <FaStar className="mr-1.5" />}
-      <span>{event.title}</span>
+    <div className="flex items-center overflow-hidden whitespace-nowrap">
+      {/* ถ้าเป็นวันพระ (ทั้งเล็กและใหญ่) ให้แสดงไอคอนโบสถ์ */}
+      {isBuddhistDay && <FaChurch className="mr-1.5 flex-shrink-0" />}
+      
+      {/* แสดงชื่อกิจกรรม/วันหยุด */}
+      <span className="truncate">{event.title}</span>
     </div>
   );
 };
@@ -58,37 +62,31 @@ function CalendarPage() {
     })), 
   [events]);
 
-  // --- START OF EDIT: Updated Event Style Getter ---
   const eventStyleGetter = (event) => {
     let style = { borderRadius: '5px', opacity: 0.9, border: '0px', display: 'block' };
     
-    // Use color from backend if available, otherwise default by type
     if (event.color) {
         style.backgroundColor = event.color;
-        style.color = 'black'; // Assume light background colors
+        if (event.type === 'buddhist') {
+          style.color = '#78350f';
+        } else {
+          style.color = 'black';
+        }
     } else {
-        style.backgroundColor = '#a78bfa'; // Default purple for user events
+        style.backgroundColor = '#a78bfa';
         style.color = 'white';
-    }
-
-    if(event.type === 'buddhist') {
-      style.color = '#78350f'; // Darker text for yellow bg
     }
     
     return { style };
   };
-  // --- END OF EDIT ---
-
 
   const handleSelectSlot = ({ start, end }) => {
-    // Public holidays cannot be edited/created this way
     setSelectedEvent(null);
     setEventData({ title: '', start, end, allDay: false });
     setModalIsOpen(true);
   };
 
   const handleSelectEvent = (event) => {
-    // Do not open modal for public holidays
     if (event.type === 'holiday' || event.type === 'buddhist') {
         return;
     }
@@ -132,7 +130,30 @@ function CalendarPage() {
     setEventData({ title: '', start: new Date(), end: new Date() });
   };
 
-  const messages = { allDay: 'ตลอดวัน', previous: '‹', next: '›', today: 'วันนี้', month: 'เดือน', week: 'สัปดาห์', day: 'วัน', agenda: 'กำหนดการ', date: 'วันที่', time: 'เวลา', event: 'กิจกรรม', noEventsInRange: 'ไม่มีกิจกรรมในช่วงนี้', showMore: total => `+ ดูอีก ${total} รายการ` };
+  // --- START OF EDIT: เพิ่ม formats และ messages ภาษาไทยเต็มรูปแบบ ---
+  const messages = {
+    allDay: 'ตลอดวัน',
+    previous: '‹',
+    next: '›',
+    today: 'วันนี้',
+    month: 'เดือน',
+    week: 'สัปดาห์',
+    day: 'วัน',
+    agenda: 'กำหนดการ',
+    date: 'วันที่',
+    time: 'เวลา',
+    event: 'กิจกรรม',
+    noEventsInRange: 'ไม่มีกิจกรรมในช่วงนี้',
+    showMore: total => `+ ดูอีก ${total} รายการ`
+  };
+
+  const formats = {
+    monthHeaderFormat: 'MMMM YYYY', // e.g., 'กรกฎาคม 2568'
+    dayHeaderFormat: 'dddd D MMM', // e.g., 'อังคาร 25 ก.ค.'
+    dayRangeHeaderFormat: ({ start, end }, culture, local) =>
+      `${local.format(start, 'D MMMM')} - ${local.format(end, 'D MMMM')}`,
+  };
+  // --- END OF EDIT ---
 
   if (isLoading && !events.length) {
     return <Spinner />;
@@ -159,13 +180,12 @@ function CalendarPage() {
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
             selectable
-            messages={messages}
             culture='th'
-            // --- START OF EDIT: Use Custom Event Component ---
+            messages={messages} // <--- เพิ่ม prop นี้
+            formats={formats}   // <--- เพิ่ม prop นี้
             components={{
                 event: CustomEvent,
             }}
-            // --- END OF EDIT ---
         />
       </div>
 

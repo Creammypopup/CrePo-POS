@@ -1,99 +1,121 @@
 const asyncHandler = require('express-async-handler');
 const Event = require('../models/Event');
-const { getPublicHolidays } = require('../utils/holidayHelper'); // Updated import
+const ical = require('node-ical');
 
-// @desc    Get all events for a user, including public holidays
-// @route   GET /api/calendar
-// @access  Private
+const getOnlineCalendarEvents = async (url, type, color) => {
+    try {
+        const events = await ical.async.fromURL(url);
+        const formattedEvents = [];
+        const majorBuddhistKeywords = ['บูชา', 'พรรษา', 'วิสาขบูชา', 'มาฆบูชา', 'อาสาฬหบูชา'];
+
+        for (const key in events) {
+            if (Object.prototype.hasOwnProperty.call(events, key)) {
+                const event = events[key];
+                if (event.type === 'VEVENT') {
+                    
+                    let isMajor = false;
+                    // **ปรับปรุงการเช็ควันพระใหญ่:**
+                    // วันพระใหญ่จะมีชื่อเฉพาะ ส่วนวันพระเล็กจะชื่อว่า "วันพระ" เฉยๆ
+                    if (type === 'buddhist') {
+                       isMajor = majorBuddhistKeywords.some(keyword => event.summary.includes(keyword));
+                    }
+
+                    formattedEvents.push({
+                        _id: event.uid,
+                        title: event.summary,
+                        start: event.start,
+                        end: event.end || event.start,
+                        allDay: true,
+                        type: type,
+                        color: color,
+                        isMajor: isMajor, // ส่ง isMajor ไปให้ Client
+                    });
+                }
+            }
+        }
+        return formattedEvents;
+    } catch (error) {
+        console.error(`Error fetching calendar from ${url}:`, error);
+        return [];
+    }
+};
+
 const getEvents = asyncHandler(async (req, res) => {
-  // 1. Get user-specific events
   const userEvents = await Event.find({ user: req.user.id });
-
-  // 2. Get public holidays (for now, using our helper)
+  
   const currentYear = new Date().getFullYear();
-  const holidays = getPublicHolidays(currentYear);
+  const nextYear = currentYear + 1;
 
-  // You can easily add next year's holidays too
-  const nextYearHolidays = getPublicHolidays(currentYear + 1);
+  const thaiHolidaysUrl = 'https://calendar.google.com/calendar/ical/th.th%23holiday%40group.v.calendar.google.com/public/basic.ics';
+  const wanPhraUrlCurrentYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${currentYear}`;
+  const wanPhraUrlNextYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${nextYear}`;
 
-  // 3. Combine them all
-  const allEvents = [...userEvents, ...holidays, ...nextYearHolidays];
+  const [holidaysData, buddhistDaysCurrent, buddhistDaysNext] = await Promise.all([
+      getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'),
+      getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'),
+      getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist', '#fde68a'),
+  ]);
+
+  // **แก้ไข:** ลบวันหยุดที่ซ้ำกับวันพระใหญ่ออกจากรายการวันหยุดของ Google
+  const buddhistMajorTitles = [...buddhistDaysCurrent, ...buddhistDaysNext]
+    .filter(e => e.isMajor)
+    .map(e => e.title);
+    
+  const holidays = holidaysData.filter(h => !buddhistMajorTitles.includes(h.title));
+
+  const allBuddhistDays = [...buddhistDaysCurrent, ...buddhistDaysNext];
+
+  const allEvents = [...userEvents, ...holidays, ...allBuddhistDays];
 
   res.status(200).json(allEvents);
 });
 
 
-// ... (ส่วนที่เหลือของไฟล์ไม่ต้องแก้ไข) ...
-
-// @desc    Create a new event
-// @route   POST /api/calendar
-// @access  Private
+// ... (ส่วนที่เหลือของไฟล์เหมือนเดิม) ...
 const createEvent = asyncHandler(async (req, res) => {
   const { title, start, end, allDay, type } = req.body;
-
-  if (!title || !start || !end) {
+  if (!title || !start) {
     res.status(400);
-    throw new Error('Please provide all required fields: title, start, end');
+    throw new Error('Please provide all required fields: title, start');
   }
-
   const event = await Event.create({
     user: req.user.id,
     title,
     start: new Date(start),
-    end: new Date(end),
+    end: end ? new Date(end) : new Date(start),
     allDay: allDay || false,
-    type: type || 'user', // Default type is 'user'
+    type: type || 'user',
   });
-
   res.status(201).json(event);
 });
-
-// @desc    Update an event
-// @route   PUT /api/calendar/:id
-// @access  Private
 const updateEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
-
   if (!event) {
     res.status(404);
     throw new Error('Event not found');
   }
-
-  // Ensure user can only update their own events
   if (event.user.toString() !== req.user.id) {
     res.status(401);
     throw new Error('User not authorized');
   }
-
   const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
-
   res.status(200).json(updatedEvent);
 });
-
-// @desc    Delete an event
-// @route   DELETE /api/calendar/:id
-// @access  Private
 const deleteEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
-
   if (!event) {
     res.status(404);
     throw new Error('Event not found');
   }
-
-  // Ensure user can only delete their own events
   if (event.user.toString() !== req.user.id) {
     res.status(401);
     throw new Error('User not authorized');
   }
-
   await event.deleteOne();
-
   res.status(200).json({ id: req.params.id, message: 'Event removed' });
 });
-
 module.exports = {
   getEvents,
   createEvent,

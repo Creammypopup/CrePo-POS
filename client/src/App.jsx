@@ -9,7 +9,7 @@ import Sidebar from './components/Sidebar';
 import Spinner from './components/Spinner';
 
 // Page Imports
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard'; // <--- **จุดแก้ไข:** เพิ่มบรรทัดนี้กลับเข้ามา
 import Login from './pages/LoginPage';
 import Register from './pages/RegisterPage';
 import ProductsPage from './pages/ProductsPage';
@@ -23,13 +23,11 @@ import QuotationsPage from './pages/QuotationsPage';
 import ReceiptsPage from './pages/ReceiptsPage';
 import ReportsPage from './pages/ReportsPage';
 import StockAdjustmentsPage from './pages/StockAdjustmentsPage';
-// --- START OF EDIT: Import Settings Pages ---
 import SettingsPage from './pages/SettingsPage';
 import GeneralPage from './pages/settings/GeneralPage';
 import UsersPage from './pages/settings/UsersPage';
 import RolesPage from './pages/settings/RolesPage';
 import ThemePage from './pages/settings/ThemePage';
-// --- END OF EDIT ---
 
 
 const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white/80 backdrop-blur-lg rounded-xl shadow-md border border-gray-200/80"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
@@ -48,8 +46,16 @@ const AuthWrapper = () => { const { user } = useSelector((state) => state.auth);
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  
+  // --- START OF EDIT: นำโค้ดส่วนนี้กลับมาทำงาน ---
   const mainContentRef = useRef(null);
-  const handleMainContentClick = () => { if (isSidebarOpen) { setSidebarOpen(false); } };
+  const handleMainContentClick = () => {
+    // ทำให้ Sidebar ยุบเมื่อคลิกที่พื้นที่ด้านนอก และ Sidebar กำลังเปิดอยู่
+    if (isSidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+  // --- END OF EDIT ---
 
   return (
     <div className='flex h-screen font-sans'>
@@ -74,7 +80,6 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-          {/* Note: Register route is now inside protected area for admin */}
           
           <Route element={<AuthWrapper />}>
             <Route element={<DashboardLayout />}>
@@ -101,17 +106,12 @@ function App() {
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/reports" element={<ReportsPage />} />
 
-              {/* --- START OF EDIT: Nested Settings Routes --- */}
-              <Route path="/settings" element={<SettingsPage />}>
-                  <Route index element={<Navigate to="/settings/general" replace />} />
-                  <Route path="general" element={<GeneralPage />} />
-                  <Route path="users" element={<UsersPage />} />
-                  <Route path="roles" element={<RolesPage />} />
-                  <Route path="theme" element={<ThemePage />} />
-                  {/* The register page is now a sub-route of settings */}
-                  <Route path="users/register" element={<Register />} /> 
-              </Route>
-              {/* --- END OF EDIT --- */}
+              <Route path="/settings/general" element={<GeneralPage />} />
+              <Route path="/settings/users" element={<UsersPage />} />
+              <Route path="/settings/roles" element={<RolesPage />} />
+              <Route path="/settings/theme" element={<ThemePage />} />
+              <Route path="/settings/users/register" element={<Register />} /> 
+              <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
               
               <Route path="*" element={<Navigate to="/" />} />
             </Route>

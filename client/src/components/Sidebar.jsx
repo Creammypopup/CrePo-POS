@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/auth/authSlice';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,14 +23,25 @@ const menuConfig = [
     { name: 'สินทรัพย์', icon: <GiIcons.GiVendingMachine />, path: '/assets', color: 'text-lime-500' },
     { name: 'ปฏิทินกิจกรรม', icon: <FaIcons.FaCalendarAlt />, path: '/calendar', color: 'text-cyan-500' },
     { name: 'รายงาน', icon: <HiIcons.HiDocumentReport />, path: '/reports', color: 'text-pastel-pink-dark' },
-    { name: 'ตั้งค่า', icon: <FaIcons.FaCog />, path: '/settings', color: 'text-pastel-gray-dark' },
+    // --- START OF EDIT: แก้ไขเมนูย่อยของ Settings ให้ไม่มีไอคอน ---
+    { name: 'ตั้งค่า', icon: <FaIcons.FaCog />, color: 'text-pastel-gray-dark', subMenus: [
+            { name: 'ทั่วไป', path: '/settings/general' },
+            { name: 'ผู้ใช้งาน', path: '/settings/users' },
+            { name: 'ตำแหน่งและสิทธิ์', path: '/settings/roles' },
+            { name: 'ดีไซน์', path: '/settings/theme' },
+        ],
+    },
+    // --- END OF EDIT ---
 ];
 
 const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const location = useLocation();
     const { user } = useSelector((state) => state.auth);
-    const [openSubMenu, setOpenSubMenu] = useState('');
+    
+    const isSettingsActive = location.pathname.startsWith('/settings');
+    const [openSubMenu, setOpenSubMenu] = useState(isSettingsActive ? 'ตั้งค่า' : '');
 
     const onLogout = () => { dispatch(logout()); navigate('/login'); };
 
@@ -43,10 +54,12 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
     const SubMenu = ({ menu, isVisible }) => (
         <AnimatePresence>
             {isVisible && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-10 bg-white/30 rounded-lg">
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-6 bg-white/30 rounded-lg my-1">
                     {menu.subMenus.map((subMenu) => (
-                        <NavLink key={subMenu.name} to={subMenu.path} className={({ isActive }) => `flex items-center py-2 px-2 text-sm rounded-md hover:bg-white/50 ${ isActive ? 'text-purple-800 font-semibold' : 'text-gray-700' }`}>
-                            <BsIcons.BsDot className="mr-2" />
+                        <NavLink key={subMenu.name} to={subMenu.path} className={({ isActive }) => `flex items-center py-2.5 px-4 text-sm rounded-md hover:bg-white/50 transition-colors duration-200 ${ isActive ? 'text-purple-800 font-semibold bg-white/60' : 'text-gray-700' }`}>
+                           {/* --- START OF EDIT: แสดงผล Dot อัตโนมัติ --- */}
+                            <BsIcons.BsDot className="mr-2 text-lg" />
+                           {/* --- END OF EDIT --- */}
                             <span>{subMenu.name}</span>
                         </NavLink>
                     ))}
@@ -56,9 +69,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
     );
 
     return (
-        // --- START OF EDIT ---
         <div className={`relative flex flex-col bg-gradient-to-b from-purple-50 via-pink-50 to-blue-50 text-gray-800 shadow-2xl transition-all duration-300 ease-in-out ${ isSidebarOpen ? 'w-72' : 'w-20' }`}>
-        {/* --- END OF EDIT --- */}
             <Tooltip id="sidebar-tooltip" place="right" className="z-20" />
             <div className="flex items-center justify-center h-20 border-b border-gray-200/80">
                 <GiIcons.GiMushroomHouse className={`text-5xl text-pastel-purple-dark transition-all duration-300 ${isSidebarOpen ? 'mr-2' : ''}`} />
