@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Event = require('../models/Event');
 const ical = require('node-ical');
+const moment = require('moment'); // เพิ่ม moment เพื่อจัดการวันที่
 
 const getOnlineCalendarEvents = async (url, type, color) => {
     try {
@@ -12,11 +13,9 @@ const getOnlineCalendarEvents = async (url, type, color) => {
             if (Object.prototype.hasOwnProperty.call(events, key)) {
                 const event = events[key];
                 if (event.type === 'VEVENT') {
-                    
                     let isMajor = false;
-                    // **ปรับปรุงการเช็ควันพระใหญ่:**
-                    // วันพระใหญ่จะมีชื่อเฉพาะ ส่วนวันพระเล็กจะชื่อว่า "วันพระ" เฉยๆ
                     if (type === 'buddhist') {
+                       // วันพระใหญ่จะมีชื่อเฉพาะ ส่วนวันพระเล็กจะชื่อว่า "วันพระ" เฉยๆ หรือมีคำว่า ขึ้น/แรม
                        isMajor = majorBuddhistKeywords.some(keyword => event.summary.includes(keyword));
                     }
 
@@ -41,37 +40,47 @@ const getOnlineCalendarEvents = async (url, type, color) => {
 };
 
 const getEvents = asyncHandler(async (req, res) => {
-  const userEvents = await Event.find({ user: req.user.id });
+    const userEvents = await Event.find({ user: req.user.id });
   
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
 
-  const thaiHolidaysUrl = 'https://calendar.google.com/calendar/ical/th.th%23holiday%40group.v.calendar.google.com/public/basic.ics';
-  const wanPhraUrlCurrentYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${currentYear}`;
-  const wanPhraUrlNextYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${nextYear}`;
+    const thaiHolidaysUrl = 'https://calendar.google.com/calendar/ical/th.th%23holiday%40group.v.calendar.google.com/public/basic.ics';
+    const wanPhraUrlCurrentYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${currentYear}`;
+    const wanPhraUrlNextYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${nextYear}`;
 
-  const [holidaysData, buddhistDaysCurrent, buddhistDaysNext] = await Promise.all([
-      getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'),
-      getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'),
-      getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist', '#fde68a'),
-  ]);
-
-  // **แก้ไข:** ลบวันหยุดที่ซ้ำกับวันพระใหญ่ออกจากรายการวันหยุดของ Google
-  const buddhistMajorTitles = [...buddhistDaysCurrent, ...buddhistDaysNext]
-    .filter(e => e.isMajor)
-    .map(e => e.title);
+    const [holidaysData, buddhistDaysCurrent, buddhistDaysNext] = await Promise.all([
+        getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'), // สีชมพูพาสเทล
+        getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'), // สีเหลืองพาสเทล
+        getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist', '#fde68a'),
+    ]);
     
-  const holidays = holidaysData.filter(h => !buddhistMajorTitles.includes(h.title));
+    const allBuddhistDays = [...buddhistDaysCurrent, ...buddhistDaysNext];
+    
+    // **START OF EDIT: ตรรกะใหม่เพื่อจัดลำดับความสำคัญของ Event**
+    const eventMap = new Map();
 
-  const allBuddhistDays = [...buddhistDaysCurrent, ...buddhistDaysNext];
+    // 1. ใส่ข้อมูลวันหยุดราชการลงไปก่อน
+    holidaysData.forEach(event => {
+        const dateString = moment(event.start).format('YYYY-MM-DD');
+        eventMap.set(dateString, event);
+    });
 
-  const allEvents = [...userEvents, ...holidays, ...allBuddhistDays];
+    // 2. ใส่ข้อมูลวันพระทับลงไป (ถ้าวันเดียวกัน วันพระจะสำคัญกว่าเสมอ)
+    allBuddhistDays.forEach(event => {
+        const dateString = moment(event.start).format('YYYY-MM-DD');
+        eventMap.set(dateString, event);
+    });
 
-  res.status(200).json(allEvents);
+    // 3. แปลง Map กลับมาเป็น Array
+    const publicEvents = Array.from(eventMap.values());
+    // **END OF EDIT**
+
+    const allEvents = [...userEvents, ...publicEvents];
+    res.status(200).json(allEvents);
 });
 
-
-// ... (ส่วนที่เหลือของไฟล์เหมือนเดิม) ...
+// ... (ส่วน create, update, delete เหมือนเดิม) ...
 const createEvent = asyncHandler(async (req, res) => {
   const { title, start, end, allDay, type } = req.body;
   if (!title || !start) {

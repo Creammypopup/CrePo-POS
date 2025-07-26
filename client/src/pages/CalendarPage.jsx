@@ -10,7 +10,7 @@ import { FaPlus, FaTimes, FaChurch } from 'react-icons/fa';
 import Spinner from '../components/Spinner';
 import { toast } from 'react-toastify';
 
-moment.locale('th'); // ตั้งค่าภาษาไทยสำหรับ Moment.js
+moment.locale('th');
 const localizer = momentLocalizer(moment);
 
 // --- START OF EDIT: ปรับปรุง Custom Event Component ---
@@ -22,13 +22,14 @@ const CustomEvent = ({ event }) => {
       {/* ถ้าเป็นวันพระ (ทั้งเล็กและใหญ่) ให้แสดงไอคอนโบสถ์ */}
       {isBuddhistDay && <FaChurch className="mr-1.5 flex-shrink-0" />}
       
-      {/* แสดงชื่อกิจกรรม/วันหยุด */}
+      {/* แสดงชื่อกิจกรรม/วันหยุด (Backend จะจัดการชื่อที่ถูกต้องให้แล้ว) */}
       <span className="truncate">{event.title}</span>
     </div>
   );
 };
 // --- END OF EDIT ---
 
+// ... (ส่วน customModalStyles และ Modal.setAppElement เหมือนเดิม) ...
 const customModalStyles = {
   content: { top: '50%', left: '50%', right: 'auto', bottom: 'auto', marginRight: '-50%', transform: 'translate(-50%, -50%)', borderRadius: '1rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '2rem', width: '90%', maxWidth: '500px', background: '#fff' },
   overlay: { backgroundColor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(4px)', zIndex: 50 }
@@ -40,6 +41,7 @@ function CalendarPage() {
   const dispatch = useDispatch();
   const { events, isLoading, isError, message } = useSelector((state) => state.calendar);
 
+  // ... (ส่วน state และ useEffect เหมือนเดิม) ...
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventData, setEventData] = useState({ title: '', start: new Date(), end: new Date() });
@@ -53,6 +55,7 @@ function CalendarPage() {
       dispatch(reset());
     };
   }, [isError, message, dispatch]);
+
 
   const formattedEvents = useMemo(() => 
     events.map(event => ({
@@ -68,7 +71,9 @@ function CalendarPage() {
     if (event.color) {
         style.backgroundColor = event.color;
         if (event.type === 'buddhist') {
-          style.color = '#78350f';
+          style.color = '#78350f'; 
+        } else if (event.type === 'holiday') {
+          style.color = '#881337'; // ทำให้สีตัวอักษรบนพื้นหลังชมพูเข้มขึ้น
         } else {
           style.color = 'black';
         }
@@ -80,6 +85,7 @@ function CalendarPage() {
     return { style };
   };
 
+  // ... (ส่วน handleFunctions และ messages, formats เหมือนเดิม) ...
   const handleSelectSlot = ({ start, end }) => {
     setSelectedEvent(null);
     setEventData({ title: '', start, end, allDay: false });
@@ -129,38 +135,27 @@ function CalendarPage() {
     setSelectedEvent(null);
     setEventData({ title: '', start: new Date(), end: new Date() });
   };
-
-  // --- START OF EDIT: เพิ่ม formats และ messages ภาษาไทยเต็มรูปแบบ ---
+  
   const messages = {
-    allDay: 'ตลอดวัน',
-    previous: '‹',
-    next: '›',
-    today: 'วันนี้',
-    month: 'เดือน',
-    week: 'สัปดาห์',
-    day: 'วัน',
-    agenda: 'กำหนดการ',
-    date: 'วันที่',
-    time: 'เวลา',
-    event: 'กิจกรรม',
-    noEventsInRange: 'ไม่มีกิจกรรมในช่วงนี้',
-    showMore: total => `+ ดูอีก ${total} รายการ`
+    allDay: 'ตลอดวัน', previous: '‹', next: '›', today: 'วันนี้', month: 'เดือน', week: 'สัปดาห์', day: 'วัน', agenda: 'กำหนดการ', date: 'วันที่', time: 'เวลา', event: 'กิจกรรม', noEventsInRange: 'ไม่มีกิจกรรมในช่วงนี้', showMore: total => `+ ดูอีก ${total} รายการ`
   };
 
   const formats = {
-    monthHeaderFormat: 'MMMM YYYY', // e.g., 'กรกฎาคม 2568'
-    dayHeaderFormat: 'dddd D MMM', // e.g., 'อังคาร 25 ก.ค.'
+    monthHeaderFormat: 'MMMM YYYY',
+    dayHeaderFormat: 'dddd D MMM',
     dayRangeHeaderFormat: ({ start, end }, culture, local) =>
       `${local.format(start, 'D MMMM')} - ${local.format(end, 'D MMMM')}`,
   };
-  // --- END OF EDIT ---
+
 
   if (isLoading && !events.length) {
     return <Spinner />;
   }
 
   return (
-    <div className="p-4 sm:p-6 bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/80">
+    // --- START OF EDIT: เปลี่ยนพื้นหลังเป็นสีขาวทึบ ---
+    <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-lg">
+    {/* --- END OF EDIT --- */}
         <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800">ปฏิทินกิจกรรม</h1>
             <button onClick={() => handleSelectSlot({ start: new Date(), end: new Date() })} className="flex items-center px-4 py-2 bg-pastel-purple-dark text-white rounded-lg shadow-md hover:bg-purple-700 transition-colors">
@@ -181,8 +176,8 @@ function CalendarPage() {
             onSelectEvent={handleSelectEvent}
             selectable
             culture='th'
-            messages={messages} // <--- เพิ่ม prop นี้
-            formats={formats}   // <--- เพิ่ม prop นี้
+            messages={messages}
+            formats={formats}
             components={{
                 event: CustomEvent,
             }}
@@ -190,6 +185,7 @@ function CalendarPage() {
       </div>
 
       <Modal isOpen={modalIsOpen} onRequestClose={closeModal} style={customModalStyles} contentLabel="Event Modal">
+        {/* ... (Modal content is unchanged) ... */}
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-700">{selectedEvent ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่'}</h2>
             <button onClick={closeModal}><FaTimes className="text-gray-400 hover:text-gray-600 text-2xl"/></button>

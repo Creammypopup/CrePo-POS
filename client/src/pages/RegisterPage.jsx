@@ -110,7 +110,7 @@ function RegisterPage() {
                     {/* --- END OF EDIT --- */}
                 </div>
                 <div className="flex justify-end pt-4">
-                    <button type="submit" disabled={authLoading} className="bg-candy-purple-action text-white font-bold py-3 px-6 rounded-xl flex items-center transition-all duration-300 shadow-candy hover:brightness-110 disabled:opacity-50">
+                    <button type="submit" disabled={authLoading} className="bg-pastel-purple-dark text-white font-bold py-3 px-6 rounded-xl flex items-center transition-all duration-300 shadow-lg hover:bg-purple-700 disabled:opacity-50">
                         <FaUserPlus className="mr-2" />
                         {authLoading ? 'กำลังสร้าง...' : 'สร้างผู้ใช้งาน'}
                     </button>

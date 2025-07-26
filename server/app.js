@@ -27,6 +27,7 @@ app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/sales', require('./routes/saleRoutes'));
 app.use('/api/roles', require('./routes/roleRoutes'));
 app.use('/api/calendar', require('./routes/calendarRoutes'));
+app.use('/api/expenses', require('./routes/expenseRoutes')); // <-- **เพิ่มบรรทัดนี้**
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

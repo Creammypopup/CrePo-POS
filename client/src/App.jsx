@@ -9,7 +9,7 @@ import Sidebar from './components/Sidebar';
 import Spinner from './components/Spinner';
 
 // Page Imports
-import Dashboard from './pages/Dashboard'; // <--- **จุดแก้ไข:** เพิ่มบรรทัดนี้กลับเข้ามา
+import Dashboard from './pages/Dashboard'; // **จุดแก้ไข:** เพิ่มบรรทัดนี้กลับเข้ามา
 import Login from './pages/LoginPage';
 import Register from './pages/RegisterPage';
 import ProductsPage from './pages/ProductsPage';
@@ -30,7 +30,7 @@ import RolesPage from './pages/settings/RolesPage';
 import ThemePage from './pages/settings/ThemePage';
 
 
-const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white/80 backdrop-blur-lg rounded-xl shadow-md border border-gray-200/80"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
+const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white rounded-2xl shadow-lg"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
 const CreditDebitNotesPage = createPlaceholderPage('เอกสารลดหนี้/เพิ่มหนี้');
 const WarehousesPage = createPlaceholderPage('คลังสินค้า');
 const FinanceOverviewPage = createPlaceholderPage('ภาพรวมการเงิน');
@@ -47,21 +47,18 @@ const AuthWrapper = () => { const { user } = useSelector((state) => state.auth);
 const DashboardLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   
-  // --- START OF EDIT: นำโค้ดส่วนนี้กลับมาทำงาน ---
   const mainContentRef = useRef(null);
   const handleMainContentClick = () => {
-    // ทำให้ Sidebar ยุบเมื่อคลิกที่พื้นที่ด้านนอก และ Sidebar กำลังเปิดอยู่
     if (isSidebarOpen) {
       setSidebarOpen(false);
     }
   };
-  // --- END OF EDIT ---
 
   return (
     <div className='flex h-screen font-sans'>
       <Sidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div ref={mainContentRef} onClick={handleMainContentClick} className='flex-1 flex flex-col overflow-hidden'>
-        <main className='flex-1 overflow-x-hidden overflow-y-auto'>
+        <main className='flex-1 overflow-x-hidden overflow-y-auto bg-gray-100/50'>
           <div className='container mx-auto px-6 py-8'> <Outlet /> </div>
         </main>
       </div>

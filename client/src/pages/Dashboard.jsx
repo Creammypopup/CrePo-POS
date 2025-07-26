@@ -1,11 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { FaFileInvoiceDollar, FaShoppingBag, FaBoxOpen, FaChartLine, FaExclamationTriangle, FaTasks, FaFileAlt } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaShoppingBag, FaChartLine, FaExclamationTriangle, FaFileAlt } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // --- Mock Data (for demonstration) ---
 const chartData = [ { name: 'ม.ค.', 'รายรับ': 4000, 'รายจ่าย': 2400 }, { name: 'ก.พ.', 'รายรับ': 3000, 'รายจ่าย': 1398 }, { name: 'มี.ค.', 'รายรับ': 2000, 'รายจ่าย': 9800 }, { name: 'เม.ย.', 'รายรับ': 2780, 'รายจ่าย': 3908 }, { name: 'พ.ค.', 'รายรับ': 1890, 'รายจ่าย': 4800 }, { name: 'มิ.ย.', 'รายรับ': 2390, 'รายจ่าย': 3800 }, { name: 'ก.ค.', 'รายรับ': 3490, 'รายจ่าย': 4300 }, ];
-const lowStockItems = [ { name: 'สีทาบ้าน TOA (ขาว)', stock: 5 }, { name: 'หลอดไฟ LED 12W', stock: 8 }, ];
 const documentStatus = [ 
     { doc: 'ใบเสนอราคา #QT-0021', status: 'รออนุมัติ', color: 'blue' },
     { doc: 'ใบสั่งซื้อ #PO-0015', status: 'รอจัดส่ง', color: 'yellow' },
@@ -20,7 +19,6 @@ const paymentAlerts = [
 // --- Components ---
 const StatCard = ({ title, value, icon, gradient, permission }) => {
     const { user } = useSelector((state) => state.auth);
-    // Hide card if a specific permission is required and the user doesn't have it
     if (permission && !user?.permissions.includes(permission)) {
         return null;
     }
@@ -36,7 +34,7 @@ const StatCard = ({ title, value, icon, gradient, permission }) => {
 };
 
 const InfoWidget = ({ title, icon, children, cta }) => (
-    <div className="p-6 bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/80 h-full flex flex-col">
+    <div className="p-6 bg-white rounded-2xl shadow-lg h-full flex flex-col">
         <div className="flex items-center justify-between text-xl font-bold text-gray-700 mb-4">
             <div className="flex items-center">
                 {icon}

@@ -11,6 +11,7 @@ import * as HiIcons from 'react-icons/hi';
 import * as BsIcons from 'react-icons/bs';
 
 const menuConfig = [
+    // ... (menuConfig array is unchanged) ...
     { name: 'ภาพรวม', icon: <FaIcons.FaTachometerAlt />, path: '/', color: 'text-pastel-purple-dark' },
     { name: 'ขายหน้าร้าน (POS)', icon: <FaIcons.FaShoppingCart />, path: '/pos', color: 'text-pastel-sky-dark' },
     { name: 'ขาย', icon: <FaIcons.FaFileInvoiceDollar />, color: 'text-pastel-mint-dark', subMenus: [ { name: 'ใบเสนอราคา', path: '/quotations' }, { name: 'ใบวางบิล/ใบแจ้งหนี้', path: '/invoices' }, { name: 'ใบเสร็จรับเงิน', path: '/receipts' }, { name: 'เอกสารลดหนี้/เพิ่มหนี้', path: '/credit-debit-notes' }, ], },
@@ -23,7 +24,6 @@ const menuConfig = [
     { name: 'สินทรัพย์', icon: <GiIcons.GiVendingMachine />, path: '/assets', color: 'text-lime-500' },
     { name: 'ปฏิทินกิจกรรม', icon: <FaIcons.FaCalendarAlt />, path: '/calendar', color: 'text-cyan-500' },
     { name: 'รายงาน', icon: <HiIcons.HiDocumentReport />, path: '/reports', color: 'text-pastel-pink-dark' },
-    // --- START OF EDIT: แก้ไขเมนูย่อยของ Settings ให้ไม่มีไอคอน ---
     { name: 'ตั้งค่า', icon: <FaIcons.FaCog />, color: 'text-pastel-gray-dark', subMenus: [
             { name: 'ทั่วไป', path: '/settings/general' },
             { name: 'ผู้ใช้งาน', path: '/settings/users' },
@@ -31,7 +31,6 @@ const menuConfig = [
             { name: 'ดีไซน์', path: '/settings/theme' },
         ],
     },
-    // --- END OF EDIT ---
 ];
 
 const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
@@ -57,9 +56,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pl-6 bg-white/30 rounded-lg my-1">
                     {menu.subMenus.map((subMenu) => (
                         <NavLink key={subMenu.name} to={subMenu.path} className={({ isActive }) => `flex items-center py-2.5 px-4 text-sm rounded-md hover:bg-white/50 transition-colors duration-200 ${ isActive ? 'text-purple-800 font-semibold bg-white/60' : 'text-gray-700' }`}>
-                           {/* --- START OF EDIT: แสดงผล Dot อัตโนมัติ --- */}
                             <BsIcons.BsDot className="mr-2 text-lg" />
-                           {/* --- END OF EDIT --- */}
                             <span>{subMenu.name}</span>
                         </NavLink>
                     ))}
@@ -70,6 +67,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
 
     return (
         <div className={`relative flex flex-col bg-gradient-to-b from-purple-50 via-pink-50 to-blue-50 text-gray-800 shadow-2xl transition-all duration-300 ease-in-out ${ isSidebarOpen ? 'w-72' : 'w-20' }`}>
+            {/* ... (Tooltip and Header unchanged) ... */}
             <Tooltip id="sidebar-tooltip" place="right" className="z-20" />
             <div className="flex items-center justify-center h-20 border-b border-gray-200/80">
                 <GiIcons.GiMushroomHouse className={`text-5xl text-pastel-purple-dark transition-all duration-300 ${isSidebarOpen ? 'mr-2' : ''}`} />
@@ -77,17 +75,31 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }) => {
             </div>
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="absolute -right-3 top-20 z-10 p-1.5 bg-pastel-purple-dark text-white rounded-full focus:outline-none hover:bg-purple-700 shadow-lg"> {isSidebarOpen ? <FaIcons.FaAngleLeft /> : <FaIcons.FaAngleRight />} </button>
             <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-                {menuConfig.map((menu) => (
+                {menuConfig.map((menu) => {
+                    // --- START OF EDIT: ตรรกะสำหรับ Active Menu ---
+                    const isMenuActive = menu.subMenus 
+                        ? menu.subMenus.some(sm => location.pathname.startsWith(sm.path)) 
+                        : (menu.path === '/' ? location.pathname === '/' : location.pathname.startsWith(menu.path));
+                    // --- END OF EDIT ---
+                    return (
                     <div key={menu.name}>
-                        <div onClick={() => handleMenuClick(menu)} data-tooltip-id="sidebar-tooltip" data-tooltip-content={menu.name} className={`flex items-center p-3 text-base font-normal rounded-lg cursor-pointer hover:bg-white/50 ${!isSidebarOpen ? 'justify-center' : ''}`}>
+                        <div 
+                            onClick={() => handleMenuClick(menu)} 
+                            data-tooltip-id="sidebar-tooltip" 
+                            data-tooltip-content={menu.name} 
+                            // --- START OF EDIT: เพิ่ม Class เมื่อ Active ---
+                            className={`flex items-center p-3 text-base font-normal rounded-lg cursor-pointer transition-colors duration-200 ${!isSidebarOpen ? 'justify-center' : ''} ${isMenuActive ? 'bg-purple-200/60' : 'hover:bg-white/50'}`}
+                            // --- END OF EDIT ---
+                        >
                             <span className={`text-2xl ${menu.color}`}>{menu.icon}</span>
                             <AnimatePresence> {isSidebarOpen && ( <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="ml-4 flex-1 whitespace-nowrap"> {menu.name} </motion.span> )} </AnimatePresence>
                             {isSidebarOpen && menu.subMenus && ( <FaIcons.FaChevronDown className={`transition-transform duration-300 ${openSubMenu === menu.name ? 'rotate-180' : ''}`} /> )}
                         </div>
                         {isSidebarOpen && <SubMenu menu={menu} isVisible={openSubMenu === menu.name} />}
                     </div>
-                ))}
+                )})}
             </nav>
+            {/* ... (Footer user profile unchanged) ... */}
             <div className="p-2 border-t border-gray-200/80">
                 <div className={`flex items-center p-2 text-base font-normal rounded-lg ${!isSidebarOpen ? 'justify-center' : ''}`}>
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pastel-purple-light flex items-center justify-center border-2 border-pastel-purple"> <span className="font-bold text-pastel-purple-dark">{user?.name ? user.name.charAt(0).toUpperCase() : 'A'}</span> </div>
