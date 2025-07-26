@@ -12,36 +12,31 @@ export default {
           DEFAULT: '#C084FC', // bg-purple-400
           dark: '#9333EA',  // bg-purple-600
         },
-        'pastel-sky': {
-          light: '#BAE6FD',
-          DEFAULT: '#38BDF8',
-          dark: '#0284C7',
-        },
-        'pastel-mint': {
-          light: '#A7F3D0',
-          DEFAULT: '#34D399',
-          dark: '#059669',
-        },
-        'pastel-peach': {
-          light: '#FED7AA',
-          DEFAULT: '#FB923C',
-          dark: '#EA580C',
+        'pastel-green': {
+          light: '#D1FAE5', // bg-green-200
+          DEFAULT: '#6EE7B7', // bg-green-300
+          dark: '#059669',   // bg-green-700
         },
         'pastel-yellow': {
-          light: '#FDE68A',
-          DEFAULT: '#FACC15',
-          dark: '#CA8A04',
+          light: '#FEF3C7', // bg-amber-200
+          DEFAULT: '#FCD34D', // bg-amber-300
+          dark: '#B45309',   // bg-amber-700
         },
         'pastel-pink': {
-          light: '#FBCFE8',
-          DEFAULT: '#F472B6',
-          dark: '#DB2777',
+          light: '#FCE7F3', // bg-pink-100
+          DEFAULT: '#F9A8D4', // bg-pink-300
+          dark: '#BE185D',   // bg-pink-700
         },
-        'pastel-gray': {
-          light: '#F3F4F6', // gray-100
-          DEFAULT: '#D1D5DB', // gray-300
-          dark: '#6B7280',   // gray-500
+        'pastel-blue': {
+          light: '#DBEAFE', // bg-blue-200
+          DEFAULT: '#93C5FD', // bg-blue-300
+          dark: '#2563EB',   // bg-blue-600
         },
+        'pastel-peach': {
+          light: '#FFEDD5', // bg-orange-200
+          DEFAULT: '#FDBA74', // bg-orange-300
+          dark: '#C2410C',   // bg-orange-700
+        }
       }
     },
   },

@@ -1,13 +1,13 @@
 const asyncHandler = require('express-async-handler');
 const Event = require('../models/Event');
 const ical = require('node-ical');
-const moment = require('moment'); // เพิ่ม moment เพื่อจัดการวันที่
+const moment = require('moment');
 
 const getOnlineCalendarEvents = async (url, type, color) => {
     try {
         const events = await ical.async.fromURL(url);
         const formattedEvents = [];
-        const majorBuddhistKeywords = ['บูชา', 'พรรษา', 'วิสาขบูชา', 'มาฆบูชา', 'อาสาฬหบูชา'];
+        const majorBuddhistKeywords = ['บูชา', 'พรรษา'];
 
         for (const key in events) {
             if (Object.prototype.hasOwnProperty.call(events, key)) {
@@ -15,10 +15,8 @@ const getOnlineCalendarEvents = async (url, type, color) => {
                 if (event.type === 'VEVENT') {
                     let isMajor = false;
                     if (type === 'buddhist') {
-                       // วันพระใหญ่จะมีชื่อเฉพาะ ส่วนวันพระเล็กจะชื่อว่า "วันพระ" เฉยๆ หรือมีคำว่า ขึ้น/แรม
                        isMajor = majorBuddhistKeywords.some(keyword => event.summary.includes(keyword));
                     }
-
                     formattedEvents.push({
                         _id: event.uid,
                         title: event.summary,
@@ -27,7 +25,7 @@ const getOnlineCalendarEvents = async (url, type, color) => {
                         allDay: true,
                         type: type,
                         color: color,
-                        isMajor: isMajor, // ส่ง isMajor ไปให้ Client
+                        isMajor: isMajor,
                     });
                 }
             }
@@ -50,37 +48,28 @@ const getEvents = asyncHandler(async (req, res) => {
     const wanPhraUrlNextYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${nextYear}`;
 
     const [holidaysData, buddhistDaysCurrent, buddhistDaysNext] = await Promise.all([
-        getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'), // สีชมพูพาสเทล
-        getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'), // สีเหลืองพาสเทล
+        getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'),
+        getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'),
         getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist', '#fde68a'),
     ]);
     
     const allBuddhistDays = [...buddhistDaysCurrent, ...buddhistDaysNext];
     
-    // **START OF EDIT: ตรรกะใหม่เพื่อจัดลำดับความสำคัญของ Event**
     const eventMap = new Map();
-
-    // 1. ใส่ข้อมูลวันหยุดราชการลงไปก่อน
     holidaysData.forEach(event => {
         const dateString = moment(event.start).format('YYYY-MM-DD');
         eventMap.set(dateString, event);
     });
-
-    // 2. ใส่ข้อมูลวันพระทับลงไป (ถ้าวันเดียวกัน วันพระจะสำคัญกว่าเสมอ)
     allBuddhistDays.forEach(event => {
         const dateString = moment(event.start).format('YYYY-MM-DD');
         eventMap.set(dateString, event);
     });
 
-    // 3. แปลง Map กลับมาเป็น Array
     const publicEvents = Array.from(eventMap.values());
-    // **END OF EDIT**
-
     const allEvents = [...userEvents, ...publicEvents];
     res.status(200).json(allEvents);
 });
 
-// ... (ส่วน create, update, delete เหมือนเดิม) ...
 const createEvent = asyncHandler(async (req, res) => {
   const { title, start, end, allDay, type } = req.body;
   if (!title || !start) {
@@ -97,6 +86,7 @@ const createEvent = asyncHandler(async (req, res) => {
   });
   res.status(201).json(event);
 });
+
 const updateEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
   if (!event) {
@@ -112,6 +102,7 @@ const updateEvent = asyncHandler(async (req, res) => {
   });
   res.status(200).json(updatedEvent);
 });
+
 const deleteEvent = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.id);
   if (!event) {
@@ -125,6 +116,7 @@ const deleteEvent = asyncHandler(async (req, res) => {
   await event.deleteOne();
   res.status(200).json({ id: req.params.id, message: 'Event removed' });
 });
+
 module.exports = {
   getEvents,
   createEvent,

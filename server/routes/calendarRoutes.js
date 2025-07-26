@@ -8,16 +8,14 @@ const {
 } = require('../controllers/calendarController');
 const { protect } = require('../middleware/authMiddleware');
 
-// GET /api/calendar/ -> ดึงกิจกรรมทั้งหมด
-router.get('/', protect, getEvents);
+// **START OF EDIT: แก้ไขการใช้ middleware ใน route**
+router.route('/')
+  .get(protect, getEvents)
+  .post(protect, createEvent);
 
-// POST /api/calendar/ -> สร้างกิจกรรมใหม่
-router.post('/', protect, createEvent);
-
-// PUT /api/calendar/:id -> แก้ไขกิจกรรม
-router.put('/:id', protect, updateEvent);
-
-// DELETE /api/calendar/:id -> ลบกิจกรรม
-router.delete('/:id', protect, deleteEvent);
+router.route('/:id')
+  .put(protect, updateEvent)
+  .delete(protect, deleteEvent);
+// **END OF EDIT**
 
 module.exports = router;
