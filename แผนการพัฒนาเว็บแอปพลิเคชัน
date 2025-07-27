@@ -10,23 +10,23 @@ Sidebar สามารถย่อ-ขยายได้
 
 สถานะการพัฒนา (อัปเดตล่าสุด: 27/07/2568)
 ระยะที่ 1: พื้นฐานและโครงสร้าง (Foundation & Setup)
-[x] ตั้งค่าโปรเจกต์ (Vite + React, Node.js + Express)
-[x] โครงสร้างไฟล์สำหรับ Client และ Server
-[x] เชื่อมต่อฐานข้อมูล MongoDB
-[x] ติดตั้งและตั้งค่า Redux Toolkit, React Router DOM, Tailwind CSS
-[x] สร้าง Layout หลัก (Sidebar, Header, Main Content)
+[ ] ตั้งค่าโปรเจกต์ (Vite + React, Node.js + Express)
+[ ] โครงสร้างไฟล์สำหรับ Client และ Server
+[ ] เชื่อมต่อฐานข้อมูล MongoDB
+[ ] ติดตั้งและตั้งค่า Redux Toolkit, React Router DOM, Tailwind CSS
+[ ] สร้าง Layout หลัก (Sidebar, Header, Main Content)
 
 ระยะที่ 2: การตั้งค่า (Settings)
 2.1 ผู้ใช้และสิทธิ์
 
 หน้าจัดการผู้ใช้/พนักงาน (Users/Employees Page)
-[x] แสดงรายชื่อผู้ใช้ทั้งหมด
-[x] เพิ่มผู้ใช้ใหม่ (AddUserModal)
-[x] แก้ไขข้อมูลผู้ใช้ (EditUserModal)
+[ ] แสดงรายชื่อผู้ใช้ทั้งหมด
+[ ] เพิ่มผู้ใช้ใหม่ (AddUserModal)
+[ ] แก้ไขข้อมูลผู้ใช้ (EditUserModal)
 [ ] ลบผู้ใช้
 
 หน้าจัดการตำแหน่ง/บทบาท (Roles Page)
-[x] แสดงรายการตำแหน่งทั้งหมด
+[ ] แสดงรายการตำแหน่งทั้งหมด
 [ ] เพิ่ม/แก้ไข/ลบ ตำแหน่ง
 [ ] กำหนดสิทธิ์ (Permissions) ในแต่ละตำแหน่ง
 
