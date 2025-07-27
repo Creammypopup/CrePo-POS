@@ -1,40 +1,39 @@
-// รายการสิทธิ์ทั้งหมดในระบบ
-export const ALL_PERMISSIONS = [
-    // ภาพรวม
-    { id: 'dashboard-view', name: 'ดูหน้าภาพรวม' },
+// client/src/permissions.js
 
-    // ขายหน้าร้าน
-    { id: 'pos-access', name: 'เข้าถึงหน้าขายหน้าร้าน (POS)' },
+// กำหนดค่าคงที่สำหรับสิทธิ์ต่างๆ เพื่อป้องกันการพิมพ์ผิดและจัดการได้ง่าย
+export const permissions = {
+  // General
+  VIEW_DASHBOARD: 'view_dashboard',
+  VIEW_CALENDAR: 'view_calendar',
+  
+  // Sales
+  MANAGE_POS: 'manage_pos',
+  VIEW_RECEIPTS: 'view_receipts',
+  MANAGE_INVOICES: 'manage_invoices',
+  MANAGE_QUOTATIONS: 'manage_quotations',
 
-    // เอกสารขาย
-    { id: 'sales-docs-view', name: 'ดูเอกสารขาย' },
-    { id: 'quotations-manage', name: 'จัดการใบเสนอราคา' },
-    { id: 'invoices-manage', name: 'จัดการใบแจ้งหนี้' },
-    { id: 'receipts-manage', name: 'จัดการใบเสร็จ' },
+  // Expenses
+  MANAGE_EXPENSES: 'manage_expenses',
 
-    // เอกสารซื้อ
-    { id: 'purchase-docs-view', name: 'ดูเอกสารซื้อ' },
-    { id: 'expenses-manage', name: 'จัดการค่าใช้จ่าย' },
-    { id: 'purchase-orders-manage', name: 'จัดการใบสั่งซื้อ' },
+  // Inventory
+  MANAGE_PRODUCTS: 'manage_products',
+  MANAGE_STOCK_ADJUSTMENTS: 'manage_stock_adjustments',
+  MANAGE_PURCHASE_ORDERS: 'manage_purchase_orders',
 
-    // บัญชี
-    { id: 'accounting-view', name: 'ดูหน้าบริหารบัญชี' },
-    { id: 'chart-of-accounts-manage', name: 'จัดการผังบัญชี' },
-    { id: 'journal-manage', name: 'จัดการสมุดรายวัน' },
+  // Contacts
+  MANAGE_CONTACTS: 'manage_contacts',
 
-    // สินค้า
-    { id: 'products-view', name: 'ดูสินค้า' },
-    { id: 'products-manage', name: 'จัดการสินค้า (เพิ่ม/ลบ/แก้)' },
-    { id: 'stock-adjustments-manage', name: 'จัดการการปรับสต็อก' },
+  // Accounting
+  VIEW_REPORTS: 'view_reports',
+  MANAGE_ACCOUNTING: 'manage_accounting', // For Chart of Accounts & Journal
 
-    // อื่นๆ
-    { id: 'contacts-manage', name: 'จัดการผู้ติดต่อ' },
-    { id: 'reports-view', name: 'ดูรายงาน' },
+  // Settings
+  MANAGE_USERS: 'manage_users',
+  MANAGE_ROLES: 'manage_roles',
+  MANAGE_SETTINGS: 'manage_settings',
+};
 
-    // ตั้งค่า (สิทธิ์สูงสุด)
-    { id: 'settings-access', name: 'เข้าถึงหน้าตั้งค่า' },
-    { id: 'users-manage', name: 'จัดการผู้ใช้งาน' },
-    { id: 'roles-manage', name: 'จัดการตำแหน่งและสิทธิ์' },
-    { id: 'theme-settings-manage', name: 'จัดการดีไซน์' },
-    { id: 'general-settings-manage', name: 'จัดการตั้งค่าทั่วไป' },
-];
+// --- ส่วนที่เพิ่มเข้ามาเพื่อแก้ไข Error ---
+// สร้าง Array ของ permission ทั้งหมดจาก object ด้านบน
+// เพื่อให้หน้าจัดการตำแหน่ง (RolesPage) สามารถนำไปแสดงผลได้
+export const ALL_PERMISSIONS = Object.values(permissions);

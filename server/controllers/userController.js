@@ -1,67 +1,80 @@
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
-const Role = require('../models/Role');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const asyncHandler = require("express-async-handler");
+const User = require("../models/User");
+const Role = require("../models/Role");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // @desc    Register a new user
-// @route   POST /api/users/register
-// @access  Private (Admin)
+// @route   POST /api/users
+// @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, username, password, role } = req.body;
+  const { name, username, email, password } = req.body;
 
-    if (!name || !username || !password || !role) {
-        res.status(400);
-        throw new Error('Please include all fields: name, username, password, role');
-    }
+  if (!name || !username || !email || !password) {
+    res.status(400);
+    throw new Error("Please include all fields");
+  }
 
-    const userExists = await User.findOne({ username });
+  const userExists = await User.findOne({ $or: [{ email }, { username }] });
 
-    if (userExists) {
-        res.status(400);
-        throw new Error('Username already exists');
-    }
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
 
-    const user = await User.create({
-        name,
-        username,
-        password,
-        role,
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  let defaultRole = await Role.findOne({ name: "Employee" });
+  if (!defaultRole) {
+    defaultRole = await Role.findOne().sort({ createdAt: 1 });
+  }
+
+  const user = await User.create({
+    name,
+    username,
+    email,
+    password: hashedPassword,
+    role: defaultRole ? defaultRole._id : null,
+  });
+
+  if (user) {
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id),
     });
-
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            username: user.username,
-            role: user.role,
-        });
-    } else {
-        res.status(400);
-        throw new Error('Invalid user data');
-    }
+  } else {
+    res.status(400);
+    throw new Error("Invalid user data");
+  }
 });
-
 
 // @desc    Login a user
 // @route   POST /api/users/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
+
+  // --- จุดที่แก้ไข ---
+  // ค้นหาผู้ใช้จาก 'username' ไม่ใช่ 'name'
   const user = await User.findOne({ username }).populate('role');
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.status(200).json({
       _id: user._id,
       name: user.name,
-      username: user.username, 
-      role: user.role ? user.role.name : 'No role assigned',
-      permissions: user.role ? user.role.permissions : [],
+      username: user.username,
+      email: user.email,
+      role: user.role,
       token: generateToken(user._id),
     });
   } else {
     res.status(401);
-    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    throw new Error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
   }
 });
 
@@ -69,35 +82,29 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   GET /api/users/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
-    const user = req.user;
-    if (user) {
-        res.status(200).json({
-            id: user._id,
-            username: user.username,
-            name: user.name,
-            role: user.role ? user.role.name : 'No role assigned',
-            permissions: user.role ? user.role.permissions : [],
-        });
-    } else {
-        res.status(404);
-        throw new Error('User not found');
-    }
+  const user = {
+    id: req.user._id,
+    email: req.user.email,
+    name: req.user.name,
+    username: req.user.username,
+    role: req.user.role,
+  };
+  res.status(200).json(user);
 });
-
-// --- START OF EDIT: เพิ่มฟังก์ชันที่จำเป็น ---
 
 // @desc    Get all users
 // @route   GET /api/users
-// @access  Private (Admin)
+// @access  Private
 const getUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({}).populate('role', 'name'); // ดึงข้อมูล role มาด้วย
-    res.status(200).json(users);
+  const users = await User.find().populate("role").select("-password");
+  res.status(200).json(users);
 });
 
 // @desc    Update a user
 // @route   PUT /api/users/:id
-// @access  Private (Admin)
+// @access  Private
 const updateUser = asyncHandler(async (req, res) => {
+    const { name, username, email, role, password } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -105,28 +112,26 @@ const updateUser = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    user.name = req.body.name || user.name;
-    user.role = req.body.role || user.role;
-    if (req.body.password) {
-        user.password = req.body.password; // Mongoose 'pre-save' hook will hash it
+    user.name = name || user.name;
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.role = role || user.role;
+
+    if (password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
     }
 
     const updatedUser = await user.save();
-    // Populate role info before sending back
-    await updatedUser.populate('role', 'name');
+    const populatedUser = await User.findById(updatedUser._id).populate('role').select('-password');
 
-    res.status(200).json({
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        username: updatedUser.username,
-        role: updatedUser.role,
-    });
+    res.status(200).json(populatedUser);
 });
 
 
 // @desc    Delete a user
 // @route   DELETE /api/users/:id
-// @access  Private (Admin)
+// @access  Private
 const deleteUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
 
@@ -135,23 +140,16 @@ const deleteUser = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
 
-    // Prevent admin from deleting themselves
-    if(user._id.toString() === req.user._id.toString()) {
-        res.status(400);
-        throw new Error('You cannot delete your own account');
-    }
-
     await user.deleteOne();
 
-    res.status(200).json({ id: req.params.id });
+    res.status(200).json({ id: req.params.id, message: 'User removed' });
 });
 
-// --- END OF EDIT ---
 
-
+// Generate token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: "30d",
   });
 };
 
@@ -159,7 +157,7 @@ module.exports = {
   registerUser,
   loginUser,
   getMe,
-  getUsers,     // <-- export
-  updateUser,   // <-- export
-  deleteUser,   // <-- export
+  getUsers,
+  updateUser,
+  deleteUser,
 };

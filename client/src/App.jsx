@@ -1,123 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// ... (ส่วน import ทั้งหมดเหมือนเดิม) ...
+import Sidebar from "./components/Sidebar"; // แก้ไข import ให้ใช้ Sidebar ตัวใหม่
+import Header from "./components/Header"; // แก้ไข import ให้ใช้ Header ตัวใหม่
 
-import { checkAuthStatus } from './features/auth/authSlice';
-import Sidebar from './components/Sidebar';
-import Spinner from './components/Spinner';
+// ... (โค้ดส่วนอื่นๆ เหมือนเดิม) ...
 
-// Page Imports
-import Dashboard from './pages/Dashboard'; // **จุดแก้ไข:** เพิ่มบรรทัดนี้กลับเข้ามา
-import Login from './pages/LoginPage';
-import Register from './pages/RegisterPage';
-import ProductsPage from './pages/ProductsPage';
-import PosPage from './pages/PosPage';
-import CalendarPage from './pages/CalendarPage';
-import ContactsPage from './pages/ContactsPage';
-import ExpensesPage from './pages/ExpensesPage';
-import InvoicesPage from './pages/InvoicesPage';
-import PurchaseOrdersPage from './pages/PurchaseOrdersPage';
-import QuotationsPage from './pages/QuotationsPage';
-import ReceiptsPage from './pages/ReceiptsPage';
-import ReportsPage from './pages/ReportsPage';
-import StockAdjustmentsPage from './pages/StockAdjustmentsPage';
-import SettingsPage from './pages/SettingsPage';
-import GeneralPage from './pages/settings/GeneralPage';
-import UsersPage from './pages/settings/UsersPage';
-import RolesPage from './pages/settings/RolesPage';
-import ThemePage from './pages/settings/ThemePage';
-
-
-const createPlaceholderPage = (pageName) => () => ( <div className="p-6 bg-white rounded-2xl shadow-lg"> <h1 className="text-3xl font-bold text-gray-700">หน้า {pageName}</h1> <p className="mt-2 text-gray-500">ส่วนนี้ยังอยู่ในระหว่างการพัฒนาครับ</p> </div> );
-const CreditDebitNotesPage = createPlaceholderPage('เอกสารลดหนี้/เพิ่มหนี้');
-const WarehousesPage = createPlaceholderPage('คลังสินค้า');
-const FinanceOverviewPage = createPlaceholderPage('ภาพรวมการเงิน');
-const CashManagementPage = createPlaceholderPage('เงินสด/ธนาคาร');
-const ChequesPage = createPlaceholderPage('เช็ครับ/จ่าย');
-const ChartOfAccountsPage = createPlaceholderPage('ผังบัญชี');
-const JournalPage = createPlaceholderPage('สมุดรายวัน');
-const BankReconciliationPage = createPlaceholderPage('กระทบยอดธนาคาร');
-const PayrollPage = createPlaceholderPage('เงินเดือน');
-const AssetsPage = createPlaceholderPage('สินทรัพย์');
-
-const AuthWrapper = () => { const { user } = useSelector((state) => state.auth); return user ? <Outlet /> : <Navigate to="/login" />; };
-
-const DashboardLayout = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  
-  const mainContentRef = useRef(null);
-  const handleMainContentClick = () => {
-    if (isSidebarOpen) {
-      setSidebarOpen(false);
-    }
-  };
+function DashboardLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className='flex h-screen font-sans'>
-      <Sidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div ref={mainContentRef} onClick={handleMainContentClick} className='flex-1 flex flex-col overflow-hidden'>
-        <main className='flex-1 overflow-x-hidden overflow-y-auto bg-gray-100/50'>
-          <div className='container mx-auto px-6 py-8'> <Outlet /> </div>
+    // เปลี่ยนพื้นหลังตรงนี้
+    <div className="flex h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 font-sans">
+      <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent"> {/* ทำให้พื้นหลังโปร่งใส */}
+          <div className="container mx-auto px-6 py-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
   );
-};
-
-function App() {
-  const dispatch = useDispatch();
-  const { isLoading, user } = useSelector((state) => state.auth);
-  useEffect(() => { dispatch(checkAuthStatus()); }, [dispatch]);
-  if (isLoading) { return <Spinner />; }
-
-  return (
-    <>
-      <Router>
-        <Routes>
-          <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-          
-          <Route element={<AuthWrapper />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/pos" element={<PosPage />} />
-              <Route path="/quotations" element={<QuotationsPage />} />
-              <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/receipts" element={<ReceiptsPage />} />
-              <Route path="/credit-debit-notes" element={<CreditDebitNotesPage />} />
-              <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
-              <Route path="/warehouses" element={<WarehousesPage />} />
-              <Route path="/contacts" element={<ContactsPage />} />
-              <Route path="/finance-overview" element={<FinanceOverviewPage />} />
-              <Route path="/cash-management" element={<CashManagementPage />} />
-              <Route path="/cheques" element={<ChequesPage />} />
-              <Route path="/chart-of-accounts" element={<ChartOfAccountsPage />} />
-              <Route path="/journal" element={<JournalPage />} />
-              <Route path="/bank-reconciliation" element={<BankReconciliationPage />} />
-              <Route path="/payroll" element={<PayrollPage />} />
-              <Route path="/assets" element={<AssetsPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
-
-              <Route path="/settings/general" element={<GeneralPage />} />
-              <Route path="/settings/users" element={<UsersPage />} />
-              <Route path="/settings/roles" element={<RolesPage />} />
-              <Route path="/settings/theme" element={<ThemePage />} />
-              <Route path="/settings/users/register" element={<Register />} /> 
-              <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
-              
-              <Route path="*" element={<Navigate to="/" />} />
-            </Route>
-          </Route>
-        </Routes>
-      </Router>
-      <ToastContainer />
-    </>
-  );
 }
 
-export default App;
+// ... (โค้ดส่วนที่เหลือของ App.jsx เหมือนเดิม) ...

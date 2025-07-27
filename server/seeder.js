@@ -1,71 +1,79 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const dotenv = require('dotenv').config();
+const colors = require('colors');
+const bcrypt = require('bcryptjs');
+
+// Load models
 const User = require('./models/User');
 const Role = require('./models/Role');
-const connectDB = require('./config/db');
+const Product = require('./models/Product');
+const Customer = require('./models/Customer');
+const Expense = require('./models/Expense');
+const Sale = require('./models/Sale');
 
-dotenv.config();
-connectDB();
+// Connect to DB
+mongoose.connect(process.env.MONGO_URI, {});
+
+// Hash password function
+const createPasswordHash = async (password) => {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
+};
 
 const importData = async () => {
-  try {
-    // 1. Clear existing data
-    await Role.deleteMany();
-    await User.deleteMany();
+    try {
+        // Clear existing data
+        await Role.deleteMany();
+        await User.deleteMany();
+        console.log('Old data destroyed...'.red.inverse);
 
-    // 2. Create all permissions list
-    const allPermissions = [
-        'dashboard-view', 'pos-access', 'sales-docs-view', 'quotations-manage',
-        'invoices-manage', 'receipts-manage', 'purchase-docs-view', 'expenses-manage',
-        'purchase-orders-manage', 'accounting-view', 'chart-of-accounts-manage',
-        'journal-manage', 'products-view', 'products-manage', 'stock-adjustments-manage',
-        'contacts-manage', 'reports-view', 'settings-access', 'users-manage',
-        'roles-manage', 'theme-settings-manage', 'general-settings-manage'
-    ];
+        // --- Create Roles ---
+        const roles = await Role.create([
+            { name: 'Admin', permissions: ['view_dashboard', 'manage_pos', 'view_receipts', 'manage_invoices', 'manage_quotations', 'manage_expenses', 'manage_products', 'manage_stock_adjustments', 'manage_purchase_orders', 'manage_contacts', 'view_reports', 'manage_accounting', 'view_calendar', 'manage_users', 'manage_roles', 'manage_settings'] },
+            { name: 'Manager', permissions: ['view_dashboard', 'manage_pos', 'view_receipts', 'manage_invoices', 'manage_quotations', 'manage_expenses', 'manage_products', 'manage_stock_adjustments', 'manage_purchase_orders', 'manage_contacts', 'view_reports', 'view_calendar'] },
+            { name: 'Employee', permissions: ['view_dashboard', 'manage_pos', 'view_receipts', 'manage_expenses', 'view_calendar'] }
+        ]);
+        const adminRole = roles[0];
+        console.log('Roles Imported...'.green.inverse);
 
-    // 3. Create the main 'admin' role with all permissions
-    const adminRole = await Role.create({
-      name: 'admin',
-      permissions: allPermissions,
-    });
+        // --- Create a default Admin User ---
+        const users = await User.create([
+            {
+                name: 'Admin User', // ชื่อที่ใช้แสดงผล
+                username: 'admin', // ชื่อผู้ใช้สำหรับเข้าระบบ
+                email: 'admin@example.com',
+                password: await createPasswordHash('123456'), // รหัสผ่านคือ 123456
+                role: adminRole._id
+            }
+        ]);
+        console.log('Default Admin User Imported...'.green.inverse);
 
-    // 4. Create the 'cashier' role with limited permissions
-    await Role.create({
-        name: 'cashier',
-        permissions: ['pos-access'],
-    });
-
-    // 5. Create the Super Admin user ('Pop')
-    // The password will be hashed automatically by the pre-save hook in the User model
-    await User.create({
-      name: 'ชยาภรณ์ ทัศนบรรจง',
-      username: 'Pop', // Correct username
-      password: 'Pop.za310',
-      role: adminRole._id,
-    });
-
-    console.log('Data Imported Successfully!');
-    process.exit();
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
+        console.log('Data Imported!'.cyan.inverse);
+        process.exit();
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+    }
 };
 
 const destroyData = async () => {
     try {
         await Role.deleteMany();
         await User.deleteMany();
-        console.log('Data Destroyed!');
+        await Product.deleteMany();
+        await Customer.deleteMany();
+        await Expense.deleteMany();
+        await Sale.deleteMany();
+        console.log('Data Destroyed!'.red.inverse);
         process.exit();
-    } catch(error) {
-        console.error(`Error: ${error.message}`);
+    } catch (err) {
+        console.error(err);
         process.exit(1);
     }
-}
+};
 
 if (process.argv[2] === '-d') {
-  destroyData();
+    destroyData();
 } else {
-  importData();
+    importData();
 }

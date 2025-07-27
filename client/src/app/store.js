@@ -1,20 +1,16 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/authSlice';
-import roleReducer from '../features/role/roleSlice';
-import userReducer from '../features/user/userSlice';
-import calendarReducer from '../features/calendar/calendarSlice';
-import expenseReducer from '../features/expense/expenseSlice'; // <-- **เพิ่มบรรทัดนี้**
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "../features/auth/authSlice";
+import userReducer from "../features/user/userSlice";
+import roleReducer from "../features/role/roleSlice";
+import calendarReducer from "../features/calendar/calendarSlice";
+import expenseReducer from "../features/expense/expenseSlice"; // เพิ่ม reducer นีเข้ามา
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    roles: roleReducer,
-    users: userReducer,
+    user: userReducer,
+    role: roleReducer,
     calendar: calendarReducer,
-    expenses: expenseReducer, // <-- **เพิ่มบรรทัดนี้**
+    expense: expenseReducer, // เพิ่ม expense เข้าไปใน store
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }),
 });
