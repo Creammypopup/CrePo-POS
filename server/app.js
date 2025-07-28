@@ -18,13 +18,12 @@
 
     // --- Routes ---
     app.use('/api/users', require('./routes/userRoutes'));
-    app.use('/api/products', require('./routes/productRoutes'));
-    app.use('/api/customers', require('./routes/customerRoutes'));
-    app.use('/api/sales', require('./routes/saleRoutes'));
     app.use('/api/roles', require('./routes/roleRoutes'));
+    app.use('/api/settings', require('./routes/settingRoutes')); // <-- **เพิ่มบรรทัดนี้**
     app.use('/api/calendar', require('./routes/calendarRoutes'));
     app.use('/api/expenses', require('./routes/expenseRoutes'));
-    app.use('/api/proxy', require('./routes/proxyRoutes')); // <-- **เพิ่มบรรทัดนี้**
+    app.use('/api/proxy', require('./routes/proxyRoutes')); 
+    // (Other routes like products, customers, sales will be added here later)
 
     // Serve Frontend
     if (process.env.NODE_ENV === 'production') {
