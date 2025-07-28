@@ -1,32 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
 
-body {
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  @apply bg-gray-100; /* เปลี่ยนสีพื้นหลังเล็กน้อยให้ดูนุ่มขึ้น */
-}
+    body {
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      @apply bg-brand-bg text-brand-text;
+    }
 
-@layer components {
-  /* ดีไซน์การ์ดแบบ 3D นุ่มๆ */
-  .card-3d {
-    @apply rounded-2xl bg-white/70 backdrop-blur-xl p-6 transition-all duration-300;
-    box-shadow: 8px 8px 16px #d1d1d1, -8px -8px 16px #ffffff;
-  }
+    /* Custom scrollbar for better look */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #d9acf5;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a076f9;
+    }
 
-  /* ดีไซน์ปุ่มแบบ 3D นุ่มๆ */
-  .btn-3d-soft {
-    @apply font-bold py-3 px-6 rounded-xl text-white transition-all duration-200 ease-in-out;
-    box-shadow: 4px 4px 8px #c5c5c5, -4px -4px 8px #ffffff;
-  }
-  .btn-3d-soft:active {
-    box-shadow: inset 4px 4px 8px #c5c5c5, inset -4px -4px 8px #ffffff;
-    @apply scale-95;
-  }
+    @layer components {
+      /* General Button Style */
+      .btn {
+        @apply px-5 py-2.5 font-medium rounded-lg text-sm text-center transition-all duration-200 ease-in-out focus:outline-none focus:ring-4;
+      }
 
-  .form-input {
-    @apply w-full px-4 py-3 rounded-lg bg-white/80 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple transition duration-200;
-  }
-}
+      /* 3D Pastel Button Style */
+      .btn-3d-pastel {
+        @apply btn border border-gray-200/50 shadow-3d-purple;
+      }
+      .btn-3d-pastel:active {
+        @apply shadow-3d-purple-inset scale-[0.98];
+      }
+      
+      .btn-primary {
+        @apply bg-brand-purple text-white hover:bg-opacity-90 focus:ring-brand-purple-light;
+      }
+      .btn-success {
+        @apply bg-brand-success text-green-900 hover:bg-opacity-90 focus:ring-green-200;
+      }
+      .btn-danger {
+        @apply bg-brand-danger text-red-900 hover:bg-opacity-90 focus:ring-red-200;
+      }
+      .btn-warning {
+         @apply bg-brand-warning text-yellow-900 hover:bg-opacity-90 focus:ring-yellow-200;
+      }
+
+      /* Form Input Style */
+      .form-input {
+        @apply w-full px-4 py-3 rounded-lg bg-white/80 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple transition duration-200;
+      }
+    }
+    

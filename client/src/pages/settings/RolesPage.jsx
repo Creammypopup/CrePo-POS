@@ -1,18 +1,21 @@
+// client/src/pages/settings/RolesPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { getRoles, createRole, updateRole, deleteRole, reset } from '../../features/role/roleSlice';
 import { toast } from 'react-toastify';
-import { FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
-import { ALL_PERMISSIONS } from '../../permissions';
+import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { ALL_PERMISSIONS } from '../../permissions'; // Make sure this path is correct
 
 function RolesPage() {
   const dispatch = useDispatch();
-  const { roles, isLoading, isError, message } = useSelector((state) => state.roles);
+  // --- START OF EDIT ---
+      const { roles, isLoading, isError, message } = useSelector((state) => state.role);
+  // --- END OF EDIT ---
 
   const [modalState, setModalState] = useState({ isOpen: false, mode: 'add', currentRole: null });
   const [roleName, setRoleName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState([]);
-  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, roleId: null });
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, roleId: null, roleName: '' });
 
   useEffect(() => {
     dispatch(getRoles());
@@ -67,7 +70,7 @@ function RolesPage() {
   const handleDelete = (roleId) => {
     dispatch(deleteRole(roleId));
     toast.success('ลบตำแหน่งเรียบร้อยแล้ว');
-    setDeleteConfirm({ isOpen: false, roleId: null });
+    setDeleteConfirm({ isOpen: false, roleId: null, roleName: '' });
   };
 
   if (isLoading && roles.length === 0) {
@@ -75,23 +78,22 @@ function RolesPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in bg-white p-6 rounded-2xl shadow-lg">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-700">ตำแหน่งและสิทธิ์</h1>
-        <button onClick={() => openModal('add')} className="bg-pastel-pink-dark hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-xl flex items-center transition-all duration-300 shadow-lg shadow-pink-100">
+        <h1 className="text-3xl font-bold text-gray-800">ตำแหน่งและสิทธิ์</h1>
+        <button onClick={() => openModal('add')} className="btn btn-3d-pastel btn-primary">
           <FaPlus className="mr-2" /> สร้างตำแหน่งใหม่
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">รายการตำแหน่งทั้งหมด</h2>
+      <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b-2">
                 <th className="p-3 text-left text-sm font-semibold text-gray-500 uppercase tracking-wider">ชื่อตำแหน่ง</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-500 uppercase tracking-wider">จำนวนสิทธิ์</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-500 uppercase tracking-wider">การกระทำ</th>
+                <th className="p-3 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">การกระทำ</th>
               </tr>
             </thead>
             <tbody>
@@ -99,9 +101,9 @@ function RolesPage() {
                 <tr key={role._id} className="border-b hover:bg-gray-50">
                   <td className="p-4 font-medium text-gray-800">{role.name}</td>
                   <td className="p-4 text-gray-600">{role.permissions.length}</td>
-                  <td className="p-4 flex space-x-4">
-                    <button onClick={() => openModal('edit', role)} className="text-yellow-500 bg-yellow-50 p-2 rounded-full hover:bg-yellow-100 transition-colors"><FaEdit size={16} /></button>
-                    <button onClick={() => setDeleteConfirm({ isOpen: true, roleId: role._id })} className="text-red-500 bg-red-50 p-2 rounded-full hover:bg-red-100 transition-colors"><FaTrash size={16} /></button>
+                  <td className="p-4 flex justify-center space-x-2">
+                    <button onClick={() => openModal('edit', role)} className="btn btn-3d-pastel bg-brand-warning text-yellow-800"><FaEdit /></button>
+                    <button onClick={() => setDeleteConfirm({ isOpen: true, roleId: role._id, roleName: role.name })} className="btn btn-3d-pastel bg-brand-danger text-red-800"><FaTrash /></button>
                   </td>
                 </tr>
               ))}
@@ -109,7 +111,7 @@ function RolesPage() {
           </table>
         </div>
       </div>
-
+    
       {/* Add/Edit Modal */}
       {modalState.isOpen && (
          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 p-4 animate-fade-in">

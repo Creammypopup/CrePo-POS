@@ -1,20 +1,21 @@
+// client/src/pages/settings/UsersPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { getUsers, updateUser, deleteUser, reset as resetUsers } from '../../features/user/userSlice';
 import { getRoles, reset as resetRoles } from '../../features/role/roleSlice';
 import { toast } from 'react-toastify';
-import AddUserModal from '../../components/modals/AddUserModal'; // **เพิ่ม import**
+import AddUserModal from '../../components/modals/AddUserModal';
 
 function UsersPage() {
     const dispatch = useDispatch();
+    // --- START OF EDIT ---
     const { users, isLoading: usersLoading } = useSelector((state) => state.users);
+    const { roles } = useSelector((state) => state.role);
+    // --- END OF EDIT ---
     const { user: loggedInUser } = useSelector((state) => state.auth);
-    
-    // **START OF EDIT: State สำหรับควบคุม Modal**
+
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    // **END OF EDIT**
-    
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -65,20 +66,16 @@ function UsersPage() {
         setIsDeleteModalOpen(false);
     };
 
-    return (
-        <div className="space-y-6 animate-fade-in bg-white p-6 rounded-2xl shadow-lg">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-700">จัดการผู้ใช้งาน</h1>
-                {/* **START OF EDIT: เปลี่ยนจาก Link เป็น Button** */}
-                <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="bg-pastel-purple-dark hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-xl flex items-center transition-all duration-300 shadow-lg shadow-purple-200"
-                >
+    return (
+        <div className="space-y-6 animate-fade-in">
+             <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-gray-800">จัดการผู้ใช้งาน</h1>
+                <button onClick={() => setIsAddModalOpen(true)} className="btn btn-3d-pastel btn-primary">
                     <FaPlus className="mr-2" /> เพิ่มผู้ใช้ใหม่
                 </button>
-                {/* **END OF EDIT** */}
             </div>
-            <div className="overflow-x-auto">
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="overflow-x-auto"></div>
                 <table className="w-full">
                     <thead>
                         <tr className="border-b-2">
@@ -158,7 +155,6 @@ function UsersPage() {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
             />
-            {/* **END OF EDIT** */}
         </div>
     );
 }

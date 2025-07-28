@@ -1,8 +1,11 @@
+// client/src/menuData.jsx
+import React from 'react';
 import {
   FaTachometerAlt, FaCashRegister, FaFileInvoiceDollar, FaFileSignature, FaReceipt,
   FaMoneyBillWave, FaBoxOpen, FaWarehouse, FaExchangeAlt, FaShoppingCart,
   FaUsers, FaUserTie, FaUserCog, FaChartBar, FaBook, FaCalendarAlt, FaCog,
-  FaFileAlt, FaMoneyCheckAlt, FaCreditCard, FaUniversity, FaFileMedicalAlt
+  FaFileAlt, FaMoneyCheckAlt, FaCreditCard, FaUniversity, FaFileMedicalAlt,
+  FaUsersCog, FaPalette, FaUserShield
 } from 'react-icons/fa';
 
 export const menuData = [
@@ -45,5 +48,12 @@ export const menuData = [
   { title: 'รายงาน', icon: <FaChartBar />, path: '/reports' },
   { title: 'ผู้ติดต่อ', icon: <FaUsers />, path: '/contacts' },
   { title: 'ปฏิทิน', icon: <FaCalendarAlt />, path: '/calendar' },
-  { title: 'ตั้งค่า', icon: <FaCog />, path: '/settings/general' },
+  { title: 'ตั้งค่า', icon: <FaCog />,
+    submenu: [
+        { title: 'ทั่วไป', path: '/settings/general', icon: <FaCog/> },
+        { title: 'ผู้ใช้งาน', path: '/settings/users', icon: <FaUsersCog/> },
+        { title: 'ตำแหน่งและสิทธิ์', path: '/settings/roles', icon: <FaUserShield/> },
+        { title: 'ดีไซน์', path: '/settings/theme', icon: <FaPalette/> },
+    ]
+  },
 ];

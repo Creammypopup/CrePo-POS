@@ -1,39 +1,21 @@
 // client/src/permissions.js
-
-// กำหนดค่าคงที่สำหรับสิทธิ์ต่างๆ เพื่อป้องกันการพิมพ์ผิดและจัดการได้ง่าย
 export const permissions = {
-  // General
-  VIEW_DASHBOARD: 'view_dashboard',
-  VIEW_CALENDAR: 'view_calendar',
-  
-  // Sales
-  MANAGE_POS: 'manage_pos',
-  VIEW_RECEIPTS: 'view_receipts',
-  MANAGE_INVOICES: 'manage_invoices',
-  MANAGE_QUOTATIONS: 'manage_quotations',
-
-  // Expenses
-  MANAGE_EXPENSES: 'manage_expenses',
-
-  // Inventory
-  MANAGE_PRODUCTS: 'manage_products',
-  MANAGE_STOCK_ADJUSTMENTS: 'manage_stock_adjustments',
-  MANAGE_PURCHASE_ORDERS: 'manage_purchase_orders',
-
-  // Contacts
-  MANAGE_CONTACTS: 'manage_contacts',
-
-  // Accounting
-  VIEW_REPORTS: 'view_reports',
-  MANAGE_ACCOUNTING: 'manage_accounting', // For Chart of Accounts & Journal
-
-  // Settings
-  MANAGE_USERS: 'manage_users',
-  MANAGE_ROLES: 'manage_roles',
-  MANAGE_SETTINGS: 'manage_settings',
+  VIEW_DASHBOARD: { id: 'view_dashboard', name: 'ดูภาพรวม' },
+  VIEW_CALENDAR: { id: 'view_calendar', name: 'ดูปฏิทิน' },
+  MANAGE_POS: { id: 'manage_pos', name: 'จัดการขายหน้าร้าน' },
+  VIEW_RECEIPTS: { id: 'view_receipts', name: 'ดูใบเสร็จ' },
+  MANAGE_INVOICES: { id: 'manage_invoices', name: 'จัดการใบแจ้งหนี้' },
+  MANAGE_QUOTATIONS: { id: 'manage_quotations', name: 'จัดการใบเสนอราคา' },
+  MANAGE_EXPENSES: { id: 'manage_expenses', name: 'จัดการค่าใช้จ่าย' },
+  MANAGE_PRODUCTS: { id: 'manage_products', name: 'จัดการสินค้า' },
+  MANAGE_STOCK_ADJUSTMENTS: { id: 'manage_stock_adjustments', name: 'ปรับสต็อก' },
+  MANAGE_PURCHASE_ORDERS: { id: 'manage_purchase_orders', name: 'จัดการใบสั่งซื้อ' },
+  MANAGE_CONTACTS: { id: 'manage_contacts', name: 'จัดการผู้ติดต่อ' },
+  VIEW_REPORTS: { id: 'view_reports', name: 'ดูรายงาน' },
+  MANAGE_ACCOUNTING: { id: 'manage_accounting', name: 'จัดการบัญชี' },
+  MANAGE_USERS: { id: 'manage_users', name: 'จัดการผู้ใช้งาน' },
+  MANAGE_ROLES: { id: 'manage_roles', name: 'จัดการตำแหน่งและสิทธิ์' },
+  MANAGE_SETTINGS: { id: 'manage_settings', name: 'ตั้งค่าทั่วไป' },
 };
 
-// --- ส่วนที่เพิ่มเข้ามาเพื่อแก้ไข Error ---
-// สร้าง Array ของ permission ทั้งหมดจาก object ด้านบน
-// เพื่อให้หน้าจัดการตำแหน่ง (RolesPage) สามารถนำไปแสดงผลได้
 export const ALL_PERMISSIONS = Object.values(permissions);

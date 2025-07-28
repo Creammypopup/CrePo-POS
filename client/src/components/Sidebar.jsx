@@ -1,18 +1,21 @@
+// client/src/components/Sidebar.jsx
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { menuData } from '../menuData'; // Import menu structure
+import { menuData } from '../menuData.jsx';
 import { FaChevronLeft, FaChevronRight, FaChevronDown } from 'react-icons/fa';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
-// Component สำหรับเมนูย่อย
 const SubMenu = ({ item, isSidebarOpen }) => {
-  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const location = useLocation();
+  const isParentActive = item.submenu.some(sub => location.pathname.startsWith(sub.path));
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(isParentActive);
 
   const getSubLinkClass = ({ isActive }) =>
-    `flex items-center justify-between w-full p-3 pl-12 pr-4 my-1 rounded-lg transition-colors duration-200 text-sm ${
+    `flex items-center w-full p-3 pl-12 pr-4 my-1 rounded-lg transition-colors duration-200 text-sm ${
       isActive
-        ? "bg-white/20 text-white"
-        : "text-purple-100 hover:bg-white/10"
+        ? "bg-brand-purple/20 text-brand-purple font-semibold"
+        : "text-brand-text-light hover:bg-brand-purple/5 hover:text-brand-purple"
     }`;
 
   return (
@@ -20,17 +23,20 @@ const SubMenu = ({ item, isSidebarOpen }) => {
       <button
         onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
         className={`flex items-center justify-between w-full p-3 my-1 rounded-lg transition-colors duration-200 text-left ${
-          location.pathname.startsWith(item.path || `/${item.title.toLowerCase()}`) ? "text-white" : "text-purple-200 hover:bg-white/10 hover:text-white"
+          isParentActive ? "text-brand-purple font-semibold" : "text-gray-600 hover:bg-brand-purple/5 hover:text-brand-purple"
         }`}
+        data-tooltip-id="nav-tooltip"
+        data-tooltip-content={item.title}
+        data-tooltip-place="right"
       >
         <div className="flex items-center">
-          <span className="w-6 flex items-center justify-center">{item.icon}</span>
-          {isSidebarOpen && <span className="ml-4">{item.title}</span>}
+          <span className="w-6 flex items-center justify-center text-xl">{item.icon}</span>
+          {isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}
         </div>
         {isSidebarOpen && <FaChevronDown className={`transition-transform duration-300 ${isSubmenuOpen ? 'rotate-180' : ''}`} />}
       </button>
       {isSubmenuOpen && isSidebarOpen && (
-        <div className="ml-6 border-l border-purple-400/30">
+        <div className="ml-6 border-l-2 border-brand-purple-light/30">
           {item.submenu.map((subItem, index) => (
             <NavLink key={index} to={subItem.path} className={getSubLinkClass}>
               {subItem.title}
@@ -42,50 +48,68 @@ const SubMenu = ({ item, isSidebarOpen }) => {
   );
 };
 
-
 function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
-  const getLinkClass = ({ isActive }) =>
+    const getLinkClass = ({ isActive }) =>
     `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
       isActive
-        ? "bg-white/20 text-white shadow-lg"
-        : "text-purple-200 hover:bg-white/10 hover:text-white"
+        ? "bg-brand-purple text-white shadow-md shadow-brand-purple/30"
+        : "text-gray-600 hover:bg-brand-purple/5 hover:text-brand-purple"
     }`;
 
+  const handleSidebarClick = (e) => {
+    if (!isSidebarOpen) {
+      e.stopPropagation();
+      setIsSidebarOpen(true);
+    }
+  };
+
   return (
-    <aside
-      className={`bg-gradient-to-b from-purple-500 to-brand-purple-dark text-white shadow-2xl transition-all duration-300 ease-in-out flex flex-col h-screen ${
-        isSidebarOpen ? "w-64" : "w-20"
-      }`}
-    >
-      {/* Logo and Toggle button */}
-      <div className="p-4 flex items-center justify-between border-b border-white/10 h-16 flex-shrink-0">
-        {isSidebarOpen && <span className="text-2xl font-bold text-white">CrePo-POS</span>}
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 rounded-full hover:bg-white/10"
-        >
-          {isSidebarOpen ? <FaChevronLeft /> : <FaChevronRight />}
-        </button>
-      </div>
-      
-      {/* Menu List */}
-      <nav className="p-3 flex-grow overflow-y-auto">
-        <ul>
-          {menuData.map((item, index) => (
-            <li key={index}>
-              {item.submenu ? (
-                <SubMenu item={item} isSidebarOpen={isSidebarOpen} />
-              ) : (
-                <NavLink to={item.path} className={getLinkClass} end>
-                  <span className="w-6 flex items-center justify-center" title={item.title}>{item.icon}</span>
-                  {isSidebarOpen && <span className="ml-4">{item.title}</span>}
-                </NavLink>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </aside>
+    <>
+      <aside
+        onClick={handleSidebarClick}
+        className={`bg-[#F5F3FF] border-r border-gray-200/80 text-white shadow-lg transition-all duration-300 ease-in-out flex flex-col h-screen ${
+          isSidebarOpen ? "w-64 cursor-default" : "w-20 cursor-pointer"
+        }`}
+      >
+        <div className="p-4 flex items-center justify-between border-b border-gray-200/80 h-16 flex-shrink-0">
+          {isSidebarOpen && <span className="text-2xl font-bold text-brand-purple">CrePo-POS</span>}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSidebarOpen(!isSidebarOpen);
+            }}
+            className="p-2 rounded-full text-brand-text hover:bg-gray-200/50"
+          >
+            {isSidebarOpen ? <FaChevronLeft /> : <FaChevronRight />}
+          </button>
+        </div>
+
+        <nav className="p-3 flex-grow overflow-y-auto">
+          <ul>
+            {menuData.map((item, index) => (
+              <li key={index}>
+                {item.submenu ? (
+                  <SubMenu item={item} isSidebarOpen={isSidebarOpen} />
+                ) : (
+                  <NavLink 
+                    to={item.path} 
+                    className={getLinkClass} 
+                    end
+                    data-tooltip-id="nav-tooltip"
+                    data-tooltip-content={item.title}
+                    data-tooltip-place="right"
+                  >
+                    <span className="w-6 flex items-center justify-center text-xl">{item.icon}</span>
+                    {isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}
+                  </NavLink>
+                )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+      {!isSidebarOpen && <Tooltip id="nav-tooltip" style={{ backgroundColor: '#A076F9', color: 'white', zIndex: 99, borderRadius: '8px', padding: '4px 10px' }} />}
+    </>
   );
 }
 
