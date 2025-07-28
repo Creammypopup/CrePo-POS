@@ -30,7 +30,7 @@ const SubMenu = ({ item, isSidebarOpen }) => {
         data-tooltip-place="right"
       >
         <div className="flex items-center">
-          <span className="w-6 flex items-center justify-center text-xl">{item.icon}</span>
+          <span className="w-6 flex items-center justify-center text-xl" style={{ color: item.color }}>{item.icon}</span>
           {isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}
         </div>
         {isSidebarOpen && <FaChevronDown className={`transition-transform duration-300 ${isSubmenuOpen ? 'rotate-180' : ''}`} />}
@@ -67,7 +67,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     <>
       <aside
         onClick={handleSidebarClick}
-        className={`bg-[#F5F3FF] border-r border-gray-200/80 text-white shadow-lg transition-all duration-300 ease-in-out flex flex-col h-screen ${
+        className={`bg-[#F9F7FF] border-r border-gray-200/80 shadow-lg transition-all duration-300 ease-in-out flex flex-col h-screen ${
           isSidebarOpen ? "w-64 cursor-default" : "w-20 cursor-pointer"
         }`}
       >
@@ -99,7 +99,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
                     data-tooltip-content={item.title}
                     data-tooltip-place="right"
                   >
-                    <span className="w-6 flex items-center justify-center text-xl">{item.icon}</span>
+                    <span className="w-6 flex items-center justify-center text-xl" style={{ color: item.color }}>{item.icon}</span>
                     {isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}
                   </NavLink>
                 )}

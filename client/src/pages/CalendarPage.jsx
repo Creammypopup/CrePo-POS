@@ -1,5 +1,6 @@
 // client/src/pages/CalendarPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
+import moment from 'moment';
 import { useSelector, useDispatch } from "react-redux";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -143,10 +144,11 @@ function CalendarPage() {
     <>
     <style>{`
         :root {
-          --fc-bg-user-event: #DBCDF0;
-          --fc-bg-public-holiday: #F2C6DE;
-          --fc-bg-buddhist-major: #FAEDCB;
-          --fc-bg-buddhist-minor: #C9E4DE;
+          --fc-user-event-bg: #DBCDF0;
+          --fc-user-event-text: #581c87;
+          --fc-public-holiday-bg: #FBCFE8;
+          --fc-buddhist-major-bg: #FDE68A;
+          --fc-buddhist-minor-bg: #D1FAE5;
         }
         .fc { font-family: 'IBM Plex Sans Thai', sans-serif; border: none; }
         .fc .fc-toolbar-title { font-size: 1.5em; font-weight: 600; color: #434242; }
@@ -156,19 +158,20 @@ function CalendarPage() {
         .fc .fc-day-today { background: rgba(160, 118, 249, 0.1); }
         .fc-day-today .fc-daygrid-day-number { background-color: #A076F9; color: white; border-radius: 9999px; width: 2em; height: 2em; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 
-        .fc-event { border-radius: 6px; padding: 4px 8px; font-weight: 500; border: 1px solid rgba(0,0,0,0.1); }
-        .event-user { background-color: var(--fc-bg-user-event) !important; color: #3c1e5a !important; }
+        .fc-event { border-radius: 6px; padding: 4px 8px; font-weight: 500; border: none; }
 
-        .fc-day-public-holiday { background-color: var(--fc-bg-public-holiday); }
-        .fc-day-buddhist-major { background-color: var(--fc-bg-buddhist-major); }
-        .fc-day-buddhist-minor { background-color: var(--fc-bg-buddhist-minor); }
+        /* --- Event Color Fixes --- */
+        .event-user {
+            background-color: var(--fc-user-event-bg) !important;
+            color: var(--fc-user-event-text) !important;
+        }
+        .fc-day-public-holiday { background-color: var(--fc-public-holiday-bg); }
+        .fc-day-buddhist-major { background-color: var(--fc-buddhist-major-bg); }
+        .fc-day-buddhist-minor { background-color: var(--fc-buddhist-minor-bg); }
     `}</style>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">ปฏิทิน</h1>
-        <button onClick={() => toast.info('คลิกที่วันที่ว่างเพื่อเพิ่มกิจกรรมใหม่')} className="btn btn-3d-pastel btn-primary">
-            <FaPlus className="mr-2" /> เพิ่มกิจกรรม
-        </button>
       </div>
        <div className="bg-white p-4 rounded-2xl shadow-lg">
         <FullCalendar
@@ -177,8 +180,12 @@ function CalendarPage() {
           initialView="dayGridMonth"
           locale="th"
           events={allEvents}
+          eventClassNames={(arg) => {
+            if (arg.event.extendedProps.type === 'user') return ['event-user'];
+            return [];
+          }}
           dayCellClassNames={(arg) => {
-              const backgroundEvent = allEvents.find(e => e.start === arg.dateStr && e.display === 'background');
+              const backgroundEvent = allEvents.find(e => moment(e.start).isSame(arg.date, 'day') && e.display === 'background');
               return backgroundEvent ? [`fc-day-${backgroundEvent.extendedProps.type}`] : [];
           }}
           selectable={true}
@@ -186,13 +193,14 @@ function CalendarPage() {
           dayMaxEvents={true}
           select={handleDateSelect}
           eventClick={handleEventClick}
+          fixedWeekCount={false} // ทำให้แสดงแค่ 5 แถวถ้าเดือนนั้นพอดี
         />
       </div>
        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-bg-user-event)] mr-3"></div><span>กิจกรรมของฉัน</span></div>
-          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-bg-public-holiday)] mr-3"></div><span>วันหยุดราชการ</span></div>
-          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-bg-buddhist-major)] mr-3"></div><span>วันพระใหญ่/วันสำคัญ</span></div>
-          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-bg-buddhist-minor)] mr-3"></div><span>วันพระเล็ก</span></div>
+          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-user-event-bg)] mr-3"></div><span>กิจกรรมของฉัน</span></div>
+          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-public-holiday-bg)] mr-3"></div><span>วันหยุดราชการ</span></div>
+          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-buddhist-major-bg)] mr-3"></div><span>วันพระใหญ่/วันสำคัญ</span></div>
+          <div className="flex items-center"><div className="w-4 h-4 rounded-md bg-[var(--fc-buddhist-minor-bg)] mr-3"></div><span>วันพระเล็ก</span></div>
       </div>
     </div>
     </>
