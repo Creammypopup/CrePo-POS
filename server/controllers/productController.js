@@ -105,7 +105,7 @@ const deleteProduct = async (req, res) => {
 
 module.exports = {
   getProducts,
-  getProductById, // << จุดที่แก้ไขคือการเอา comment ออกจากบรรทัดนี้
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct,

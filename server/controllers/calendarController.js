@@ -7,39 +7,44 @@ const getOnlineCalendarEvents = async (url, type, color) => {
     try {
         const events = await ical.async.fromURL(url);
         const formattedEvents = [];
-        const majorBuddhistKeywords = ['บูชา', 'พรรษา'];
+        const majorBuddhistKeywords = ['บูชา', 'พรรษา', 'ขึ้น 15 ค่ำ', 'แรม 15 ค่ำ', 'ดับ', 'เพ็ญ'];
+        const minorBuddhistKeywords = ['ขึ้น 8 ค่ำ', 'แรม 8 ค่ำ'];
 
         for (const key in events) {
             if (Object.prototype.hasOwnProperty.call(events, key)) {
                 const event = events[key];
                 if (event.type === 'VEVENT') {
-                    let isMajor = false;
+                    let eventType = type; // holiday or buddhist
                     if (type === 'buddhist') {
-                       isMajor = majorBuddhistKeywords.some(keyword => event.summary.includes(keyword));
+                       if (majorBuddhistKeywords.some(keyword => event.summary.includes(keyword))) {
+                           eventType = 'buddhist-major';
+                       } else if (minorBuddhistKeywords.some(keyword => event.summary.includes(keyword))) {
+                           eventType = 'buddhist-minor';
+                       }
                     }
+
                     formattedEvents.push({
                         _id: event.uid,
                         title: event.summary,
                         start: event.start,
                         end: event.end || event.start,
                         allDay: true,
-                        type: type,
-                        color: color,
-                        isMajor: isMajor,
+                        type: eventType,
+                        color: color, // อาจไม่จำเป็นแล้วถ้าใช้ className
                     });
                 }
             }
         }
         return formattedEvents;
     } catch (error) {
-        console.error(`Error fetching calendar from ${url}:`, error);
+        console.error(`Error fetching calendar from ${url}:`, error.message);
         return [];
     }
 };
 
 const getEvents = asyncHandler(async (req, res) => {
     const userEvents = await Event.find({ user: req.user.id });
-  
+
     const currentYear = new Date().getFullYear();
     const nextYear = currentYear + 1;
 
@@ -48,18 +53,22 @@ const getEvents = asyncHandler(async (req, res) => {
     const wanPhraUrlNextYear = `https://www.myhora.com/ical/ical_wanphra.php?year=${nextYear}`;
 
     const [holidaysData, buddhistDaysCurrent, buddhistDaysNext] = await Promise.all([
-        getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday', '#fecdd3'),
-        getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist', '#fde68a'),
-        getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist', '#fde68a'),
+        getOnlineCalendarEvents(thaiHolidaysUrl, 'holiday'),
+        getOnlineCalendarEvents(wanPhraUrlCurrentYear, 'buddhist'),
+        getOnlineCalendarEvents(wanPhraUrlNextYear, 'buddhist'),
     ]);
-    
+
     const allBuddhistDays = [...buddhistDaysCurrent, ...buddhistDaysNext];
-    
+
     const eventMap = new Map();
+
+    // Public holidays first
     holidaysData.forEach(event => {
         const dateString = moment(event.start).format('YYYY-MM-DD');
         eventMap.set(dateString, event);
     });
+
+    // Buddhist days, can override if it's a holiday (e.g. Visakha Bucha)
     allBuddhistDays.forEach(event => {
         const dateString = moment(event.start).format('YYYY-MM-DD');
         eventMap.set(dateString, event);
@@ -82,7 +91,7 @@ const createEvent = asyncHandler(async (req, res) => {
     start: new Date(start),
     end: end ? new Date(end) : new Date(start),
     allDay: allDay || false,
-    type: type || 'user',
+    type: 'user', // Force type to user for user-created events
   });
   res.status(201).json(event);
 });

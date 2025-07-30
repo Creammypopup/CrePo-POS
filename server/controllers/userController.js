@@ -5,48 +5,37 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // @desc    Register a new user
-// @route   POST /api/users
-// @access  Public
+// @route   POST /api/users/register
+// @access  Private (Admin)
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, username, email, password } = req.body;
+  const { name, username, password, role } = req.body; // เอา email ออก
 
-  if (!name || !username || !email || !password) {
+  if (!name || !username || !password || !role) { // เอา email ออกจาก validation
     res.status(400);
     throw new Error("Please include all fields");
   }
 
-  const userExists = await User.findOne({ $or: [{ email }, { username }] });
+  const userExists = await User.findOne({ username }); // ค้นหาจาก username อย่างเดียว
 
   if (userExists) {
     res.status(400);
-    throw new Error("User already exists");
+    throw new Error("มีชื่อผู้ใช้นี้อยู่แล้ว");
   }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  let defaultRole = await Role.findOne({ name: "Employee" });
-  if (!defaultRole) {
-    defaultRole = await Role.findOne().sort({ createdAt: 1 });
-  }
-
   const user = await User.create({
     name,
     username,
-    email,
     password: hashedPassword,
-    role: defaultRole ? defaultRole._id : null,
+    role, // role ที่ส่งมาจาก frontend
   });
 
   if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id),
-    });
+    // ไม่ต้องส่ง token กลับไป เพราะเป็นการสร้างโดย Admin
+    const populatedUser = await User.findById(user._id).populate('role').select('-password');
+    res.status(201).json(populatedUser);
   } else {
     res.status(400);
     throw new Error("Invalid user data");
@@ -58,9 +47,6 @@ const registerUser = asyncHandler(async (req, res) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-
-  // --- จุดที่แก้ไข ---
-  // ค้นหาผู้ใช้จาก 'username' ไม่ใช่ 'name'
   const user = await User.findOne({ username }).populate('role');
 
   if (user && (await bcrypt.compare(password, user.password))) {
@@ -68,7 +54,6 @@ const loginUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       username: user.username,
-      email: user.email,
       role: user.role,
       token: generateToken(user._id),
     });
@@ -84,7 +69,6 @@ const loginUser = asyncHandler(async (req, res) => {
 const getMe = asyncHandler(async (req, res) => {
   const user = {
     id: req.user._id,
-    email: req.user.email,
     name: req.user.name,
     username: req.user.username,
     role: req.user.role,
@@ -104,7 +88,7 @@ const getUsers = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/:id
 // @access  Private
 const updateUser = asyncHandler(async (req, res) => {
-    const { name, username, email, role, password } = req.body;
+    const { name, username, role, password } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -114,7 +98,6 @@ const updateUser = asyncHandler(async (req, res) => {
 
     user.name = name || user.name;
     user.username = username || user.username;
-    user.email = email || user.email;
     user.role = role || user.role;
 
     if (password) {
@@ -127,7 +110,6 @@ const updateUser = asyncHandler(async (req, res) => {
 
     res.status(200).json(populatedUser);
 });
-
 
 // @desc    Delete a user
 // @route   DELETE /api/users/:id
@@ -144,7 +126,6 @@ const deleteUser = asyncHandler(async (req, res) => {
 
     res.status(200).json({ id: req.params.id, message: 'User removed' });
 });
-
 
 // Generate token
 const generateToken = (id) => {

@@ -39,9 +39,8 @@ const importData = async () => {
         // --- Create a default Admin User ---
         const users = await User.create([
             {
-                name: 'Admin User', // ชื่อที่ใช้แสดงผล
-                username: 'admin', // ชื่อผู้ใช้สำหรับเข้าระบบ
-                email: 'admin@example.com',
+                name: 'POP', // ชื่อที่ใช้แสดงผล
+                username: 'POP', // ชื่อผู้ใช้สำหรับเข้าระบบ
                 password: await createPasswordHash('123456'), // รหัสผ่านคือ 123456
                 role: adminRole._id
             }
