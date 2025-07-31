@@ -1,6 +1,6 @@
 // client/src/components/modals/ExpenseModal.jsx
 import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 import { FaTimes, FaSave } from 'react-icons/fa';
@@ -17,10 +17,14 @@ Modal.setAppElement('#root');
 const ExpenseModal = ({ isOpen, onClose, expense }) => {
     const dispatch = useDispatch();
     const isEditMode = Boolean(expense);
+
+    // ดึงข้อมูลหมวดหมู่จาก Redux Store
+    const { categories } = useSelector((state) => state.category);
+
     const [formData, setFormData] = useState({
         date: moment().format('YYYY-MM-DD'),
         description: '',
-        category: 'อื่นๆ',
+        category: categories?.[0]?.name || '', // ใช้หมวดหมู่แรกเป็นค่าเริ่มต้น
         amount: '',
         vendor: '',
     });
@@ -38,12 +42,12 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
              setFormData({
                 date: moment().format('YYYY-MM-DD'),
                 description: '',
-                category: 'อื่นๆ',
+                category: categories?.[0]?.name || '',
                 amount: '',
                 vendor: '',
             });
         }
-    }, [expense, isEditMode, isOpen]);
+    }, [expense, isEditMode, isOpen, categories]);
 
     const { date, description, category, amount, vendor } = formData;
     const onChange = (e) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -60,8 +64,6 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
         onClose();
     };
 
-    const expenseCategories = ['ค่าเดินทาง', 'ค่าวัสดุ', 'ค่าจ้าง', 'ค่าสาธารณูปโภค', 'อื่นๆ'];
-
     return (
         <Modal isOpen={isOpen} onRequestClose={onClose} style={customModalStyles} contentLabel="Expense Modal">
             <div className="flex justify-between items-center mb-6">
@@ -77,7 +79,7 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
                     <div>
                         <label className="block text-sm font-bold mb-2 text-gray-600">หมวดหมู่</label>
                         <select name="category" value={category} onChange={onChange} className="form-input" required>
-                            {expenseCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            {categories && categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                         </select>
                     </div>
                 </div>
@@ -106,5 +108,4 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
         </Modal>
     );
 };
-
 export default ExpenseModal;

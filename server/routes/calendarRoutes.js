@@ -1,21 +1,22 @@
+// server/routes/calendarRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
   getEvents,
   createEvent,
-  updateEvent,
   deleteEvent,
-} = require('../controllers/calendarController');
+} = require('../controllers/calendarController'); // ตรวจสอบให้แน่ใจว่า controller มีฟังก์ชันครบ
 const { protect } = require('../middleware/authMiddleware');
 
-// **START OF EDIT: แก้ไขการใช้ middleware ใน route**
+// ใช้ middleware `protect` กับทุก route ในไฟล์นี้
+router.use(protect);
+
 router.route('/')
-  .get(protect, getEvents)
-  .post(protect, createEvent);
+  .get(getEvents)
+  .post(createEvent);
 
 router.route('/:id')
-  .put(protect, updateEvent)
-  .delete(protect, deleteEvent);
-// **END OF EDIT**
+  // .put(updateEvent) // เรายังไม่มีฟังก์ชัน update ใน controller จึงคอมเมนต์ออกไปก่อน
+  .delete(deleteEvent);
 
 module.exports = router;
