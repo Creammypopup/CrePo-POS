@@ -19,12 +19,13 @@
     // --- Routes ---
     app.use('/api/users', require('./routes/userRoutes'));
     app.use('/api/roles', require('./routes/roleRoutes'));
-    app.use('/api/settings', require('./routes/settingRoutes')); // <-- **เพิ่มบรรทัดนี้**
+    app.use('/api/settings', require('./routes/settingRoutes'));
     app.use('/api/calendar', require('./routes/calendarRoutes'));
     app.use('/api/expenses', require('./routes/expenseRoutes'));
-    app.use('/api/proxy', require('./routes/proxyRoutes')); 
+    app.use('/api/proxy', require('./routes/proxyRoutes'));
     app.use('/api/categories', require('./routes/categoryRoutes'));
-    app.use('/api/products', require('./routes/productRoutes')); // <-- **เพิ่มบรรทัดนี้**
+    app.use('/api/products', require('./routes/productRoutes'));
+    app.use('/api/product-categories', require('./routes/productCategoryRoutes')); // <-- **เพิ่มบรรทัดนี้**
 
     // Serve Frontend
     if (process.env.NODE_ENV === 'production') {

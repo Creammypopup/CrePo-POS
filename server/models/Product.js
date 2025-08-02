@@ -2,111 +2,57 @@
 const mongoose = require('mongoose');
 const { customAlphabet } = require('nanoid');
 
-// --- Custom Generators for SKU and Barcode ---
-// For SKU: Alphanumeric, 8 characters long. e.g., "A1B2C3D4"
 const skuGenerator = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
-// For Barcode: Numeric, 13 characters long (EAN-13 standard)
 const barcodeGenerator = customAlphabet('1234567890', 13);
 
-
-const subUnitSchema = new mongoose.Schema({
-    name: { type: String, required: true }, // e.g., 'แพ็ค', 'โหล'
-    conversionRate: { type: Number, required: true }, // How many main units make this sub-unit. e.g., 12 (for a dozen)
+// --- START OF EDIT: Renamed subUnitSchema to sellingUnitSchema for clarity ---
+const sellingUnitSchema = new mongoose.Schema({
+    name: { type: String, required: true }, // e.g., 'ขีด', 'กิโลกรัม', 'ลัง'
+    conversionRate: { type: Number, required: true }, // How many main units make this unit. (Main unit = 1)
+    price: { type: Number, required: true }, // Price for this specific unit
 });
+// --- END OF EDIT ---
 
 const supplierInfoSchema = new mongoose.Schema({
-    supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' }, // We will create Supplier model later
-    supplierName: { type: String, required: true },
+    supplierName: { type: String },
     cost: { type: Number, required: true },
 });
 
 const productSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User',
-  },
-  name: {
-    type: String,
-    required: [true, 'กรุณาใส่ชื่อสินค้า'],
-    trim: true,
-  },
-  sku: { // Stock Keeping Unit
-    type: String,
-    unique: true,
-    uppercase: true,
-    default: () => `SKU-${skuGenerator()}`,
-  },
-  barcode: {
-    type: String,
-    unique: true,
-    default: () => barcodeGenerator(),
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
-  image: {
-    type: String,
-    default: '/images/placeholder.png'
-  },
-  category: {
-    type: String,
-    required: [true, 'กรุณาระบุหมวดหมู่'],
-  },
-  mainUnit: { // หน่วยนับหลักที่เล็กที่สุด (ที่ใช้ตัดสต็อก)
-    type: String,
-    required: [true, 'กรุณาระบุหน่วยนับหลัก'],
-    default: 'ชิ้น'
-  },
-  subUnits: [subUnitSchema], // หน่วยนับย่อย
-  stock: { // จำนวนคงเหลือในหน่วยนับหลัก
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  stockAlert: { // แจ้งเตือนเมื่อสต็อกต่ำกว่า...
-    type: Number,
-    default: 0,
-  },
-  cost: { // ต้นทุนเฉลี่ย (อาจคำนวณจากหลาย supplier)
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  price: { // ราคาขาย
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  suppliers: [supplierInfoSchema], // ผู้จำหน่าย
-  isFreebie: { // เป็นของแถมหรือไม่
-      type: Boolean,
-      default: false
-  },
-  canBeSold: { // ของแถมที่สามารถขายแยกได้
-      type: Boolean,
-      default: true
-  },
-  productType: {
-    type: String,
-    enum: ['standard', 'weighted'], // สินค้าทั่วไป, สินค้าชั่งน้ำหนัก
-    default: 'standard'
-  }
+  user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+  name: { type: String, required: [true, 'กรุณาใส่ชื่อสินค้า'], trim: true },
+  sku: { type: String, unique: true, uppercase: true },
+  barcode: { type: String, unique: true },
+  description: { type: String, trim: true },
+  image: { type: String, default: '/images/placeholder.png' },
+  category: { type: String, required: [true, 'กรุณาระบุหมวดหมู่'] },
+  mainUnit: { type: String, required: [true, 'กรุณาระบุหน่วยนับหลัก'], default: 'ชิ้น' },
+  stock: { type: Number, required: true, default: 0 },
+  stockAlert: { type: Number, default: 0 },
+  price: { type: Number, required: true, default: 0 }, // Main selling price
+  suppliers: [supplierInfoSchema],
+  sellingUnits: [sellingUnitSchema], // <-- EDIT: Changed from subUnits
+  productType: { type: String, enum: ['standard', 'weighted'], default: 'standard' }
 }, { timestamps: true });
 
-// Middleware to ensure SKU and Barcode are generated if not provided
 productSchema.pre('save', function(next) {
-    if (this.isNew && !this.isModified('sku')) {
+    if (this.isNew && !this.sku) {
         this.sku = `SKU-${skuGenerator()}`;
     }
-    if (this.isNew && !this.isModified('barcode')) {
+    if (this.isNew && !this.barcode) {
         this.barcode = barcodeGenerator();
+    }
+    // Set the main price from the base selling unit if not set
+    if (this.sellingUnits && this.sellingUnits.length > 0) {
+        const baseUnit = this.sellingUnits.find(u => u.conversionRate === 1);
+        if (baseUnit) {
+            this.price = baseUnit.price;
+        }
     }
     next();
 });
 
+productSchema.index({ user: 1, name: 1 }, { unique: true });
 
 const Product = mongoose.model('Product', productSchema);
-
 module.exports = Product;

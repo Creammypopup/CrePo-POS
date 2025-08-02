@@ -47,7 +47,7 @@ function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.length > 0 ? (
+                {products && products.length > 0 ? (
                   products.map((product) => (
                     <tr key={product._id} className="border-b hover:bg-gray-50">
                       <td className="p-3 px-4 text-sm text-gray-500">{product.sku}</td>
