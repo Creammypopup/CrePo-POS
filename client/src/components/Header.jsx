@@ -15,7 +15,7 @@ function Header() {
   const onLogout = () => { dispatch(logout()); dispatch(reset()); navigate("/login"); };
 
   return (
-    <header className="bg-[#E0F2FE] shadow-sm p-4 flex justify-between items-center h-14 flex-shrink-0 border-b border-gray-200/80">
+    <header className="bg-brand-header shadow-sm p-4 flex justify-between items-center h-14 flex-shrink-0 border-b border-gray-200/80">
       <div className="flex items-center">
         <h2 className="text-lg font-semibold text-gray-700">{settings?.companyName || 'CrePo-POS'}</h2>
       </div>

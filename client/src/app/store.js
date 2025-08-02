@@ -6,7 +6,8 @@ import roleReducer from "../features/role/roleSlice";
 import calendarReducer from "../features/calendar/calendarSlice";
 import expenseReducer from "../features/expense/expenseSlice";
 import settingReducer from "../features/settings/settingSlice";
-import categoryReducer from "../features/category/categorySlice"; // <-- **เพิ่มบรรทัดนี้**
+import categoryReducer from "../features/category/categorySlice";
+import productReducer from "../features/product/productSlice"; 
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     calendar: calendarReducer,
     expense: expenseReducer,
     settings: settingReducer,
-    category: categoryReducer, // <-- **เพิ่มบรรทัดนี้**
+    category: categoryReducer,
+    products: productReducer,
   },
 });

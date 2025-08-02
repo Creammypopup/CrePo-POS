@@ -20,7 +20,11 @@ import RolesPage from './pages/settings/RolesPage';
 import CategorySettingsPage from './pages/settings/CategorySettingsPage';
 import { checkAuthStatus } from './features/auth/authSlice';
 
-// Placeholder pages
+// --- START OF EDIT: Import the actual ProductsPage ---
+import ProductsPage from './pages/ProductsPage';
+// --- END OF EDIT ---
+
+// Placeholder pages for routes that are not yet developed
 const ReportsPage = () => <div className="text-center p-10">Reports Page is under construction.</div>;
 const ContactsPage = () => <div className="text-center p-10">Contacts Page is under construction.</div>;
 const PosPage = () => <div className="text-center p-10">POS Page is under construction.</div>;
@@ -28,8 +32,8 @@ const QuotationsPage = () => <div className="text-center p-10">Quotations Page i
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
 const ReceiptsPage = () => <div className="text-center p-10">Receipts Page is under construction.</div>;
 const PurchaseOrdersPage = () => <div className="text-center p-10">Purchase Orders Page is under construction.</div>;
-const ProductsPage = () => <div className="text-center p-10">Products Page is under construction.</div>;
 const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
+
 
 function BottomBar() {
   const [currentDate, setCurrentDate] = useState(moment().format('YYYY-MM-DD'));
@@ -40,7 +44,7 @@ function BottomBar() {
         <div className="flex items-center">
             <FaCalendarAlt className="mr-2 text-gray-500" />
             <label htmlFor="system-date" className="mr-2 font-medium text-gray-600 text-xs">วันที่ของระบบ:</label>
-            <input 
+            <input
               type="date"
               id="system-date"
               value={currentDate}

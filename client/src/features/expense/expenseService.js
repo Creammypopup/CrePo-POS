@@ -22,15 +22,19 @@ const createExpense = async (expenseData) => {
   return response.data;
 };
 
+// --- START OF EDIT ---
 // Update an expense
 const updateExpense = async (expenseData) => {
+    // The ID is now part of the expenseData object
     const response = await axios.put(API_URL + expenseData.id, expenseData, getConfig());
     return response.data;
 };
+// --- END OF EDIT ---
 
 // Delete an expense
 const deleteExpense = async (expenseId) => {
     const response = await axios.delete(API_URL + expenseId, getConfig());
+    // Backend returns {id: '...'}, we return it to update the slice
     return response.data;
 };
 

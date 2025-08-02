@@ -18,13 +18,12 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
     const dispatch = useDispatch();
     const isEditMode = Boolean(expense);
 
-    // ดึงข้อมูลหมวดหมู่จาก Redux Store
     const { categories } = useSelector((state) => state.category);
 
     const [formData, setFormData] = useState({
         date: moment().format('YYYY-MM-DD'),
         description: '',
-        category: categories?.[0]?.name || '', // ใช้หมวดหมู่แรกเป็นค่าเริ่มต้น
+        category: categories?.[0]?.name || '',
         amount: '',
         vendor: '',
     });
@@ -55,11 +54,13 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
     const onSubmit = (e) => {
         e.preventDefault();
         if (isEditMode) {
-            dispatch(updateExpense({ id: expense._id, ...formData }));
-            toast.success('อัปเดตรายการค่าใช้จ่ายสำเร็จ');
+            dispatch(updateExpense({ id: expense._id, ...formData })).then(() => {
+                toast.success('อัปเดตรายการค่าใช้จ่ายสำเร็จ');
+            });
         } else {
-            dispatch(createExpense(formData));
-            toast.success('บันทึกค่าใช้จ่ายใหม่สำเร็จ');
+            dispatch(createExpense(formData)).then(() => {
+                toast.success('บันทึกค่าใช้จ่ายใหม่สำเร็จ');
+            });
         }
         onClose();
     };
@@ -79,7 +80,9 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
                     <div>
                         <label className="block text-sm font-bold mb-2 text-gray-600">หมวดหมู่</label>
                         <select name="category" value={category} onChange={onChange} className="form-input" required>
-                            {categories && categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                            {/* --- START OF EDIT --- */}
+                            {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                            {/* --- END OF EDIT --- */}
                         </select>
                     </div>
                 </div>

@@ -11,8 +11,7 @@ const initialState = {
 
 export const getExpenses = createAsyncThunk('expenses/getAll', async (_, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
-    return await expenseService.getExpenses(token);
+    return await expenseService.getExpenses();
   } catch (error) {
     const message = (error.response?.data?.message) || error.message || error.toString();
     return thunkAPI.rejectWithValue(message);
@@ -21,29 +20,30 @@ export const getExpenses = createAsyncThunk('expenses/getAll', async (_, thunkAP
 
 export const createExpense = createAsyncThunk('expenses/create', async (expenseData, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
-    return await expenseService.createExpense(expenseData, token);
+    return await expenseService.createExpense(expenseData);
   } catch (error) {
     const message = (error.response?.data?.message) || error.message || error.toString();
     return thunkAPI.rejectWithValue(message);
   }
 });
 
+// --- START OF EDIT ---
 export const updateExpense = createAsyncThunk('expenses/update', async (expenseData, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await expenseService.updateExpense(expenseData.id, expenseData, token);
+      // The service now correctly receives the whole expenseData object
+      return await expenseService.updateExpense(expenseData);
     } catch (error) {
       const message = (error.response?.data?.message) || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
     }
 });
+// --- END OF EDIT ---
+
 
 export const deleteExpense = createAsyncThunk('expenses/delete', async (id, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      await expenseService.deleteExpense(id, token);
-      return id; 
+      await expenseService.deleteExpense(id);
+      return id;
     } catch (error) {
       const message = (error.response?.data?.message) || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -69,35 +69,29 @@ export const expenseSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      .addCase(createExpense.pending, (state) => { state.isLoading = true; })
+      .addCase(createExpense.pending, (state) => { state.isLoading = false; }) // No loading state on create for better UX
       .addCase(createExpense.fulfilled, (state, action) => {
-        state.isLoading = false;
         state.expenses.unshift(action.payload);
       })
       .addCase(createExpense.rejected, (state, action) => {
-        state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
-      .addCase(updateExpense.pending, (state) => { state.isLoading = true; })
+      .addCase(updateExpense.pending, (state) => { state.isLoading = false; }) // No loading state on update for better UX
       .addCase(updateExpense.fulfilled, (state, action) => {
-        state.isLoading = false;
         state.expenses = state.expenses.map((expense) =>
           expense._id === action.payload._id ? action.payload : expense
         );
       })
       .addCase(updateExpense.rejected, (state, action) => {
-        state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
-      .addCase(deleteExpense.pending, (state) => { state.isLoading = true; })
+      .addCase(deleteExpense.pending, (state) => { state.isLoading = false; }) // No loading state on delete for better UX
       .addCase(deleteExpense.fulfilled, (state, action) => {
-        state.isLoading = false;
         state.expenses = state.expenses.filter((expense) => expense._id !== action.payload);
       })
       .addCase(deleteExpense.rejected, (state, action) => {
-        state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       });

@@ -1,11 +1,13 @@
-// src/pages/ExpensesPage.jsx
+// client/src/pages/ExpensesPage.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaRegFileAlt, FaEdit, FaTrash, FaFilter, FaPrint } from "react-icons/fa";
-import { getExpenses, deleteExpense, reset } from "../features/expense/expenseSlice";
+import { getExpenses, deleteExpense, reset as resetExpenses } from "../features/expense/expenseSlice";
+import { getCategories, reset as resetCategories } from "../features/category/categorySlice";
 import ExpenseModal from "../components/modals/ExpenseModal";
 import Spinner from "../components/Spinner";
 import moment from 'moment';
+import { toast } from "react-toastify";
 
 function ExpensesPage() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
@@ -14,30 +16,41 @@ function ExpensesPage() {
 
   const dispatch = useDispatch();
   const { expenses, isLoading } = useSelector((state) => state.expense);
+  const { categories, isLoading: categoriesLoading } = useSelector((state) => state.category);
+
+  useEffect(() => {
+    dispatch(getExpenses());
+    dispatch(getCategories());
+    return () => {
+      dispatch(resetExpenses());
+      dispatch(resetCategories());
+    }
+  }, [dispatch]);
 
   const expenseCategories = useMemo(() => {
-    if (!expenses) return [];
-    const uniqueCategories = new Set(expenses.map(exp => exp.category));
+    if (!categories) return [];
+    const uniqueCategories = new Set(categories.map(cat => cat.name));
     return ['all', ...Array.from(uniqueCategories)];
-  }, [expenses]);
+  }, [categories]);
 
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
-    let data = expenses;
+    let data = [...expenses];
     if (filter.category && filter.category !== 'all') {
         data = data.filter(exp => exp.category === filter.category);
     }
-    if (!filter.value) return data;
+    if (!filter.value) return data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
     return data.filter(exp => {
         const expenseDate = moment(exp.date);
         if (filter.type === 'day') return expenseDate.isSame(filter.value, 'day');
         if (filter.type === 'month') return expenseDate.isSame(filter.value, 'month');
         if (filter.type === 'year') {
-            const year = parseInt(filter.value, 10);
-            return expenseDate.year() === (year > 2500 ? year - 543 : year);
+            const yearValue = filter.value > 2500 ? filter.value - 543 : filter.value;
+            return expenseDate.year() === parseInt(yearValue, 10);
         }
         return true;
-    });
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [expenses, filter]);
 
   const totalFilteredAmount = useMemo(() =>
@@ -47,19 +60,50 @@ function ExpensesPage() {
     setCurrentExpense(null);
     setIsExpenseModalOpen(true);
   };
-  
+
+  const handleEditExpense = (expense) => {
+    setCurrentExpense(expense);
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleDeleteExpense = (id, description) => {
+    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการ "${description}"?`)) {
+      dispatch(deleteExpense(id)).then(() => {
+        toast.success("ลบรายการสำเร็จ");
+      });
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilter(prev => ({ ...prev, [name]: value }));
+  };
+
+  const renderFilterInput = () => {
+    const commonClasses = "form-input !py-2 !px-3 text-sm w-40";
+    if (filter.type === 'day') {
+        return <input type="date" name="value" value={filter.value} onChange={handleFilterChange} className={commonClasses} />;
+    }
+    if (filter.type === 'month') {
+        return <input type="month" name="value" value={filter.value} onChange={handleFilterChange} className={commonClasses} />;
+    }
+    if (filter.type === 'year') {
+        return <input type="number" name="value" placeholder="ระบุปี (พ.ศ.)" defaultValue={moment().year() + 543} onChange={handleFilterChange} className={`${commonClasses} w-32`} />;
+    }
+    return null;
+  };
+
+  if (isLoading || categoriesLoading) {
+    return <Spinner />;
+  }
+
   return (
     <>
     <style>{`
+        .form-input-filter { @apply bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-brand-purple focus:border-brand-purple transition duration-150 ease-in-out; }
         @media print {
-            body * { visibility: hidden; }
-            .printable-container, .printable-container * { 
-                visibility: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .printable-container { position: absolute; left: 0; top: 0; width: 100%; font-size: 10pt; }
-            .print-title { visibility: visible !important; display: block !important; text-align: center; font-size: 18pt; margin-bottom: 1rem;}
+            body * { visibility: hidden; } .printable-container, .printable-container * { visibility: visible !important; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+            .printable-container { position: absolute; left: 0; top: 0; width: 100%; font-size: 10pt; } .print-title { visibility: visible !important; display: block !important; text-align: center; font-size: 18pt; margin-bottom: 1rem;} .non-printable { display: none !important; }
         }
     `}</style>
     <div className="space-y-6">
@@ -74,18 +118,21 @@ function ExpensesPage() {
             </button>
         </div>
       </div>
-
-      <div className="bg-white p-4 rounded-2xl shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4 non-printable">
-        <div className="flex items-center gap-x-4 gap-y-2 flex-wrap">
-            <div className="flex items-center gap-2 text-gray-600 font-semibold"><FaFilter /><span>ตัวกรอง:</span></div>
-            <select onChange={(e) => setFilter({ ...filter, type: e.target.value, value: '' })} className="form-input !py-2 pr-10">
-                <option value="month">รายเดือน</option><option value="day">รายวัน</option><option value="year">รายปี</option>
+      
+      <div className="bg-white p-3 rounded-2xl shadow-lg flex flex-wrap justify-between items-center gap-4 non-printable">
+        <div className="flex items-center gap-x-3 gap-y-2 flex-wrap">
+            <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold"><FaFilter /><span>ตัวกรอง:</span></div>
+            <select name="type" value={filter.type} onChange={handleFilterChange} className="form-input !py-2 !px-3 text-sm pr-8 w-32">
+                <option value="day">รายวัน</option><option value="month">รายเดือน</option><option value="year">รายปี</option>
             </select>
-            {/* Filter inputs */}
+            {renderFilterInput()}
+            <select name="category" value={filter.category} onChange={handleFilterChange} className="form-input !py-2 !px-3 text-sm pr-8 w-48">
+                {expenseCategories.map(cat => <option key={cat} value={cat}>{cat === 'all' ? 'ทุกหมวดหมู่' : cat}</option>)}
+            </select>
         </div>
         <div className="text-right flex-shrink-0">
-            <p className="text-gray-500">ยอดรวมที่แสดง</p>
-            <p className="text-2xl font-bold text-red-600">{totalFilteredAmount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</p>
+            <p className="text-xs text-gray-500">ยอดรวมที่แสดง</p>
+            <p className="text-xl font-bold text-red-600">{totalFilteredAmount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</p>
         </div>
       </div>
 
@@ -95,15 +142,35 @@ function ExpensesPage() {
           <table className="min-w-full bg-white">
             <thead className="bg-gray-50">
               <tr>
-                <th className="py-3 px-4 text-left">วันที่</th>
-                <th className="py-3 px-4 text-left">หมวดหมู่</th>
-                <th className="py-3 px-4 text-left">คำอธิบาย</th>
-                <th className="py-3 px-4 text-right">จำนวนเงิน</th>
-                <th className="py-3 px-4 text-center non-printable">การกระทำ</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-600">วันที่</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
+                <th className="py-3 px-4 text-left font-semibold text-gray-600">คำอธิบาย</th>
+                <th className="py-3 px-4 text-right font-semibold text-gray-600">จำนวนเงิน</th>
+                <th className="py-3 px-4 text-center font-semibold text-gray-600 non-printable">การกระทำ</th>
               </tr>
             </thead>
             <tbody>
-              {/* Table Body */}
+              {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
+                <tr key={expense._id} className="border-b hover:bg-gray-50">
+                  <td className="p-3 px-4 text-sm">{moment(expense.date).format('DD/MM/YYYY')}</td>
+                  <td className="p-3 px-4 text-sm">{expense.category}</td>
+                  <td className="p-3 px-4 text-sm">{expense.description}</td>
+                  <td className="p-3 px-4 text-right text-sm text-red-600">{expense.amount.toLocaleString('th-TH')}</td>
+                  <td className="p-3 px-4 text-center non-printable">
+                    <div className="flex justify-center gap-2">
+                      <button onClick={() => handleEditExpense(expense)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>
+                      <button onClick={() => handleDeleteExpense(expense._id, expense.description)} className="btn p-2.5 bg-red-100 text-red-700 hover:bg-red-200"><FaTrash /></button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                    <td colSpan="5" className="text-center py-10 text-gray-500">
+                        <FaRegFileAlt className="mx-auto text-4xl mb-2 text-gray-300" />
+                        ไม่พบข้อมูลรายจ่าย
+                    </td>
+                </tr>
+              )}
             </tbody>
             {filteredExpenses.length > 0 && (
                 <tfoot>

@@ -1,112 +1,93 @@
+const asyncHandler = require('express-async-handler');
 const Product = require('../models/Product');
 
-// @desc    Fetch all products
+// @desc    Get all products for a user
 // @route   GET /api/products
-// @access  Public
-const getProducts = async (req, res) => {
-  try {
-    const products = await Product.find({});
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
-  }
-};
+// @access  Private
+const getProducts = asyncHandler(async (req, res) => {
+    const products = await Product.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.status(200).json(products);
+});
 
-// @desc    Fetch single product
+// @desc    Get single product by ID
 // @route   GET /api/products/:id
-// @access  Public
-const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
+// @access  Private
+const getProductById = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
 
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+  if (product && product.user.toString() === req.user.id) {
+    res.json(product);
+  } else {
+    res.status(404);
+    throw new Error('Product not found');
   }
-};
+});
 
-// @desc    Create a product
+// @desc    Create a new product
 // @route   POST /api/products
-// @access  Private/Admin
-const createProduct = async (req, res) => {
-  // เราจะใช้ข้อมูลจาก req.body ที่ส่งมาจาก client
-  const { name, image, description, brand, category, price, countInStock } = req.body;
+// @access  Private
+const createProduct = asyncHandler(async (req, res) => {
+    const { name, category, price } = req.body; // Basic required fields
 
-  const product = new Product({
-    name,
-    price,
-    user: req.user._id, // user id มาจาก middleware 'protect'
-    image: image || '/images/sample.jpg', // ใส่รูปภาพ default ถ้าไม่มี
-    brand,
-    category,
-    countInStock,
-    description,
-  });
+    if (!name || !category || price === undefined) {
+        res.status(400);
+        throw new Error('Please provide name, category, and price');
+    }
 
-  try {
-    const createdProduct = await product.save();
-    res.status(201).json(createdProduct);
-  } catch (error) {
-    res.status(400).json({ message: 'ข้อมูลสินค้าไม่ถูกต้อง', error: error.message });
-  }
-};
+    const product = await Product.create({
+        ...req.body,
+        user: req.user.id,
+    });
+
+    res.status(201).json(product);
+});
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Admin
-const updateProduct = async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock } = req.body;
-
-  try {
+// @access  Private
+const updateProduct = asyncHandler(async (req, res) => {
     const product = await Product.findById(req.params.id);
 
-    if (product) {
-      product.name = name || product.name;
-      product.price = price || product.price;
-      product.description = description || product.description;
-      product.image = image || product.image;
-      product.brand = brand || product.brand;
-      product.category = category || product.category;
-      product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
-
-      const updatedProduct = await product.save();
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ message: 'ไม่พบสินค้านี้' });
+    if (!product) {
+        res.status(404);
+        throw new Error('Product not found');
     }
-  } catch (error) {
-    res.status(400).json({ message: 'ข้อมูลสินค้าไม่ถูกต้อง', error: error.message });
-  }
-};
+
+    if (product.user.toString() !== req.user.id) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(200).json(updatedProduct);
+});
+
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin
-const deleteProduct = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
+// @access  Private
+const deleteProduct = asyncHandler(async (req, res) => {
+    const product = await Product.findById(req.params.id);
 
-        if (product) {
-            // ใน Mongoose v6+ .remove() ถูกเอาออกไปแล้ว ให้ใช้ .deleteOne() หรือ .findByIdAndDelete()
-            await Product.deleteOne({ _id: req.params.id });
-            res.json({ message: 'สินค้าถูกลบแล้ว' });
-        } else {
-            res.status(404).json({ message: 'ไม่พบสินค้านี้' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error', error: error.message });
+    if (!product) {
+        res.status(404);
+        throw new Error('Product not found');
     }
-};
+
+    if (product.user.toString() !== req.user.id) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    await product.deleteOne();
+    res.status(200).json({ id: req.params.id });
+});
 
 
 module.exports = {
-  getProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
+    getProducts,
+    getProductById, // <-- **แก้ไขจุดที่ขาดไป**
+    createProduct,
+    updateProduct,
+    deleteProduct
 };

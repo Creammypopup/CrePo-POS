@@ -19,8 +19,9 @@ const expenseSchema = new mongoose.Schema({
     category: {
         type: String,
         required: [true, 'กรุณาระบุหมวดหมู่'],
-        enum: ['ค่าเดินทาง', 'ค่าวัสดุ', 'ค่าจ้าง', 'ค่าสาธารณูปโภค', 'อื่นๆ'], // หมวดหมู่ตัวอย่าง
-        default: 'อื่นๆ',
+        // --- START OF EDIT ---
+        // Removed the 'enum' property to allow any category string
+        // --- END OF EDIT ---
     },
     amount: {
         type: Number,
@@ -30,8 +31,6 @@ const expenseSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
-    // สามารถเพิ่ม field สำหรับแนบไฟล์ใบเสร็จได้ในอนาคต
-    // receiptImage: { type: String }
 }, {
     timestamps: true,
 });

@@ -1,7 +1,7 @@
 // client/src/components/modals/CategoryModal.jsx
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addCategory } from '../../features/category/categorySlice';
+import { createCategory } from '../../features/category/categorySlice'; // <-- EDIT: Changed from addCategory
 import { toast } from 'react-toastify';
 import { FaSave, FaTimes } from 'react-icons/fa';
 import Modal from 'react-modal';
@@ -24,8 +24,11 @@ function CategoryModal({ isOpen, onClose }) {
       toast.error('กรุณาใส่ชื่อหมวดหมู่');
       return;
     }
-    dispatch(addCategory({ name, source }));
-    toast.success(`เพิ่มหมวดหมู่ "${name}" สำเร็จ`);
+    // --- START OF EDIT ---
+    dispatch(createCategory({ name, source }));
+    // We no longer need to toast here because the slice will handle success/error messages
+    // toast.success(`เพิ่มหมวดหมู่ "${name}" สำเร็จ`);
+    // --- END OF EDIT ---
     onClose();
     setName('');
     setSource('กำไร');
