@@ -3,16 +3,17 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      backgroundImage: {
+        'sidebar-gradient': 'linear-gradient(150deg,  rgba(238, 227, 250, 1) 10%, rgba(245, 212, 250, 1) 70%, rgba(242, 221, 246, 1) 90%)',
+      },
       colors: {
         'brand-purple': '#A076F9',
         'brand-purple-light': '#D9ACF5',
         'brand-pink': '#FFABE1',
         'brand-pink-light': '#FFF5E4',
-        // --- START OF EDIT ---
-        'brand-bg': '#FDF7FF', // พื้นหลังใหม่ สีม่วงอ่อนๆ สบายตา
-        'brand-sidebar': '#F6F0F9', // สี Sidebar ใหม่
-        'brand-header': '#FEF9FF', // สี Header ใหม่
-        // --- END OF EDIT ---
+        'brand-bg': '#FDF7FF',
+        'brand-sidebar': '#F6F0F9',
+        'brand-header': '#FEF9FF',
         'brand-text': '#434242',
         'brand-text-light': '#777676',
         'brand-success': '#B7E5B4',

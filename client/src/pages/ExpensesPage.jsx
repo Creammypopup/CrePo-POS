@@ -5,14 +5,16 @@ import { FaPlus, FaRegFileAlt, FaEdit, FaTrash, FaFilter, FaPrint } from "react-
 import { getExpenses, deleteExpense, reset as resetExpenses } from "../features/expense/expenseSlice";
 import { getCategories, reset as resetCategories } from "../features/category/categorySlice";
 import ExpenseModal from "../components/modals/ExpenseModal";
+import CategoryModal from "../components/modals/CategoryModal";
 import Spinner from "../components/Spinner";
 import moment from 'moment';
 import { toast } from "react-toastify";
 
 function ExpensesPage() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [currentExpense, setCurrentExpense] = useState(null);
-  const [filter, setFilter] = useState({ type: 'month', value: moment().format('YYYY-MM'), category: 'all' });
+  const [filter, setFilter] = useState({ type: 'month', value: moment().format('YYYY-MM'), category: 'all', source: 'all' });
 
   const dispatch = useDispatch();
   const { expenses, isLoading } = useSelector((state) => state.expense);
@@ -36,9 +38,17 @@ function ExpensesPage() {
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
     let data = [...expenses];
+
+    // Filter by source (ทุน/กำไร)
+    if (filter.source && filter.source !== 'all') {
+        const sourceCategories = categories.filter(c => c.source === filter.source).map(c => c.name);
+        data = data.filter(exp => sourceCategories.includes(exp.category));
+    }
+
     if (filter.category && filter.category !== 'all') {
         data = data.filter(exp => exp.category === filter.category);
     }
+
     if (!filter.value) return data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return data.filter(exp => {
@@ -51,7 +61,7 @@ function ExpensesPage() {
         }
         return true;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [expenses, filter]);
+  }, [expenses, filter, categories]);
 
   const totalFilteredAmount = useMemo(() =>
     filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0), [filteredExpenses]);
@@ -118,7 +128,7 @@ function ExpensesPage() {
             </button>
         </div>
       </div>
-      
+
       <div className="bg-white p-3 rounded-2xl shadow-lg flex flex-wrap justify-between items-center gap-4 non-printable">
         <div className="flex items-center gap-x-3 gap-y-2 flex-wrap">
             <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold"><FaFilter /><span>ตัวกรอง:</span></div>
@@ -126,6 +136,11 @@ function ExpensesPage() {
                 <option value="day">รายวัน</option><option value="month">รายเดือน</option><option value="year">รายปี</option>
             </select>
             {renderFilterInput()}
+            <select name="source" value={filter.source} onChange={handleFilterChange} className="form-input !py-2 !px-3 text-sm pr-8 w-40">
+                <option value="all">ทุกแหล่งที่มา</option>
+                <option value="ทุน">ทุน</option>
+                <option value="กำไร">กำไร</option>
+            </select>
             <select name="category" value={filter.category} onChange={handleFilterChange} className="form-input !py-2 !px-3 text-sm pr-8 w-48">
                 {expenseCategories.map(cat => <option key={cat} value={cat}>{cat === 'all' ? 'ทุกหมวดหมู่' : cat}</option>)}
             </select>
@@ -181,7 +196,8 @@ function ExpensesPage() {
         </div>
       </div>
 
-      {isExpenseModalOpen && (<ExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} expense={currentExpense}/>)}
+      {isExpenseModalOpen && (<ExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} expense={currentExpense} onManageCategories={() => setIsCategoryModalOpen(true)} />)}
+      {isCategoryModalOpen && (<CategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} />)}
     </div>
     </>
   );

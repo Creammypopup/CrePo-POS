@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
-import { FaTimes, FaSave } from 'react-icons/fa';
+import { FaTimes, FaSave, FaPlusCircle } from 'react-icons/fa';
 import { createExpense, updateExpense } from '../../features/expense/expenseSlice';
 import moment from 'moment';
 
@@ -14,7 +14,7 @@ const customModalStyles = {
 
 Modal.setAppElement('#root');
 
-const ExpenseModal = ({ isOpen, onClose, expense }) => {
+const ExpenseModal = ({ isOpen, onClose, expense, onManageCategories }) => {
     const dispatch = useDispatch();
     const isEditMode = Boolean(expense);
 
@@ -79,11 +79,14 @@ const ExpenseModal = ({ isOpen, onClose, expense }) => {
                     </div>
                     <div>
                         <label className="block text-sm font-bold mb-2 text-gray-600">หมวดหมู่</label>
-                        <select name="category" value={category} onChange={onChange} className="form-input" required>
-                            {/* --- START OF EDIT --- */}
-                            {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-                            {/* --- END OF EDIT --- */}
-                        </select>
+                        <div className="flex items-center gap-2">
+                            <select name="category" value={category} onChange={onChange} className="form-input flex-grow" required>
+                                {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                            </select>
+                            <button type="button" onClick={onManageCategories} className="btn p-2.5 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <FaPlusCircle />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div>

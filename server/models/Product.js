@@ -5,15 +5,14 @@ const { customAlphabet } = require('nanoid');
 const skuGenerator = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
 const barcodeGenerator = customAlphabet('1234567890', 13);
 
-// --- START OF EDIT: Renamed subUnitSchema to sellingUnitSchema for clarity ---
 const sellingUnitSchema = new mongoose.Schema({
-    name: { type: String, required: true }, // e.g., 'ขีด', 'กิโลกรัม', 'ลัง'
-    conversionRate: { type: Number, required: true }, // How many main units make this unit. (Main unit = 1)
-    price: { type: Number, required: true }, // Price for this specific unit
+    name: { type: String, required: true },
+    conversionRate: { type: Number, required: true },
+    price: { type: Number, required: true },
 });
-// --- END OF EDIT ---
 
 const supplierInfoSchema = new mongoose.Schema({
+    supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' }, // Will be used later
     supplierName: { type: String },
     cost: { type: Number, required: true },
 });
@@ -29,10 +28,11 @@ const productSchema = new mongoose.Schema({
   mainUnit: { type: String, required: [true, 'กรุณาระบุหน่วยนับหลัก'], default: 'ชิ้น' },
   stock: { type: Number, required: true, default: 0 },
   stockAlert: { type: Number, default: 0 },
-  price: { type: Number, required: true, default: 0 }, // Main selling price
+  price: { type: Number, required: [true, 'กรุณาระบุราคาขาย'], default: 0 }, // Main selling price
+  cost: { type: Number, required: [true, 'กรุณาระบุราคาทุน'], default: 0 }, // Cost price
   suppliers: [supplierInfoSchema],
-  sellingUnits: [sellingUnitSchema], // <-- EDIT: Changed from subUnits
-  productType: { type: String, enum: ['standard', 'weighted'], default: 'standard' }
+  sellingUnits: [sellingUnitSchema],
+  productType: { type: String, enum: ['standard', 'weighted', 'gift'], default: 'standard' }
 }, { timestamps: true });
 
 productSchema.pre('save', function(next) {
@@ -41,13 +41,6 @@ productSchema.pre('save', function(next) {
     }
     if (this.isNew && !this.barcode) {
         this.barcode = barcodeGenerator();
-    }
-    // Set the main price from the base selling unit if not set
-    if (this.sellingUnits && this.sellingUnits.length > 0) {
-        const baseUnit = this.sellingUnits.find(u => u.conversionRate === 1);
-        if (baseUnit) {
-            this.price = baseUnit.price;
-        }
     }
     next();
 });

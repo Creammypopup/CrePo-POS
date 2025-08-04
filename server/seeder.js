@@ -7,10 +7,7 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Role = require('./models/Role');
 const Product = require('./models/Product');
-const Customer = require('./models/Customer');
-const Expense = require('./models/Expense');
-const Sale = require('./models/Sale');
-const Category = require('./models/Category'); // <-- **เพิ่มบรรทัดนี้**
+const Category = require('./models/Category');
 
 const connectDB = async () => {
     try {
@@ -22,7 +19,6 @@ const connectDB = async () => {
     }
 };
 
-// Hash password function
 const createPasswordHash = async (password) => {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
@@ -33,10 +29,11 @@ const importData = async () => {
         // Clear existing data
         await Role.deleteMany();
         await User.deleteMany();
-        await Category.deleteMany(); // <-- **เพิ่มบรรทัดนี้**
+        await Category.deleteMany();
+        await Product.deleteMany(); // Clear old products
         console.log('Old data destroyed...'.red.inverse);
 
-        // --- Create Roles ---
+        // Create Roles
         const roles = await Role.create([
             { name: 'Admin', permissions: ['view_dashboard', 'manage_pos', 'view_receipts', 'manage_invoices', 'manage_quotations', 'manage_expenses', 'manage_products', 'manage_stock_adjustments', 'manage_purchase_orders', 'manage_contacts', 'view_reports', 'manage_accounting', 'view_calendar', 'manage_users', 'manage_roles', 'manage_settings'] },
             { name: 'Manager', permissions: ['view_dashboard', 'manage_pos', 'view_receipts', 'manage_invoices', 'manage_quotations', 'manage_expenses', 'manage_products', 'manage_stock_adjustments', 'manage_purchase_orders', 'manage_contacts', 'view_reports', 'view_calendar'] },
@@ -45,30 +42,35 @@ const importData = async () => {
         const adminRole = roles[0];
         console.log('Roles Imported...'.green.inverse);
 
-        // --- Create a default Admin User ---
+        // Create a default Admin User
         const users = await User.create([
             {
-                name: 'ผู้ดูแลระบบ', // ชื่อที่ใช้แสดงผล
-                username: 'POP', // ชื่อผู้ใช้สำหรับเข้าระบบ
-                password: await createPasswordHash('123456'), // รหัสผ่านคือ 123456
+                name: 'ผู้ดูแลระบบ',
+                username: 'POP',
+                password: await createPasswordHash('123456'),
                 role: adminRole._id
             }
         ]);
         const adminUser = users[0];
         console.log('Default Admin User Imported...'.green.inverse);
 
-        // --- Create default categories for the admin user ---
+        // Create default categories for the admin user
         await Category.create([
             { user: adminUser._id, name: 'ค่าเดินทาง', source: 'กำไร' },
             { user: adminUser._id, name: 'ค่าอาหารและเครื่องดื่ม', source: 'กำไร' },
             { user: adminUser._id, name: 'ค่าวัตถุดิบ', source: 'ทุน' },
             { user: adminUser._id, name: 'เงินเดือน/ค่าจ้าง', source: 'กำไร' },
-            { user: adminUser._id, name: 'ค่าเช่า', source: 'กำไร' },
-            { user: adminUser._id, name: 'ค่าการตลาด', source: 'กำไร' },
-            { user: adminUser._id, name: 'ค่าสาธารณูปโภค', source: 'กำไร' },
-            { user: adminUser._id, name: 'อื่นๆ', source: 'กำไร' },
         ]);
         console.log('Default Categories Imported...'.green.inverse);
+
+        // Create Sample Products
+        await Product.create([
+            { user: adminUser._id, name: 'ปูน TPI แดง', category: 'ปูนและวัสดุก่อ', cost: 120, price: 150, stock: 50, mainUnit: 'ถุง', stockAlert: 10 },
+            { user: adminUser._id, name: 'สีทาบ้าน TOA (ขาว)', category: 'สีและเคมีภัณฑ์', cost: 850, price: 990, stock: 20, mainUnit: 'ถัง', stockAlert: 5 },
+            { user: adminUser._id, name: 'ท่อ PVC 4 นิ้ว', category: 'เครื่องมือช่าง', cost: 65, price: 80, stock: 100, mainUnit: 'เส้น' },
+            { user: adminUser._id, name: 'ถุงมือผ้า', category: 'เครื่องมือช่าง', productType: 'gift', cost: 5, price: 10, stock: 200, mainUnit: 'คู่' }
+        ]);
+        console.log('Sample Products Imported...'.blue.inverse);
 
 
         console.log('Data Imported!'.cyan.inverse);
@@ -84,10 +86,7 @@ const destroyData = async () => {
         await Role.deleteMany();
         await User.deleteMany();
         await Product.deleteMany();
-        await Customer.deleteMany();
-        await Expense.deleteMany();
-        await Sale.deleteMany();
-        await Category.deleteMany(); // <-- **เพิ่มบรรทัดนี้**
+        await Category.deleteMany();
         console.log('Data Destroyed!'.red.inverse);
         process.exit();
     } catch (err) {

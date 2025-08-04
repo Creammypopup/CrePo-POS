@@ -11,14 +11,23 @@ const initialState = {
 };
 
 export const getProducts = createAsyncThunk('products/getAll', async (_, thunkAPI) => {
-    // ...
+    try {
+        return await productService.getProducts();
+    } catch (error) {
+        const message = (error.response?.data?.message) || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message);
+    }
 });
 
 export const createProduct = createAsyncThunk('products/create', async (productData, thunkAPI) => {
-    // ...
+    try {
+        return await productService.createProduct(productData);
+    } catch (error) {
+        const message = (error.response?.data?.message) || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message);
+    }
 });
 
-// --- START OF EDIT ---
 export const updateProduct = createAsyncThunk('products/update', async (productData, thunkAPI) => {
   try {
     return await productService.updateProduct(productData);
@@ -37,8 +46,6 @@ export const deleteProduct = createAsyncThunk('products/delete', async (id, thun
     return thunkAPI.rejectWithValue(message);
   }
 });
-// --- END OF EDIT ---
-
 
 export const productSlice = createSlice({
   name: 'products',
@@ -59,9 +66,8 @@ export const productSlice = createSlice({
           state.message = action.payload;
       })
       .addCase(createProduct.fulfilled, (state, action) => {
-        state.products.unshift(action.payload);
+        state.products.unshift(action.payload); // Add new product to the top
       })
-      // --- START OF EDIT ---
       .addCase(updateProduct.fulfilled, (state, action) => {
         state.products = state.products.map((p) =>
           p._id === action.payload._id ? action.payload : p
@@ -70,7 +76,6 @@ export const productSlice = createSlice({
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.products = state.products.filter((p) => p._id !== action.payload);
       });
-      // --- END OF EDIT ---
   },
 });
 

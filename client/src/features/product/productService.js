@@ -3,12 +3,24 @@ import axios from 'axios';
 
 const API_URL = '/api/products/';
 
-// ... (getToken, getConfig)
+const getToken = () => JSON.parse(localStorage.getItem('user'))?.token;
 
-const getProducts = async () => { /* ... */ };
-const createProduct = async (productData) => { /* ... */ };
+const getConfig = () => ({
+  headers: {
+    Authorization: `Bearer ${getToken()}`,
+  },
+});
 
-// --- START OF EDIT ---
+const getProducts = async () => {
+  const response = await axios.get(API_URL, getConfig());
+  return response.data;
+};
+
+const createProduct = async (productData) => {
+  const response = await axios.post(API_URL, productData, getConfig());
+  return response.data;
+};
+
 const updateProduct = async (productData) => {
   const response = await axios.put(API_URL + productData._id, productData, getConfig());
   return response.data;
@@ -16,16 +28,14 @@ const updateProduct = async (productData) => {
 
 const deleteProduct = async (id) => {
   const response = await axios.delete(API_URL + id, getConfig());
-  return response.data;
+  return response.data; // Backend returns { id: '...' }
 };
-// --- END OF EDIT ---
-
 
 const productService = {
   getProducts,
   createProduct,
-  updateProduct, // <-- Add this
-  deleteProduct, // <-- Add this
+  updateProduct,
+  deleteProduct,
 };
 
 export default productService;
