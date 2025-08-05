@@ -22,4 +22,23 @@ const createProductCategory = asyncHandler(async (req, res) => {
     res.status(201).json(category);
 });
 
-module.exports = { getProductCategories, createProductCategory };
+// --- START OF EDIT ---
+const deleteProductCategory = asyncHandler(async (req, res) => {
+    const category = await ProductCategory.findById(req.params.id);
+
+    if (!category) {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+
+    if (category.user.toString() !== req.user.id) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    await category.deleteOne();
+    res.status(200).json({ id: req.params.id });
+});
+
+module.exports = { getProductCategories, createProductCategory, deleteProductCategory };
+// --- END OF EDIT ---

@@ -1,8 +1,8 @@
 // client/src/menuData.jsx
 import React from 'react';
 import {
-  FaTachometerAlt, FaCashRegister, FaFileInvoiceDollar, FaMoneyBillWave,
-  FaBoxOpen, FaBook, FaChartBar, FaUsers, FaCalendarAlt,
+  FaTachometerAlt, FaCashRegister, FaFileInvoiceDollar,
+  FaBoxOpen, FaBook, FaChartBar, FaCalendarAlt,
   FaCog, FaAddressBook
 } from 'react-icons/fa';
 import { permissions } from './permissions';
@@ -41,7 +41,7 @@ export const menuData = [
   },
 
   // Accounting
-   { title: 'บัญชี', icon: <FaBook />, color: '#34495E', 
+   { title: 'บัญชี', icon: <FaBook />, color: '#34495E',
       permission: [permissions.MANAGE_ACCOUNTING.id, permissions.MANAGE_EXPENSES.id],
       submenu: [
           { title: 'บันทึกค่าใช้จ่าย', path: '/expenses', permission: permissions.MANAGE_EXPENSES.id },

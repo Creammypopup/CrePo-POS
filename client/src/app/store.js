@@ -8,6 +8,12 @@ import expenseReducer from "../features/expense/expenseSlice";
 import settingReducer from "../features/settings/settingSlice";
 import categoryReducer from "../features/category/categorySlice";
 import productReducer from "../features/product/productSlice"; 
+import productCategoryReducer from "../features/productCategory/productCategorySlice";
+import customerReducer from "../features/customer/customerSlice";
+import supplierReducer from "../features/supplier/supplierSlice";
+// --- START OF EDIT ---
+import saleReducer from "../features/sale/saleSlice";
+// --- END OF EDIT ---
 
 export const store = configureStore({
   reducer: {
@@ -19,5 +25,11 @@ export const store = configureStore({
     settings: settingReducer,
     category: categoryReducer,
     products: productReducer,
+    productCategories: productCategoryReducer,
+    customers: customerReducer,
+    suppliers: supplierReducer,
+    // --- START OF EDIT ---
+    sale: saleReducer,
+    // --- END OF EDIT ---
   },
 });

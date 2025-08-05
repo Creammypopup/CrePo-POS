@@ -4,22 +4,25 @@ export default {
   theme: {
     extend: {
       backgroundImage: {
-        'sidebar-gradient': 'linear-gradient(150deg,  rgba(238, 227, 250, 1) 10%, rgba(245, 212, 250, 1) 70%, rgba(242, 221, 246, 1) 90%)',
+        'sidebar-gradient': 'linear-gradient(160deg, #d9acf5 0%, #ffabe1 50%, #fde4a8 100%)',
       },
       colors: {
         'brand-purple': '#A076F9',
         'brand-purple-light': '#D9ACF5',
         'brand-pink': '#FFABE1',
         'brand-pink-light': '#FFF5E4',
+        'brand-yellow-light': '#fde4a8',
         'brand-bg': '#FDF7FF',
         'brand-sidebar': '#F6F0F9',
-        'brand-header': '#FEF9FF',
+        'brand-header': '#FEFBFF',
         'brand-text': '#434242',
         'brand-text-light': '#777676',
         'brand-success': '#B7E5B4',
         'brand-warning': '#FFD384',
         'brand-danger': '#FF9494',
         'brand-info': '#A6D0DD',
+        'brand-rose': '#e8abb5',
+        'brand-brown': '#585076',
       },
       boxShadow: {
         '3d': '4px 4px 10px #d1d1d1, -4px -4px 10px #ffffff',

@@ -7,14 +7,30 @@ const barcodeGenerator = customAlphabet('1234567890', 13);
 
 const sellingUnitSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    conversionRate: { type: Number, required: true },
+    conversionRate: { type: Number, required: true }, // How many of the main unit make up this unit
     price: { type: Number, required: true },
 });
 
 const supplierInfoSchema = new mongoose.Schema({
-    supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' }, // Will be used later
-    supplierName: { type: String },
+    supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' },
+    supplierName: { type: String, required: true },
     cost: { type: Number, required: true },
+});
+
+const productSizeSchema = new mongoose.Schema({
+    name: { type: String, required: true }, // e.g., 'S', 'M', 'L', '1 นิ้ว'
+    price: { type: Number, required: true },
+    cost: { type: Number, default: 0 }
+});
+
+const weightInfoSchema = new mongoose.Schema({
+    baseWeight: { type: Number, required: true }, // e.g., 18
+    baseUnit: { type: String, required: true }, // e.g., 'กิโลกรัม'
+    sellingUnit: { type: String, required: true }, // e.g., 'ลัง'
+    prices: [{
+        unit: String, // e.g., 'กิโลกรัม', 'ขีด'
+        price: Number
+    }]
 });
 
 const productSchema = new mongoose.Schema({
@@ -28,11 +44,19 @@ const productSchema = new mongoose.Schema({
   mainUnit: { type: String, required: [true, 'กรุณาระบุหน่วยนับหลัก'], default: 'ชิ้น' },
   stock: { type: Number, required: true, default: 0 },
   stockAlert: { type: Number, default: 0 },
-  price: { type: Number, required: [true, 'กรุณาระบุราคาขาย'], default: 0 }, // Main selling price
-  cost: { type: Number, required: [true, 'กรุณาระบุราคาทุน'], default: 0 }, // Cost price
-  suppliers: [supplierInfoSchema],
+  price: { type: Number, required: [true, 'กรุณาระบุราคาขาย'], default: 0 },
+  cost: { type: Number, required: [true, 'กรุณาระบุราคาทุน'], default: 0 },
+  
+  // New/Updated fields for advanced features
+  productType: { type: String, enum: ['standard', 'weighted', 'service', 'gift'], default: 'standard' },
+  hasMultipleSizes: { type: Boolean, default: false },
+  sizes: [productSizeSchema],
+  hasSubUnits: { type: Boolean, default: false },
   sellingUnits: [sellingUnitSchema],
-  productType: { type: String, enum: ['standard', 'weighted', 'gift'], default: 'standard' }
+  hasMultipleSuppliers: { type: Boolean, default: false },
+  suppliers: [supplierInfoSchema],
+  weightInfo: weightInfoSchema,
+  
 }, { timestamps: true });
 
 productSchema.pre('save', function(next) {
@@ -41,6 +65,10 @@ productSchema.pre('save', function(next) {
     }
     if (this.isNew && !this.barcode) {
         this.barcode = barcodeGenerator();
+    }
+    // Set default supplier if none is provided but cost is
+    if (this.isNew && this.suppliers.length === 0 && this.cost > 0) {
+        this.suppliers.push({ supplierName: 'ไม่ระบุ', cost: this.cost });
     }
     next();
 });

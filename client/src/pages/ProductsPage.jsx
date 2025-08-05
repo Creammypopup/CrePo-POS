@@ -60,12 +60,19 @@ function ProductsPage() {
           @media print {
               body * { visibility: hidden; }
               .printable-container, .printable-container * { visibility: visible !important; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
-              .printable-container { position: absolute; left: 0; top: 0; width: 100%; font-size: 10pt; padding: 1rem; }
+              .printable-container { 
+                  position: absolute; 
+                  left: 0; 
+                  top: 0; 
+                  width: 100%; 
+                  font-size: 10pt; 
+                  padding: 1rem; 
+              }
               .non-printable { display: none !important; }
               .print-title { display: block !important; text-align: center; font-size: 18pt; margin-bottom: 1rem; }
               table { width: 100%; border-collapse: collapse; }
               th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-              th { background-color: #f2f2f2; }
+              th { background-color: #f2f2f2 !important; }
           }
       `}</style>
       <div className="space-y-6">

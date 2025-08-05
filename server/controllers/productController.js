@@ -1,3 +1,4 @@
+// server/controllers/productController.js
 const asyncHandler = require('express-async-handler');
 const Product = require('../models/Product');
 
@@ -27,11 +28,11 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private
 const createProduct = asyncHandler(async (req, res) => {
-    const { name, category, price } = req.body; // Basic required fields
+    const { name, category, price, cost } = req.body;
 
-    if (!name || !category || price === undefined) {
+    if (!name || !category || price === undefined || cost === undefined) {
         res.status(400);
-        throw new Error('Please provide name, category, and price');
+        throw new Error('Please provide name, category, price and cost');
     }
 
     const product = await Product.create({
@@ -86,7 +87,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 module.exports = {
     getProducts,
-    getProductById, // <-- **แก้ไขจุดที่ขาดไป**
+    getProductById,
     createProduct,
     updateProduct,
     deleteProduct

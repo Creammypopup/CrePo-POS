@@ -18,15 +18,16 @@ import GeneralPage from './pages/settings/GeneralPage';
 import UsersPage from './pages/settings/UsersPage';
 import RolesPage from './pages/settings/RolesPage';
 import CategorySettingsPage from './pages/settings/CategorySettingsPage';
-import { checkAuthStatus } from './features/auth/authSlice';
-
-// --- START OF EDIT: Import the actual ProductsPage ---
 import ProductsPage from './pages/ProductsPage';
+import CustomersPage from './pages/contacts/CustomersPage';
+import SuppliersPage from './pages/contacts/SuppliersPage';
+// --- START OF EDIT: Add the missing import ---
+import { checkAuthStatus } from './features/auth/authSlice';
 // --- END OF EDIT ---
 
-// Placeholder pages for routes that are not yet developed
+
+// Placeholder pages
 const ReportsPage = () => <div className="text-center p-10">Reports Page is under construction.</div>;
-const ContactsPage = () => <div className="text-center p-10">Contacts Page is under construction.</div>;
 const PosPage = () => <div className="text-center p-10">POS Page is under construction.</div>;
 const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
@@ -95,7 +96,8 @@ function App() {
               <Route path="/receipts" element={<ReceiptsPage />} />
               <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
               <Route path="/products" element={<ProductsPage />} />
-              <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/contacts/customers" element={<CustomersPage />} />
+              <Route path="/contacts/suppliers" element={<SuppliersPage />} />
               <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />

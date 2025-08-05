@@ -8,20 +8,19 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 
 const AppLogo = () => (
-    <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 0L40 20L20 40L0 20L20 0Z" fill="url(#paint0_linear_1_2)"/>
-        <path d="M20 5L35 20L20 35L5 20L20 5Z" fill="url(#paint1_linear_1_2)"/>
-        <path d="M20 8L32 20L20 32L8 20L20 8Z" fill="Milk Tea"/>
-        <defs>
-            <linearGradient id="paint0_linear_1_2" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse"><stop stopColor="#FECFC7"/><stop offset="1" stopColor="#FFD0FC"/></linearGradient>
-            <linearGradient id="paint1_linear_1_2" x1="20" y1="5" x2="20" y2="35" gradientUnits="userSpaceOnUse"><stop stopColor="#F4F0C0"/><stop offset="1" stopColor="#D2F9FE"/></linearGradient>
-        </defs>
-    </svg>
+    <div className="w-10 h-10 rounded-lg shadow-lg flex items-center justify-center bg-gradient-to-br from-purple-400 to-pink-400">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
+            <path d="M2 7L12 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M12 22V12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M22 7L12 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M17 4.5L7 9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+    </div>
 );
 
 const SubMenu = ({ item, isSidebarOpen, setIsSidebarOpen, userPermissions }) => {
   const location = useLocation();
-  // Filter submenu based on user permissions
   const availableSubmenu = useMemo(() =>
       item.submenu.filter(sub => userPermissions.includes(sub.permission)),
     [item.submenu, userPermissions]
@@ -30,19 +29,34 @@ const SubMenu = ({ item, isSidebarOpen, setIsSidebarOpen, userPermissions }) => 
   const isParentActive = availableSubmenu.some(sub => location.pathname.startsWith(sub.path));
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(isParentActive);
 
-  const getSubLinkClass = ({ isActive }) => `flex items-center w-full p-2.5 pl-10 pr-4 my-0.5 rounded-lg transition-colors duration-200 text-sm ${isActive ? "bg-brand-Rose/20 text-brand-Rose font-semibold" : "text-brand-text-light hover:bg-brand-Rose/5 hover:text-brand-Rose"}`;
+  const getSubLinkClass = ({ isActive }) => `flex items-center w-full p-2.5 pl-10 pr-4 my-0.5 rounded-lg transition-colors duration-200 text-sm ${isActive ? "bg-white/50 text-brand-purple font-semibold" : "text-white/80 hover:bg-white/20 hover:text-white"}`;
+  
+  const getParentButtonClass = () => {
+    let classes = "flex items-center justify-between w-full p-3 my-1 rounded-lg transition-colors duration-200 text-left text-white/90 hover:bg-white/10";
+    if (isParentActive) {
+      classes += " bg-white/20 font-semibold";
+    }
+    return classes;
+  }
+
   const handleSubMenuClick = (e) => { e.stopPropagation(); if (!isSidebarOpen) setIsSidebarOpen(true); setIsSubmenuOpen(!isSubmenuOpen); }
 
-  // If no submenu items are available, don't render the parent menu
   if (availableSubmenu.length === 0) return null;
 
   return (
     <>
-      <button onClick={handleSubMenuClick} className={`flex items-center justify-between w-full p-3 my-1 rounded-lg transition-colors duration-200 text-left ${isParentActive ? "text-brand-Brown font-semibold" : "text-gray-600 hover:bg-brand-Brown/5 hover:text-brand-Brown"}`} data-tooltip-id="nav-tooltip" data-tooltip-content={item.title} data-tooltip-place="right">
-        <div className="flex items-center"><span className="w-6 flex items-center justify-center text-xl" style={{ color: item.color }}>{item.icon}</span>{isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}</div>
-        {isSidebarOpen && <FaChevronDown className={`transition-transform duration-300 ${isSubmenuOpen ? 'rotate-180' : ''}`} />}
+      <button onClick={handleSubMenuClick} className={getParentButtonClass()} data-tooltip-id="nav-tooltip" data-tooltip-content={item.title} data-tooltip-place="right">
+        <div className="flex items-center">
+            {/* --- START OF EDIT --- */}
+            <span className="w-6 flex items-center justify-center text-xl" style={{ color: isParentActive && isSidebarOpen ? 'white' : item.color }}>
+                {item.icon}
+            </span>
+            {isSidebarOpen && <span className="ml-4 font-medium text-white">{item.title}</span>}
+            {/* --- END OF EDIT --- */}
+        </div>
+        {isSidebarOpen && <FaChevronDown className={`transition-transform duration-300 text-white ${isSubmenuOpen ? 'rotate-180' : ''}`} />}
       </button>
-      {isSubmenuOpen && isSidebarOpen && ( <div className="ml-4 border-l-2 border-brand-Yellow-light/20">{availableSubmenu.map((subItem, index) => (<NavLink key={index} to={subItem.path} className={getSubLinkClass}>{subItem.title}</NavLink>))}</div> )}
+      {isSubmenuOpen && isSidebarOpen && ( <div className="ml-4 border-l-2 border-white/20">{availableSubmenu.map((subItem, index) => (<NavLink key={index} to={subItem.path} className={getSubLinkClass}>{subItem.title}</NavLink>))}</div> )}
     </>
   );
 };
@@ -51,12 +65,10 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     const { user } = useSelector((state) => state.auth);
     const userPermissions = useMemo(() => user?.role?.permissions || [], [user]);
 
-    // Filter the main menu based on user permissions
     const accessibleMenuData = useMemo(() =>
         menuData.filter(item => {
-            if (!item.permission) return true; // Items without permission are public
+            if (!item.permission) return true;
             if (Array.isArray(item.permission)) {
-                // For parent menus, check if user has at least one of the required permissions for sub-items
                 return item.permission.some(p => userPermissions.includes(p));
             }
             return userPermissions.includes(item.permission);
@@ -64,20 +76,34 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
       [userPermissions]
     );
 
-    const getLinkClass = ({ isActive }) => `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${isActive ? "bg-brand-purple text-white shadow-md shadow-brand-purple/30" : "text-gray-600 hover:bg-brand-purple/5 hover:text-brand-purple"}`;
+    const getLinkClass = ({ isActive }) => `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${isActive ? "bg-white/90 text-brand-purple shadow-lg shadow-black/10" : "text-white/90 hover:bg-white/20"}`;
     const handleSidebarClick = (e) => { e.stopPropagation(); if (!isSidebarOpen) setIsSidebarOpen(true); };
 
     return (
       <>
-        <aside onClick={handleSidebarClick} className={`bg-sidebar-gradient border-r border-gray-200/80 transition-all duration-300 ease-in-out flex flex-col h-screen ${isSidebarOpen ? "w-64" : "w-20 cursor-pointer"}`}>
-          <div className="p-4 flex items-center justify-center border-b border-gray-200/80 h-14 flex-shrink-0">
-            <div className="flex items-center gap-3"><AppLogo />{isSidebarOpen && <span className="text-3xl font-bold bg-gradient-to-r from-brand-Purple to-brand-Pink text-transparent bg-clip-text">CrePo-POS</span>}</div>
+        <aside onClick={handleSidebarClick} className={`bg-sidebar-gradient border-r border-white/20 transition-all duration-300 ease-in-out flex flex-col h-screen ${isSidebarOpen ? "w-64" : "w-20 cursor-pointer"}`}>
+          <div className="p-4 flex items-center justify-center border-b border-white/20 h-14 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <AppLogo />
+              {isSidebarOpen && <span className="text-xl font-bold text-white tracking-wider">CrePo POS</span>}
+            </div>
           </div>
           <nav className="p-3 flex-grow overflow-y-auto">
-            <ul>{accessibleMenuData.map((item, index) => (<li key={index}>{item.submenu ? ( <SubMenu item={item} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} userPermissions={userPermissions} /> ) : ( <NavLink to={item.path} className={getLinkClass} end data-tooltip-id="nav-tooltip" data-tooltip-content={item.title} data-tooltip-place="right"><span className="w-6 flex items-center justify-center text-xl" style={{ color: item.color }}>{item.icon}</span>{isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}</NavLink>)}</li>))}</ul>
+            <ul>{accessibleMenuData.map((item, index) => (
+                <li key={index}>
+                    {item.submenu ? ( 
+                        <SubMenu item={item} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} userPermissions={userPermissions} /> 
+                    ) : ( 
+                        <NavLink to={item.path} className={getLinkClass} end data-tooltip-id="nav-tooltip" data-tooltip-content={item.title} data-tooltip-place="right">
+                           <span className="w-6 flex items-center justify-center text-xl" style={{ color: item.color }}>{item.icon}</span>
+                           {isSidebarOpen && <span className="ml-4 font-medium">{item.title}</span>}
+                        </NavLink>
+                    )}
+                </li>
+            ))}</ul>
           </nav>
         </aside>
-        {!isSidebarOpen && <Tooltip id="nav-tooltip" style={{ backgroundColor: '#E8ABB5', color: 'white', zIndex: 99, borderRadius: '8px', padding: '4px 10px' }} />}
+        {!isSidebarOpen && <Tooltip id="nav-tooltip" style={{ backgroundColor: '#A076F9', color: 'white', zIndex: 99, borderRadius: '8px', padding: '4px 10px' }} />}
       </>
     );
 }
