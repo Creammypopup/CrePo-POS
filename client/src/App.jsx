@@ -6,34 +6,38 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch } from 'react-redux';
 import { FaCalendarAlt } from 'react-icons/fa';
 import moment from 'moment';
+
+// --- Core Components ---
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
 import Spinner from './components/Spinner';
+
+// --- Page Imports ---
 import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import CalendarPage from './pages/CalendarPage';
 import ExpensesPage from './pages/ExpensesPage';
+import ProductsPage from './pages/ProductsPage';
+import PosPage from './pages/PosPage';
+import CustomersPage from './pages/contacts/CustomersPage';
+import SuppliersPage from './pages/contacts/SuppliersPage';
 import GeneralPage from './pages/settings/GeneralPage';
 import UsersPage from './pages/settings/UsersPage';
 import RolesPage from './pages/settings/RolesPage';
-import CategorySettingsPage from './pages/settings/CategorySettingsPage';
-import ProductsPage from './pages/ProductsPage';
-import CustomersPage from './pages/contacts/CustomersPage';
-import SuppliersPage from './pages/contacts/SuppliersPage';
-// --- START OF EDIT: Add the missing import ---
+
+// --- Redux Actions ---
 import { checkAuthStatus } from './features/auth/authSlice';
-// --- END OF EDIT ---
 
 
 // Placeholder pages
 const ReportsPage = () => <div className="text-center p-10">Reports Page is under construction.</div>;
-const PosPage = () => <div className="text-center p-10">POS Page is under construction.</div>;
 const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
 const ReceiptsPage = () => <div className="text-center p-10">Receipts Page is under construction.</div>;
 const PurchaseOrdersPage = () => <div className="text-center p-10">Purchase Orders Page is under construction.</div>;
 const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
+const CategorySettingsPage = () => <div className="text-center p-10">This page has been integrated into Expenses and Products.</div>;
 
 
 function BottomBar() {
@@ -41,7 +45,7 @@ function BottomBar() {
   const handleDateChange = (e) => { setCurrentDate(e.target.value); };
 
   return (
-    <div className="h-10 bg-[#F5EBE0] border-t border-gray-200/80 flex items-center justify-end px-6 text-sm">
+    <div className="h-10 bg-[#F5EBE0] border-t border-gray-200/80 flex items-center justify-end px-6 text-sm flex-shrink-0">
         <div className="flex items-center">
             <FaCalendarAlt className="mr-2 text-gray-500" />
             <label htmlFor="system-date" className="mr-2 font-medium text-gray-600 text-xs">วันที่ของระบบ:</label>
@@ -59,7 +63,11 @@ function BottomBar() {
 
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const handleContentClick = () => { if (isSidebarOpen) setIsSidebarOpen(false); };
+  const handleContentClick = (e) => { 
+    if (isSidebarOpen && e.target.closest('aside') === null) {
+        setIsSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 font-sans">
@@ -78,8 +86,15 @@ function DashboardLayout() {
 function App() {
   const dispatch = useDispatch();
   const [authChecked, setAuthChecked] = useState(false);
-  useEffect(() => { dispatch(checkAuthStatus()).finally(() => setAuthChecked(true)); }, [dispatch]);
-  if (!authChecked) return <Spinner />;
+
+  useEffect(() => {
+    dispatch(checkAuthStatus()).finally(() => setAuthChecked(true));
+  }, [dispatch]);
+
+  if (!authChecked) {
+    return <Spinner />;
+  }
+
   return (
     <>
       <Router>
@@ -88,18 +103,18 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/sales/create" element={<PosPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/contacts/customers" element={<CustomersPage />} />
+              <Route path="/contacts/suppliers" element={<SuppliersPage />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/receipts" element={<ReceiptsPage />} />
               <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/contacts/customers" element={<CustomersPage />} />
-              <Route path="/contacts/suppliers" element={<SuppliersPage />} />
               <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />
               <Route path="/settings/users" element={<UsersPage />} />
               <Route path="/settings/roles" element={<RolesPage />} />

@@ -2,9 +2,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import saleService from './saleService';
 import { handleApiError } from '../../utils/errorHandler';
+import { getProducts } from '../product/productSlice'; // Import to refresh stock
+
+const walkInCustomer = { _id: 'walk-in', name: 'ลูกค้าทั่วไป' };
 
 const initialState = {
   cart: [],
+  selectedCustomer: walkInCustomer,
+  heldBills: [],
   isLoading: false,
   isError: false,
   isSuccess: false,
@@ -13,7 +18,9 @@ const initialState = {
 
 export const createSale = createAsyncThunk('sale/create', async (saleData, thunkAPI) => {
     try {
-        return await saleService.createSale(saleData);
+        const result = await saleService.createSale(saleData);
+        thunkAPI.dispatch(getProducts()); // Re-fetch products to update stock
+        return result;
     } catch (error) {
         return thunkAPI.rejectWithValue(handleApiError(error));
     }
@@ -23,11 +30,19 @@ export const saleSlice = createSlice({
   name: 'sale',
   initialState,
   reducers: {
-    reset: (state) => {
-        state.isLoading = false;
-        state.isError = false;
-        state.isSuccess = false;
-        state.message = '';
+    resetSale: (state) => {
+      state.cart = [];
+      state.selectedCustomer = walkInCustomer;
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = false;
+      state.message = '';
+    },
+    selectCustomer: (state, action) => {
+        state.selectedCustomer = action.payload;
+    },
+    clearCustomer: (state) => {
+        state.selectedCustomer = walkInCustomer;
     },
     addToCart: (state, action) => {
         const itemInCart = state.cart.find((item) => item._id === action.payload._id);
@@ -39,13 +54,11 @@ export const saleSlice = createSlice({
     },
     incrementQuantity: (state, action) => {
         const item = state.cart.find((item) => item._id === action.payload);
-        item.quantity++;
+        if(item) item.quantity++;
     },
     decrementQuantity: (state, action) => {
         const item = state.cart.find((item) => item._id === action.payload);
-        if (item.quantity === 1) {
-            item.quantity = 1;
-        } else {
+        if (item && item.quantity > 1) {
             item.quantity--;
         }
     },
@@ -54,6 +67,26 @@ export const saleSlice = createSlice({
     },
     clearCart: (state) => {
         state.cart = [];
+        state.selectedCustomer = walkInCustomer;
+    },
+    holdBill: (state) => {
+        if (state.cart.length > 0) {
+            state.heldBills.push({
+                cart: state.cart,
+                customer: state.selectedCustomer,
+                timestamp: new Date().toISOString()
+            });
+            state.cart = [];
+            state.selectedCustomer = walkInCustomer;
+        }
+    },
+    recallBill: (state, action) => {
+        const billToRecall = state.heldBills[action.payload];
+        if (billToRecall) {
+            state.cart = billToRecall.cart;
+            state.selectedCustomer = billToRecall.customer;
+            state.heldBills.splice(action.payload, 1);
+        }
     }
   },
   extraReducers: (builder) => {
@@ -61,10 +94,11 @@ export const saleSlice = createSlice({
         .addCase(createSale.pending, (state) => {
             state.isLoading = true;
         })
-        .addCase(createSale.fulfilled, (state, action) => {
+        .addCase(createSale.fulfilled, (state) => {
             state.isLoading = false;
             state.isSuccess = true;
-            state.cart = []; // Clear cart on successful sale
+            state.cart = [];
+            state.selectedCustomer = walkInCustomer;
         })
         .addCase(createSale.rejected, (state, action) => {
             state.isLoading = false;
@@ -74,5 +108,5 @@ export const saleSlice = createSlice({
   }
 });
 
-export const { reset, addToCart, incrementQuantity, decrementQuantity, removeFromCart, clearCart } = saleSlice.actions;
+export const { resetSale, addToCart, incrementQuantity, decrementQuantity, removeFromCart, clearCart, selectCustomer, clearCustomer, holdBill, recallBill } = saleSlice.actions;
 export default saleSlice.reducer;
