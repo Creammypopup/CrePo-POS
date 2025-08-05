@@ -51,6 +51,42 @@ function ProductsPage() {
         })
         .catch((e) => toast.error(e || 'เกิดข้อผิดพลาดในการลบ'));
   }
+  
+  const PriceDisplay = ({ product }) => {
+    if (product.hasMultipleSizes && product.sizes && product.sizes.length > 0) {
+      const prices = product.sizes.map(s => s.price).filter(p => p != null);
+      if (prices.length === 0) {
+        return <span className="text-sm text-gray-500">ไม่มีราคา</span>;
+      }
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      return (
+        <span className="text-sm text-gray-700">
+          {minPrice.toLocaleString('th-TH')} - {maxPrice.toLocaleString('th-TH')}
+        </span>
+      );
+    }
+    return (
+      <span className="text-sm text-green-600 font-semibold">
+        {product.price?.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </span>
+    );
+  };
+  
+  // --- START OF EDIT ---
+  const StockDisplay = ({ product }) => {
+    let stockValue;
+    if (product.hasMultipleSizes && product.sizes && product.sizes.length > 0) {
+        stockValue = product.sizes.reduce((total, size) => total + (size.stock || 0), 0);
+    } else {
+        stockValue = product.stock;
+    }
+    return (
+        <span className="text-sm font-bold">{stockValue} {product.mainUnit}</span>
+    );
+  }
+  // --- END OF EDIT ---
+
 
   if (isLoading && !products.length) return <Spinner />;
 
@@ -116,7 +152,7 @@ function ProductsPage() {
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">รหัสสินค้า</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">ชื่อสินค้า</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
-                  <th className="py-3 px-4 text-right font-semibold text-gray-600">ราคาขาย</th>
+                  <th className="py-3 px-4 text-right font-semibold text-gray-600">ราคาขาย (บาท)</th>
                   <th className="py-3 px-4 text-right font-semibold text-gray-600">คงเหลือ</th>
                   <th className="py-3 px-4 text-center font-semibold text-gray-600 non-printable">การกระทำ</th>
                 </tr>
@@ -131,8 +167,14 @@ function ProductsPage() {
                         <td className="p-3 px-4 text-sm text-gray-500">{product.sku}</td>
                         <td className="p-3 px-4 text-sm font-medium text-gray-800">{product.name}</td>
                         <td className="p-3 px-4 text-sm text-gray-600">{product.category}</td>
-                        <td className="p-3 px-4 text-sm text-right text-green-600 font-semibold">{product.price.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td className="p-3 px-4 text-sm text-right font-bold">{product.stock} {product.mainUnit}</td>
+                        <td className="p-3 px-4 text-right">
+                          <PriceDisplay product={product} />
+                        </td>
+                        {/* --- START OF EDIT --- */}
+                        <td className="p-3 px-4 text-right">
+                           <StockDisplay product={product} />
+                        </td>
+                        {/* --- END OF EDIT --- */}
                         <td className="p-3 px-4 text-center non-printable">
                           <div className="flex justify-center gap-2">
                               <button onClick={() => openEditModal(product)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>

@@ -20,7 +20,8 @@ const supplierInfoSchema = new mongoose.Schema({
 const productSizeSchema = new mongoose.Schema({
     name: { type: String, required: true }, // e.g., 'S', 'M', 'L', '1 นิ้ว'
     price: { type: Number, required: true },
-    cost: { type: Number, default: 0 }
+    cost: { type: Number, default: 0 },
+    stock: { type: Number, default: 0 }
 });
 
 const weightInfoSchema = new mongoose.Schema({
@@ -42,12 +43,13 @@ const productSchema = new mongoose.Schema({
   image: { type: String, default: '/images/placeholder.png' },
   category: { type: String, required: [true, 'กรุณาระบุหมวดหมู่'] },
   mainUnit: { type: String, required: [true, 'กรุณาระบุหน่วยนับหลัก'], default: 'ชิ้น' },
-  stock: { type: Number, required: true, default: 0 },
+  stock: { type: Number, default: 0 },
   stockAlert: { type: Number, default: 0 },
-  price: { type: Number, required: [true, 'กรุณาระบุราคาขาย'], default: 0 },
-  cost: { type: Number, required: [true, 'กรุณาระบุราคาทุน'], default: 0 },
+  // --- START OF EDIT ---
+  price: { type: Number, default: 0 }, // ไม่ required แล้ว
+  cost: { type: Number, default: 0 },  // ไม่ required แล้ว
+  // --- END OF EDIT ---
   
-  // New/Updated fields for advanced features
   productType: { type: String, enum: ['standard', 'weighted', 'service', 'gift'], default: 'standard' },
   hasMultipleSizes: { type: Boolean, default: false },
   sizes: [productSizeSchema],

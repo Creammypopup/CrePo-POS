@@ -28,12 +28,27 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private
 const createProduct = asyncHandler(async (req, res) => {
-    const { name, category, price, cost } = req.body;
+    // --- START OF EDIT ---
+    const { name, category, price, cost, hasMultipleSizes, sizes } = req.body;
 
-    if (!name || !category || price === undefined || cost === undefined) {
+    // Enhanced validation
+    if (!name || !category) {
         res.status(400);
-        throw new Error('Please provide name, category, price and cost');
+        throw new Error('กรุณาระบุชื่อสินค้าและหมวดหมู่');
     }
+
+    if (hasMultipleSizes) {
+        if (!sizes || sizes.length === 0) {
+            res.status(400);
+            throw new Error('กรุณาระบุขนาดสำหรับสินค้าหลายขนาด');
+        }
+    } else {
+        if (price === undefined || cost === undefined) {
+            res.status(400);
+            throw new Error('กรุณาระบุราคาขายและราคาทุนสำหรับสินค้าปกติ');
+        }
+    }
+    // --- END OF EDIT ---
 
     const product = await Product.create({
         ...req.body,
