@@ -9,8 +9,9 @@ const initialState = {
         totalItemsSold: 0,
         topProductsToday: [],
         lowStockProducts: [],
-        expiringProducts: [], // <-- ADD THIS LINE
-        overduePawns: [],     // <-- ADD THIS LINE
+        expiringProducts: [],
+        overduePawns: [],
+        pendingDeliveries: [], // <-- ADD THIS LINE
     },
     isLoading: true,
     isError: false,
