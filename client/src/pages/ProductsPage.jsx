@@ -1,8 +1,8 @@
 // client/src/pages/ProductsPage.jsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Fragment } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { getProducts, deleteProduct, reset } from '../features/product/productSlice';
-import { FaPlus, FaBoxOpen, FaPrint, FaBarcode, FaFileImport, FaFileExport, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaBoxOpen, FaPrint, FaBarcode, FaFileImport, FaFileExport, FaEdit, FaTrash, FaSearch, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import Spinner from '../components/Spinner';
 import AddProductModal from '../components/modals/AddProductModal';
 import BarcodeModal from '../components/modals/BarcodeModal';
@@ -19,6 +19,7 @@ function ProductsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, product: null });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedRows, setExpandedRows] = useState([]);
 
   useEffect(() => {
     if (isError) toast.error(message);
@@ -51,67 +52,17 @@ function ProductsPage() {
         })
         .catch((e) => toast.error(e || 'เกิดข้อผิดพลาดในการลบ'));
   }
-  
-  const PriceDisplay = ({ product }) => {
-    if (product.hasMultipleSizes && product.sizes && product.sizes.length > 0) {
-      const prices = product.sizes.map(s => s.price).filter(p => p != null);
-      if (prices.length === 0) {
-        return <span className="text-sm text-gray-500">ไม่มีราคา</span>;
-      }
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      return (
-        <span className="text-sm text-gray-700">
-          {minPrice.toLocaleString('th-TH')} - {maxPrice.toLocaleString('th-TH')}
-        </span>
-      );
-    }
-    return (
-      <span className="text-sm text-green-600 font-semibold">
-        {product.price?.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </span>
-    );
-  };
-  
-  // --- START OF EDIT ---
-  const StockDisplay = ({ product }) => {
-    let stockValue;
-    if (product.hasMultipleSizes && product.sizes && product.sizes.length > 0) {
-        stockValue = product.sizes.reduce((total, size) => total + (size.stock || 0), 0);
-    } else {
-        stockValue = product.stock;
-    }
-    return (
-        <span className="text-sm font-bold">{stockValue} {product.mainUnit}</span>
-    );
-  }
-  // --- END OF EDIT ---
 
+  const toggleRow = (id) => {
+    setExpandedRows(expandedRows.includes(id) ? expandedRows.filter(rowId => rowId !== id) : [...expandedRows, id]);
+  };
 
   if (isLoading && !products.length) return <Spinner />;
 
   return (
     <>
-      <style>{`
-          @media print {
-              body * { visibility: hidden; }
-              .printable-container, .printable-container * { visibility: visible !important; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
-              .printable-container { 
-                  position: absolute; 
-                  left: 0; 
-                  top: 0; 
-                  width: 100%; 
-                  font-size: 10pt; 
-                  padding: 1rem; 
-              }
-              .non-printable { display: none !important; }
-              .print-title { display: block !important; text-align: center; font-size: 18pt; margin-bottom: 1rem; }
-              table { width: 100%; border-collapse: collapse; }
-              th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-              th { background-color: #f2f2f2 !important; }
-          }
-      `}</style>
       <div className="space-y-6">
+        {/* ... (ส่วน Header และ Buttons เหมือนเดิม) ... */}
         <div className="flex flex-wrap justify-between items-center gap-4 non-printable">
           <div>
              <h1 className="text-3xl font-bold text-gray-800">สินค้าทั้งหมด</h1>
@@ -143,12 +94,11 @@ function ProductsPage() {
           </div>
 
         <div className="bg-white shadow-lg rounded-2xl p-4 printable-container">
-           <h1 className="hidden print-title">รายการสินค้าทั้งหมด</h1>
            <div className="overflow-x-auto">
              <table className="min-w-full bg-white">
                <thead className="bg-gray-50">
                 <tr>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600 non-printable">ลำดับ</th>
+                  <th className="py-3 px-4 text-left font-semibold text-gray-600 w-12"></th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">รหัสสินค้า</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">ชื่อสินค้า</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
@@ -161,27 +111,43 @@ function ProductsPage() {
                   {isLoading ? (
                     <tr><td colSpan="7" className="text-center py-10"><Spinner/></td></tr>
                   ) : filteredProducts.length > 0 ? (
-                    filteredProducts.map((product, index) => (
-                      <tr key={product._id} className="border-b hover:bg-gray-50">
-                        <td className="p-3 px-4 text-sm text-gray-500 non-printable">{index + 1}</td>
-                        <td className="p-3 px-4 text-sm text-gray-500">{product.sku}</td>
-                        <td className="p-3 px-4 text-sm font-medium text-gray-800">{product.name}</td>
-                        <td className="p-3 px-4 text-sm text-gray-600">{product.category}</td>
-                        <td className="p-3 px-4 text-right">
-                          <PriceDisplay product={product} />
-                        </td>
-                        {/* --- START OF EDIT --- */}
-                        <td className="p-3 px-4 text-right">
-                           <StockDisplay product={product} />
-                        </td>
-                        {/* --- END OF EDIT --- */}
-                        <td className="p-3 px-4 text-center non-printable">
-                          <div className="flex justify-center gap-2">
-                              <button onClick={() => openEditModal(product)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>
-                              <button onClick={() => setDeleteConfirm({ isOpen: true, product })} className="btn p-2.5 bg-red-100 text-red-700 hover:bg-red-200"><FaTrash /></button>
-                          </div>
-                        </td>
-                      </tr>
+                    filteredProducts.map((product) => (
+                      <Fragment key={product._id}>
+                        <tr className="border-b hover:bg-gray-50">
+                          <td className="p-3 px-4 text-center">
+                            {product.hasMultipleSizes && (
+                              <button onClick={() => toggleRow(product._id)} className="text-gray-400 hover:text-brand-purple">
+                                {expandedRows.includes(product._id) ? <FaChevronDown /> : <FaChevronRight />}
+                              </button>
+                            )}
+                          </td>
+                          <td className="p-3 px-4 text-sm text-gray-500">{product.sku}</td>
+                          <td className="p-3 px-4 text-sm font-medium text-gray-800">{product.name}</td>
+                          <td className="p-3 px-4 text-sm text-gray-600">{product.category}</td>
+                          <td className="p-3 px-4 text-right text-sm text-gray-500 italic">
+                            {product.hasMultipleSizes ? 'ดูด้านล่าง' : product.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="p-3 px-4 text-right text-sm text-gray-500 italic">
+                             {product.hasMultipleSizes ? 'ดูด้านล่าง' : `${product.stock} ${product.mainUnit}`}
+                          </td>
+                          <td className="p-3 px-4 text-center non-printable">
+                            <div className="flex justify-center gap-2">
+                                <button onClick={() => openEditModal(product)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>
+                                <button onClick={() => setDeleteConfirm({ isOpen: true, product })} className="btn p-2.5 bg-red-100 text-red-700 hover:bg-red-200"><FaTrash /></button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedRows.includes(product._id) && product.sizes.map((size, index) => (
+                          <tr key={`${product._id}-${index}`} className="bg-purple-50 border-b border-purple-100">
+                            <td colSpan="2" className="p-2 pl-16 text-sm text-gray-500">{size.sku || '-'}</td>
+                            <td className="p-2 text-sm text-purple-800">{size.name}</td>
+                            <td className="p-2"></td>
+                            <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                            <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.stock} {product.mainUnit}</td>
+                            <td className="p-2"></td>
+                          </tr>
+                        ))}
+                      </Fragment>
                     ))
                   ) : (
                     <tr>

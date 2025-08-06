@@ -28,10 +28,8 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private
 const createProduct = asyncHandler(async (req, res) => {
-    // --- START OF EDIT ---
     const { name, category, price, cost, hasMultipleSizes, sizes } = req.body;
 
-    // Enhanced validation
     if (!name || !category) {
         res.status(400);
         throw new Error('กรุณาระบุชื่อสินค้าและหมวดหมู่');
@@ -42,13 +40,20 @@ const createProduct = asyncHandler(async (req, res) => {
             res.status(400);
             throw new Error('กรุณาระบุขนาดสำหรับสินค้าหลายขนาด');
         }
+        // Auto-generate SKU for sizes if not provided
+        req.body.sizes.forEach((size, index) => {
+            if (!size.sku) {
+                // Sanitize size name for SKU
+                const sanitizedSizeName = size.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                req.body.sizes[index].sku = `${req.body.sku || 'VAR'}-${sanitizedSizeName}`;
+            }
+        });
     } else {
         if (price === undefined || cost === undefined) {
             res.status(400);
             throw new Error('กรุณาระบุราคาขายและราคาทุนสำหรับสินค้าปกติ');
         }
     }
-    // --- END OF EDIT ---
 
     const product = await Product.create({
         ...req.body,
@@ -72,6 +77,16 @@ const updateProduct = asyncHandler(async (req, res) => {
     if (product.user.toString() !== req.user.id) {
         res.status(401);
         throw new Error('User not authorized');
+    }
+    
+    // Auto-generate SKU for new sizes if not provided
+    if (req.body.hasMultipleSizes && req.body.sizes) {
+        req.body.sizes.forEach((size, index) => {
+            if (!size.sku) {
+                const sanitizedSizeName = size.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                req.body.sizes[index].sku = `${req.body.sku || 'VAR'}-${sanitizedSizeName}`;
+            }
+        });
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });

@@ -7,7 +7,7 @@ const barcodeGenerator = customAlphabet('1234567890', 13);
 
 const sellingUnitSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    conversionRate: { type: Number, required: true }, // How many of the main unit make up this unit
+    conversionRate: { type: Number, required: true },
     price: { type: Number, required: true },
 });
 
@@ -17,19 +17,22 @@ const supplierInfoSchema = new mongoose.Schema({
     cost: { type: Number, required: true },
 });
 
+// --- START OF EDIT ---
 const productSizeSchema = new mongoose.Schema({
-    name: { type: String, required: true }, // e.g., 'S', 'M', 'L', '1 นิ้ว'
+    name: { type: String, required: true },
+    sku: { type: String }, // Added SKU for each size
     price: { type: Number, required: true },
     cost: { type: Number, default: 0 },
     stock: { type: Number, default: 0 }
 });
+// --- END OF EDIT ---
 
 const weightInfoSchema = new mongoose.Schema({
-    baseWeight: { type: Number, required: true }, // e.g., 18
-    baseUnit: { type: String, required: true }, // e.g., 'กิโลกรัม'
-    sellingUnit: { type: String, required: true }, // e.g., 'ลัง'
+    baseWeight: { type: Number, required: true },
+    baseUnit: { type: String, required: true },
+    sellingUnit: { type: String, required: true },
     prices: [{
-        unit: String, // e.g., 'กิโลกรัม', 'ขีด'
+        unit: String,
         price: Number
     }]
 });
@@ -45,10 +48,8 @@ const productSchema = new mongoose.Schema({
   mainUnit: { type: String, required: [true, 'กรุณาระบุหน่วยนับหลัก'], default: 'ชิ้น' },
   stock: { type: Number, default: 0 },
   stockAlert: { type: Number, default: 0 },
-  // --- START OF EDIT ---
-  price: { type: Number, default: 0 }, // ไม่ required แล้ว
-  cost: { type: Number, default: 0 },  // ไม่ required แล้ว
-  // --- END OF EDIT ---
+  price: { type: Number, default: 0 },
+  cost: { type: Number, default: 0 },
   
   productType: { type: String, enum: ['standard', 'weighted', 'service', 'gift'], default: 'standard' },
   hasMultipleSizes: { type: Boolean, default: false },
@@ -68,7 +69,6 @@ productSchema.pre('save', function(next) {
     if (this.isNew && !this.barcode) {
         this.barcode = barcodeGenerator();
     }
-    // Set default supplier if none is provided but cost is
     if (this.isNew && this.suppliers.length === 0 && this.cost > 0) {
         this.suppliers.push({ supplierName: 'ไม่ระบุ', cost: this.cost });
     }
