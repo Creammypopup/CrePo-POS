@@ -32,7 +32,8 @@ app.use('/api/sales', require('./routes/saleRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/pawns', require('./routes/pawnRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
-app.use('/api/reports', require('./routes/reportRoutes')); // <-- ADD THIS LINE
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/purchase-orders', require('./routes/purchaseOrderRoutes')); // <-- ADD THIS LINE
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

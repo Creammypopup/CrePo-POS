@@ -7,6 +7,7 @@ import { FaTimes, FaSave, FaPlus, FaTrash } from 'react-icons/fa';
 import { updateProduct } from '../../features/product/productSlice';
 import { getProductCategories } from '../../features/productCategory/productCategorySlice';
 import ProductCategoryModal from './ProductCategoryModal';
+import moment from 'moment';
 
 const customModalStyles = {
   content: { top: '50%', left: '50%', right: 'auto', bottom: 'auto', marginRight: '-50%', transform: 'translate(-50%, -50%)', borderRadius: '1.5rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '0', width: '90%', maxWidth: '800px', background: '#FDF7FF', maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
@@ -37,7 +38,8 @@ function EditProductModal({ isOpen, onClose, product }) {
     if (product && isOpen) {
         setFormData({
             ...product,
-            sizes: product.sizes || [],
+            expiryDate: product.expiryDate ? moment(product.expiryDate).format('YYYY-MM-DD') : '',
+            sizes: product.sizes ? product.sizes.map(s => ({...s, expiryDate: s.expiryDate ? moment(s.expiryDate).format('YYYY-MM-DD') : ''})) : [],
             sellingUnits: product.sellingUnits || [],
         });
         dispatch(getProductCategories());
@@ -113,30 +115,6 @@ function EditProductModal({ isOpen, onClose, product }) {
                     </div>
                 </div>
                 
-                {/* Advanced Functions */}
-                <div className="bg-white p-5 border rounded-2xl shadow-sm">
-                    <h3 className="font-semibold text-lg mb-4 text-orange-600">ฟังก์ชันเพิ่มเติม</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Switch label="สินค้าหลายขนาด" isEnabled={formData.hasMultipleSizes || false} onToggle={() => setFormData(p => ({...p, hasMultipleSizes: !p.hasMultipleSizes, price: p.hasMultipleSizes ? p.price : '', cost: p.hasMultipleSizes ? p.cost : ''}))} />
-                        <Switch label="สินค้ามีหลายหน่วย" isEnabled={formData.hasSubUnits || false} onToggle={() => setFormData(p => ({...p, hasSubUnits: !p.hasSubUnits}))} />
-                        <Switch label="สินค้าชั่งน้ำหนัก" isEnabled={formData.productType === 'weighted'} onToggle={() => setFormData(p => ({...p, productType: p.productType === 'weighted' ? 'standard' : 'weighted'}))} />
-                    </div>
-                </div>
-
-                {/* Price & Cost */}
-                <div className="bg-white p-5 border rounded-2xl shadow-sm">
-                    <h3 className="font-semibold text-lg mb-4 text-green-600">ราคาและต้นทุน (พื้นฐาน)</h3>
-                    {formData.hasMultipleSizes && <p className="text-xs text-amber-600 -mt-3 mb-3 p-2 bg-amber-100 rounded-lg">เมื่อเปิดใช้งาน "สินค้าหลายขนาด" ราคาและต้นทุนหลักจะถูกใช้เป็นค่าเริ่มต้นเท่านั้น กรุณากำหนดราคาของแต่ละขนาดในส่วน "จัดการขนาดสินค้า"</p>}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-                        <input type="number" step="any" name="cost" value={formData.cost ?? ''} onChange={onChange} className="form-input" placeholder="ราคาทุน" required={!formData.hasMultipleSizes} min="0" disabled={formData.hasMultipleSizes} />
-                        <input type="number" step="any" name="price" value={formData.price ?? ''} onChange={onChange} className="form-input" placeholder="ราคาขาย" required={!formData.hasMultipleSizes} min={formData.cost || 0} disabled={formData.hasMultipleSizes} />
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-center">กำไร (บาท)</label>
-                            <input type="text" value={profit.toLocaleString('th-TH')} className="form-input bg-gray-100 text-center" readOnly />
-                        </div>
-                    </div>
-                </div>
-
                 {/* Inventory */}
                 <div className="bg-white p-5 border rounded-2xl shadow-sm">
                     <h3 className="font-semibold text-lg mb-4 text-blue-600">คลังสินค้า</h3>
@@ -144,6 +122,7 @@ function EditProductModal({ isOpen, onClose, product }) {
                         <input type="number" name="stock" value={formData.stock ?? ''} onChange={onChange} className="form-input" placeholder="จำนวนตั้งต้น" disabled={formData.hasMultipleSizes}/>
                         <input type="text" name="mainUnit" value={formData.mainUnit || ''} onChange={onChange} className="form-input" placeholder="หน่วยนับหลัก*" required />
                         <input type="number" name="stockAlert" value={formData.stockAlert ?? ''} onChange={onChange} className="form-input" placeholder="แจ้งเตือนเมื่อต่ำกว่า" />
+                        <input type="date" name="expiryDate" value={formData.expiryDate} onChange={onChange} className="form-input" disabled={formData.hasMultipleSizes}/>
                     </div>
                 </div>
                 
@@ -152,53 +131,24 @@ function EditProductModal({ isOpen, onClose, product }) {
                      <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-lg text-indigo-600">จัดการขนาดสินค้า</h3>
-                            <button type="button" onClick={() => addDynamicItem('sizes', { name: '', sku: '', cost: '', price: '', stock: '' })} className="btn btn-3d-pastel bg-indigo-200 text-indigo-800 text-xs py-1 px-3"><FaPlus className="mr-2"/>เพิ่มขนาด</button>
+                            <button type="button" onClick={() => addDynamicItem('sizes', { name: '', sku: '', cost: '', price: '', stock: '', expiryDate: '' })} className="btn btn-3d-pastel bg-indigo-200 text-indigo-800 text-xs py-1 px-3"><FaPlus className="mr-2"/>เพิ่มขนาด</button>
                         </div>
                         <div className="space-y-2">
                              <div className="grid grid-cols-12 gap-2 px-2 text-xs font-semibold text-gray-500">
                                 <div className="col-span-3">ชื่อขนาด*</div>
-                                <div className="col-span-2">รหัส SKU</div>
                                 <div className="col-span-2">ต้นทุน</div>
                                 <div className="col-span-2">ราคาขาย*</div>
                                 <div className="col-span-2">สต็อก</div>
+                                <div className="col-span-2">วันหมดอายุ</div>
                             </div>
                             {formData.sizes && formData.sizes.map((size, index) => (
                                 <div key={index} className="grid grid-cols-12 gap-2 items-center">
                                 <input type="text" name="name" value={size.name} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="เช่น S, M" className="form-input !py-1.5 col-span-3" required/>
-                                <input type="text" name="sku" value={size.sku} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="รหัสสินค้า" className="form-input !py-1.5 col-span-2"/>
                                 <input type="number" step="any" name="cost" value={size.cost} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0.00" className="form-input !py-1.5 col-span-2"/>
                                 <input type="number" step="any" name="price" value={size.price} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0.00" className="form-input !py-1.5 col-span-2" required/>
                                 <input type="number" name="stock" value={size.stock} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0" className="form-input !py-1.5 col-span-2" />
+                                <input type="date" name="expiryDate" value={size.expiryDate} onChange={e => handleDynamicChange('sizes', index, e)} className="form-input !py-1.5 col-span-2"/>
                                 <button type="button" onClick={() => removeDynamicItem('sizes', index)} className="btn p-2 bg-red-100 text-red-600 col-span-1"><FaTrash/></button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                 {/* Sub-units Section */}
-                {formData.hasSubUnits && (
-                    <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-semibold text-lg text-teal-600">จัดการหน่วยย่อย</h3>
-                            <button type="button" onClick={() => addDynamicItem('sellingUnits', { name: '', conversionRate: '', price: '' })} className="btn btn-3d-pastel bg-teal-200 text-teal-800 text-xs py-1 px-3"><FaPlus className="mr-2"/>เพิ่มหน่วยย่อย</button>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="grid grid-cols-12 gap-2 px-2 text-xs font-semibold text-gray-500">
-                                <div className="col-span-4">ชื่อหน่วยย่อย*</div>
-                                <div className="col-span-4">อัตราส่วนต่อหน่วยหลัก*</div>
-                                <div className="col-span-3">ราคาขาย*</div>
-                            </div>
-                            {formData.sellingUnits && formData.sellingUnits.map((unit, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                                <input type="text" name="name" value={unit.name} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="เช่น แพ็ค" className="form-input !py-1.5 col-span-4" required/>
-                                <div className="col-span-4 relative flex items-center">
-                                        <span className="absolute left-3 text-gray-500 text-sm">1 {unit.name || 'หน่วย'} =</span>
-                                        <input type="number" step="any" name="conversionRate" value={unit.conversionRate} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="จำนวน" className="form-input !py-1.5 pl-24 pr-12 text-center" required/>
-                                        <span className="absolute right-3 text-gray-500">{formData.mainUnit}</span>
-                                </div>
-                                <input type="number" step="any" name="price" value={unit.price} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="ราคาขาย" className="form-input !py-1.5 col-span-3" required/>
-                                <button type="button" onClick={() => removeDynamicItem('sellingUnits', index)} className="btn p-2 bg-red-100 text-red-600 col-span-1"><FaTrash/></button>
                                 </div>
                             ))}
                         </div>

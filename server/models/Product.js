@@ -9,7 +9,7 @@ const barcodeGenerator = customAlphabet('1234567890', 13);
 // Schema for products with multiple selling units (e.g., box, pack)
 const sellingUnitSchema = new mongoose.Schema({
     name: { type: String, required: true }, // e.g., "แพ็ค"
-    conversionRate: { type: Number, required: true }, // e.g., 12 (1 แพ็ค = 12 ชิ้น)
+    conversionRate: { type: Number, required: true }, // e.g., 1 แพ็ค = 12 ชิ้น)
     price: { type: Number, required: true }, // Price for this unit
 });
 
@@ -19,7 +19,8 @@ const productSizeSchema = new mongoose.Schema({
     sku: { type: String, uppercase: true }, // SKU for this specific size
     price: { type: Number, required: true, default: 0 },
     cost: { type: Number, default: 0 },
-    stock: { type: Number, default: 0 }
+    stock: { type: Number, default: 0 },
+    expiryDate: { type: Date }, // <-- ADD THIS LINE
 });
 
 const productSchema = new mongoose.Schema({
@@ -37,6 +38,7 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, default: 0 },
   cost: { type: Number, default: 0 },
   stockAlert: { type: Number, default: 0 },
+  expiryDate: { type: Date }, 
   
   // Flags and schemas for advanced product types
   productType: { type: String, enum: ['standard', 'weighted', 'service', 'gift'], default: 'standard' },

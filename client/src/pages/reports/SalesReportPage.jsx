@@ -1,7 +1,7 @@
 // client/src/pages/reports/SalesReportPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { getSalesReport, reset } from '../../features/report/reportSlice';
 import { FaPrint, FaFileExcel, FaCalendarAlt } from 'react-icons/fa';
 import Spinner from '../../components/Spinner';
@@ -17,7 +17,7 @@ const ReportStatCard = ({ title, value, color }) => (
 
 function SalesReportPage() {
     const dispatch = useDispatch();
-    const navigate = useNavigate(); // Initialize navigate
+    const navigate = useNavigate();
     const { salesReport, isLoading } = useSelector((state) => state.report);
     const [dateRange, setDateRange] = useState({
         startDate: moment().startOf('month').format('YYYY-MM-DD'),
@@ -36,6 +36,24 @@ function SalesReportPage() {
     const handleSearch = () => {
         dispatch(getSalesReport(dateRange));
     };
+    
+    // --- START OF EDIT ---
+    const getDeliveryStatusChip = (status) => {
+        switch (status) {
+            case 'pending': return 'bg-gray-200 text-gray-800';
+            case 'preparing': return 'bg-yellow-200 text-yellow-800';
+            case 'shipping': return 'bg-blue-200 text-blue-800';
+            case 'delivered': return 'bg-green-200 text-green-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+    const deliveryStatusTranslations = {
+        pending: 'รอจัดส่ง',
+        preparing: 'กำลังเตรียม',
+        shipping: 'กำลังจัดส่ง',
+        delivered: 'จัดส่งแล้ว'
+    }
+    // --- END OF EDIT ---
 
     return (
         <div className="space-y-6">
@@ -75,6 +93,7 @@ function SalesReportPage() {
                                     <th className="p-3 text-left">วันที่</th>
                                     <th className="p-3 text-left">ลูกค้า</th>
                                     <th className="p-3 text-center">ช่องทาง</th>
+                                    <th className="p-3 text-center">สถานะจัดส่ง</th> {/* <-- ADD THIS HEADER */}
                                     <th className="p-3 text-right">ยอดรวม</th>
                                 </tr>
                             </thead>
@@ -84,6 +103,17 @@ function SalesReportPage() {
                                         <td className="p-3">{moment(sale.createdAt).format('DD/MM/YYYY HH:mm')}</td>
                                         <td className="p-3">{sale.customer?.name || 'ลูกค้าทั่วไป'}</td>
                                         <td className="p-3 text-center">{sale.paymentMethod}</td>
+                                        {/* --- START OF EDIT --- */}
+                                        <td className="p-3 text-center">
+                                            {sale.isDelivery ? (
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getDeliveryStatusChip(sale.deliveryStatus)}`}>
+                                                    {deliveryStatusTranslations[sale.deliveryStatus]}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        {/* --- END OF EDIT --- */}
                                         <td className="p-3 text-right font-medium">{formatCurrency(sale.totalAmount)}</td>
                                     </tr>
                                 ))}

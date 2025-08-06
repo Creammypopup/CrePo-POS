@@ -2,6 +2,7 @@
 const asyncHandler = require('express-async-handler');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
+const Pawn = require('../models/Pawn'); // <-- ADD THIS LINE
 const moment = require('moment');
 
 // @desc    Get dashboard statistics
@@ -10,11 +11,12 @@ const moment = require('moment');
 const getDashboardStats = asyncHandler(async (req, res) => {
     const todayStart = moment().startOf('day');
     const todayEnd = moment().endOf('day');
+    const thirtyDaysFromNow = moment().add(30, 'days').toDate(); // For expiry check
 
     // Calculate today's sales
     const salesToday = await Sale.find({
         createdAt: { $gte: todayStart, $lte: todayEnd },
-        // user: req.user.id // This can be enabled if sales are tied to the logged-in user
+        user: req.user.id
     });
 
     const totalSalesValue = salesToday.reduce((acc, sale) => acc + sale.totalAmount, 0);
@@ -22,7 +24,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     // Get top selling products today
     const topProductsToday = await Sale.aggregate([
-        { $match: { createdAt: { $gte: todayStart.toDate(), $lte: todayEnd.toDate() } } },
+        { $match: { user: req.user._id, createdAt: { $gte: todayStart.toDate(), $lte: todayEnd.toDate() } } },
         { $unwind: '$products' },
         { $group: { 
             _id: '$products.product', 
@@ -38,15 +40,33 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     // Get low stock products using the custom stockAlert field
     const lowStockProducts = await Product.find({
         user: req.user.id,
-        $expr: { $lte: [ "$stock", "$stockAlert" ] }, // Use stockAlert for comparison
-        stockAlert: { $gt: 0 } // Only include products where stockAlert is set
+        $expr: { $lte: [ "$stock", "$stockAlert" ] },
+        stockAlert: { $gt: 0 }
     }).limit(5).select('name stock mainUnit');
+
+    // --- START OF NEW CODE ---
+    // Get products expiring soon (within 30 days)
+    const expiringProducts = await Product.find({
+        user: req.user.id,
+        expiryDate: { $ne: null, $lte: thirtyDaysFromNow }
+    }).limit(5).select('name expiryDate');
+
+    // Get overdue pawns
+    const overduePawns = await Pawn.find({
+        user: req.user.id,
+        status: 'active',
+        endDate: { $lt: new Date() }
+    }).populate('customer', 'name').limit(5).select('productName customer endDate');
+    // --- END OF NEW CODE ---
+
 
     res.json({
         totalSalesValue,
         totalItemsSold,
         topProductsToday,
-        lowStockProducts
+        lowStockProducts,
+        expiringProducts, // <-- Add this
+        overduePawns,     // <-- Add this
     });
 });
 

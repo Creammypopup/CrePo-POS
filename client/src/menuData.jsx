@@ -17,7 +17,7 @@ export const menuData = [
   { title: 'คลังสินค้า', icon: <FaWarehouse />, color: '#16A085',
     permission: [permissions.MANAGE_PURCHASE_ORDERS.id, permissions.MANAGE_STOCK_ADJUSTMENTS.id],
     submenu: [
-        { title: 'ใบสั่งซื้อ', path: '/purchase-orders', permission: permissions.MANAGE_PURCHASE_ORDERS.id },
+        { title: 'รับสินค้าเข้าสต็อก', path: '/inventory/receive', permission: permissions.MANAGE_PURCHASE_ORDERS.id },
         { title: 'ปรับปรุงสต็อก', path: '/stock-adjustments', permission: permissions.MANAGE_STOCK_ADJUSTMENTS.id },
     ]
   },

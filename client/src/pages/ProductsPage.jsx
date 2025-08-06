@@ -1,6 +1,7 @@
 // client/src/pages/ProductsPage.jsx
 import React, { useEffect, useState, useMemo, Fragment } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom'; // <-- ADD THIS LINE
 import { getProducts, deleteProduct, reset } from '../features/product/productSlice';
 import { FaPlus, FaBoxOpen, FaPrint, FaBarcode, FaFileImport, FaFileExport, FaEdit, FaTrash, FaSearch, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import Spinner from '../components/Spinner';
@@ -8,9 +9,11 @@ import AddProductModal from '../components/modals/AddProductModal';
 import BarcodeModal from '../components/modals/BarcodeModal';
 import EditProductModal from '../components/modals/EditProductModal';
 import { toast } from 'react-toastify';
+import moment from 'moment'; // <-- ADD THIS LINE
 
 function ProductsPage() {
   const dispatch = useDispatch();
+  const location = useLocation(); // <-- ADD THIS LINE
   const { products, isLoading, isError, message } = useSelector((state) => state.products);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -20,6 +23,10 @@ function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedRows, setExpandedRows] = useState([]);
+  
+  // --- START OF EDIT ---
+  const [activeFilter, setActiveFilter] = useState(location.state?.filter || 'all');
+  // --- END OF EDIT ---
 
   useEffect(() => {
     if (isError) toast.error(message);
@@ -29,14 +36,26 @@ function ProductsPage() {
 
   const filteredProducts = useMemo(() => {
       if (!Array.isArray(products)) return [];
-      if (!searchTerm) return products;
+      
+      let data = [...products];
+
+      // --- START OF EDIT: Filter Logic ---
+      if (activeFilter === 'low-stock') {
+          data = data.filter(p => p.stockAlert > 0 && p.stock <= p.stockAlert);
+      } else if (activeFilter === 'expiring') {
+          const thirtyDaysFromNow = moment().add(30, 'days');
+          data = data.filter(p => p.expiryDate && moment(p.expiryDate).isBefore(thirtyDaysFromNow));
+      }
+      // --- END OF EDIT ---
+
+      if (!searchTerm) return data;
       const lowercasedTerm = searchTerm.toLowerCase();
-      return products.filter(p =>
+      return data.filter(p =>
           p.name.toLowerCase().includes(lowercasedTerm) ||
           (p.sku && p.sku.toLowerCase().includes(lowercasedTerm)) ||
           (p.category && p.category.toLowerCase().includes(lowercasedTerm))
       );
-  }, [products, searchTerm]);
+  }, [products, searchTerm, activeFilter]); // <-- Add activeFilter
 
   const openEditModal = (product) => {
       setSelectedProduct(product);
@@ -56,6 +75,9 @@ function ProductsPage() {
   const toggleRow = (id) => {
     setExpandedRows(expandedRows.includes(id) ? expandedRows.filter(rowId => rowId !== id) : [...expandedRows, id]);
   };
+  
+  const getFilterButtonClass = (filterName) => 
+      `btn !py-1.5 !px-4 text-sm ${activeFilter === filterName ? 'bg-brand-purple text-white' : 'bg-white text-gray-600'}`;
 
   if (isLoading && (!products || products.length === 0)) return <Spinner />;
 
@@ -74,23 +96,18 @@ function ProductsPage() {
              </div>
           </div>
         </div>
+
+        {/* --- START OF EDIT: Filter Buttons --- */}
         <div className="flex flex-wrap gap-2 non-printable">
-             <button onClick={() => toast.info("ฟังก์ชันนำเข้าข้อมูลกำลังจะมาเร็วๆ นี้")} className="btn btn-3d-pastel bg-blue-200 text-blue-800">
-                <FaFileImport className="mr-2" /> นำเข้า
-             </button>
-              <button onClick={() => toast.info("ฟังก์ชันส่งออกข้อมูลกำลังจะมาเร็วๆ นี้")} className="btn btn-3d-pastel bg-green-200 text-green-800">
-                <FaFileExport className="mr-2" /> ส่งออก
-             </button>
-             <button onClick={() => setIsBarcodeModalOpen(true)} className="btn btn-3d-pastel bg-gray-600 text-white">
-                <FaBarcode className="mr-2" /> พิมพ์บาร์โค้ด
-             </button>
-             <button onClick={() => window.print()} className="btn btn-3d-pastel bg-white text-gray-700">
-                <FaPrint className="mr-2" /> พิมพ์รายการ
-             </button>
+             <button onClick={() => setActiveFilter('all')} className={getFilterButtonClass('all')}>สินค้าทั้งหมด</button>
+             <button onClick={() => setActiveFilter('low-stock')} className={getFilterButtonClass('low-stock')}>ใกล้หมดสต็อก</button>
+             <button onClick={() => setActiveFilter('expiring')} className={getFilterButtonClass('expiring')}>ใกล้หมดอายุ</button>
+             <div className="flex-grow"></div>
             <button onClick={() => setIsAddModalOpen(true)} className="btn btn-3d-pastel btn-primary ml-auto">
               <FaPlus className="mr-2" /> เพิ่มสินค้าใหม่
             </button>
-          </div>
+        </div>
+        {/* --- END OF EDIT --- */}
 
         <div className="bg-white shadow-lg rounded-2xl p-4 printable-container">
            <div className="overflow-x-auto">
@@ -103,12 +120,13 @@ function ProductsPage() {
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
                   <th className="py-3 px-4 text-right font-semibold text-gray-600">ราคาขาย (บาท)</th>
                   <th className="py-3 px-4 text-right font-semibold text-gray-600">คงเหลือ</th>
+                  <th className="py-3 px-4 text-center font-semibold text-gray-600">วันหมดอายุ</th>
                   <th className="py-3 px-4 text-center font-semibold text-gray-600 non-printable">การกระทำ</th>
                 </tr>
                </thead>
                <tbody>
                   {isLoading && products.length === 0 ? (
-                    <tr><td colSpan="7" className="text-center py-10"><Spinner/></td></tr>
+                    <tr><td colSpan="8" className="text-center py-10"><Spinner/></td></tr>
                   ) : filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                       <Fragment key={product._id}>
@@ -129,6 +147,9 @@ function ProductsPage() {
                           <td className="p-3 px-4 text-right text-sm text-gray-500 italic">
                              {product.hasMultipleSizes ? 'ดูด้านล่าง' : `${product.stock} ${product.mainUnit}`}
                           </td>
+                           <td className="p-3 px-4 text-center text-sm text-gray-500">
+                             {product.hasMultipleSizes ? '-' : (product.expiryDate ? moment(product.expiryDate).format('DD/MM/YY') : '-')}
+                           </td>
                           <td className="p-3 px-4 text-center non-printable">
                             <div className="flex justify-center gap-2">
                                 <button onClick={() => openEditModal(product)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>
@@ -143,6 +164,7 @@ function ProductsPage() {
                             <td className="p-2"></td>
                             <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
                             <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.stock} {product.mainUnit}</td>
+                             <td className="p-2 text-center text-sm font-semibold text-purple-800">{size.expiryDate ? moment(size.expiryDate).format('DD/MM/YY') : '-'}</td>
                             <td className="p-2"></td>
                           </tr>
                         ))}
@@ -150,7 +172,7 @@ function ProductsPage() {
                     ))
                   ) : (
                     <tr>
-                        <td colSpan="7" className="text-center py-10 text-gray-500">
+                        <td colSpan="8" className="text-center py-10 text-gray-500">
                             <FaBoxOpen className="mx-auto text-4xl mb-2 text-gray-300" />
                             ไม่พบข้อมูลสินค้า {searchTerm && 'ที่ตรงกับคำค้นหา'}
                         </td>

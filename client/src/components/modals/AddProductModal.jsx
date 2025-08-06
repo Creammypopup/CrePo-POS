@@ -30,6 +30,7 @@ const Switch = ({ label, isEnabled, onToggle }) => (
 const initialFormData = {
     name: '', sku: '', category: '', description: '',
     price: '', cost: '', stock: '', stockAlert: '', mainUnit: 'ชิ้น',
+    expiryDate: '', // <-- ADD THIS LINE
     productType: 'standard',
     hasMultipleSizes: false,
     sizes: [],
@@ -151,6 +152,9 @@ function AddProductModal({ isOpen, onClose }) {
                 <input type="number" name="stock" value={formData.stock} onChange={onChange} className="form-input" placeholder="จำนวนตั้งต้น" disabled={formData.hasMultipleSizes}/>
                 <input type="text" name="mainUnit" value={formData.mainUnit} onChange={onChange} className="form-input" placeholder="หน่วยนับหลัก*" required />
                 <input type="number" name="stockAlert" value={formData.stockAlert} onChange={onChange} className="form-input" placeholder="แจ้งเตือนเมื่อต่ำกว่า" />
+                {/* --- START OF EDIT --- */}
+                <input type="date" name="expiryDate" value={formData.expiryDate} onChange={onChange} className="form-input" placeholder="วันหมดอายุ" />
+                {/* --- END OF EDIT --- */}
             </div>
         </div>
 

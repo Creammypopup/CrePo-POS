@@ -31,6 +31,7 @@ import SalesReportPage from './pages/reports/SalesReportPage.jsx';
 import InventoryReportPage from './pages/reports/InventoryReportPage.jsx';
 import PawnReportPage from './pages/reports/PawnReportPage.jsx';
 import ReceiptPage from './pages/ReceiptPage.jsx';
+import ReceiveStockPage from './pages/inventory/ReceiveStockPage.jsx'; // <-- ADD THIS LINE
 
 // --- Redux Actions ---
 import { checkAuthStatus } from './features/auth/authSlice.js';
@@ -39,7 +40,6 @@ import { checkAuthStatus } from './features/auth/authSlice.js';
 const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
 const ReceiptsListPage = () => <div className="text-center p-10">Receipts List Page is under construction.</div>;
-const PurchaseOrdersPage = () => <div className="text-center p-10">Purchase Orders Page is under construction.</div>;
 const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
 
 function BottomBar() {
@@ -100,6 +100,7 @@ function App() {
               <Route path="/sales/create" element={<PosPageWrapper />} />
               <Route path="/pawn" element={<PawnPage />} /> 
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/inventory/receive" element={<ReceiveStockPage />} /> {/* <-- ADD THIS LINE */}
               <Route path="/contacts/customers" element={<CustomersPage />} />
               <Route path="/contacts/suppliers" element={<SuppliersPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
@@ -114,7 +115,6 @@ function App() {
               <Route path="/receipts" element={<ReceiptsListPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
               <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />
               <Route path="/settings/users" element={<UsersPage />} />
