@@ -1,118 +1,112 @@
-// D:\CrePo-POS\server\controllers\saleController.js
-
+// server/controllers/saleController.js
+const asyncHandler = require('express-async-handler');
 const Sale = require('../models/Sale');
-const Product = require('../models/Product'); // ต้องใช้ Product model เพื่ออัปเดตสต็อก
-
-// @desc    Get all sales
-// @route   GET /api/sales
-// @access  Public
-const getSales = async (req, res) => {
-  try {
-    // Populate customer และ product details
-    const sales = await Sale.find({})
-      .populate('customer', 'name contact') // ดึงเฉพาะ name และ contact ของ customer
-      .populate('products.product', 'name price'); // ดึงเฉพาะ name และ price ของ product ในรายการ
-    res.status(200).json(sales);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Get single sale by ID
-// @route   GET /api/sales/:id
-// @access  Public
-const getSaleById = async (req, res) => {
-  try {
-    const sale = await Sale.findById(req.params.id)
-      .populate('customer', 'name contact')
-      .populate('products.product', 'name price');
-    if (sale) {
-      res.status(200).json(sale);
-    } else {
-      res.status(404).json({ message: 'Sale not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+const Product = require('../models/Product');
+const Shift = require('../models/Shift');
 
 // @desc    Create a new sale
 // @route   POST /api/sales
-// @access  Public
-const createSale = async (req, res) => {
-  const { customerId, products } = req.body; // products เป็น array ของ { productId, quantity }
+// @access  Private
+const createSale = asyncHandler(async (req, res) => {
+  const { 
+    customerId, products, paymentMethod, totalAmount,
+    isDelivery, deliveryFee, deliveryAddress, recipientName, recipientPhone 
+  } = req.body;
 
   if (!products || products.length === 0) {
-    return res.status(400).json({ message: 'At least one product is required for a sale' });
+    return res.status(400).json({ message: 'ต้องมีสินค้าอย่างน้อย 1 รายการ' });
+  }
+  if (!paymentMethod) {
+    return res.status(400).json({ message: 'กรุณาระบุวิธีการชำระเงิน' });
   }
 
-  let totalAmount = 0;
-  const productsForSale = [];
+  const currentShift = await Shift.findOne({ user: req.user.id, status: 'open' });
+  if (!currentShift) {
+    return res.status(400).json({ message: 'ไม่พบกะการขายที่เปิดอยู่ กรุณาเปิดกะก่อน' });
+  }
 
-  try {
-    // ตรวจสอบสินค้าและคำนวณราคารวม
-    for (const item of products) {
-      const product = await Product.findById(item.productId);
-      if (!product) {
-        return res.status(404).json({ message: `Product with ID ${item.productId} not found` });
-      }
-      if (product.stock < item.quantity) {
-        return res.status(400).json({ message: `Not enough stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}` });
-      }
-
-      productsForSale.push({
-        product: product._id,
-        quantity: item.quantity,
-        priceAtSale: product.price, // บันทึกราคา ณ เวลาที่ขาย
-      });
-      totalAmount += product.price * item.quantity;
-
-      // ลดสต็อกสินค้า
-      product.stock -= item.quantity;
-      await product.save();
+  const productUpdates = [];
+  for (const item of products) {
+    const product = await Product.findById(item.productId);
+    if (!product) {
+      throw new Error(`ไม่พบสินค้า ID: ${item.productId}`);
     }
-
-    const sale = new Sale({
-      customer: customerId || null, // หากไม่มี customerId ให้เป็น null
-      products: productsForSale,
-      totalAmount: totalAmount,
-    });
-
-    const createdSale = await sale.save();
-    res.status(201).json(createdSale);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (product.stock < item.quantity) {
+      throw new Error(`สินค้า '${product.name}' มีไม่พอ (คงเหลือ: ${product.stock})`);
+    }
+    product.stock -= item.quantity;
+    productUpdates.push(product.save());
   }
-};
+  
+  await Promise.all(productUpdates);
 
-// @desc    Delete a sale (อาจไม่จำเป็นต้องใช้บ่อยในการใช้งานจริง)
-// @route   DELETE /api/sales/:id
-// @access  Public
-const deleteSale = async (req, res) => {
-  try {
-    const sale = await Sale.findById(req.params.id);
-    if (sale) {
-      // คืนสต็อกสินค้ากลับก่อนลบรายการขาย
-      for (const item of sale.products) {
-        const product = await Product.findById(item.product);
-        if (product) {
-          product.stock += item.quantity;
-          await product.save();
-        }
-      }
-      await sale.deleteOne();
-      res.status(200).json({ message: 'Sale removed and stock restored' });
+  const sale = new Sale({
+    user: req.user.id,
+    shift: currentShift._id,
+    customer: customerId || null,
+    products: products.map(p => ({
+        product: p.productId,
+        quantity: p.quantity,
+        priceAtSale: p.priceAtSale
+    })),
+    totalAmount,
+    paymentMethod,
+    isDelivery,
+    deliveryFee,
+    deliveryAddress,
+    recipientName,
+    recipientPhone,
+  });
+
+  const createdSale = await sale.save();
+  res.status(201).json(createdSale);
+});
+
+// @desc    Get all sales for the user
+// @route   GET /api/sales
+// @access  Private
+const getSales = asyncHandler(async (req, res) => {
+    const sales = await Sale.find({ user: req.user.id })
+      .populate('customer', 'name')
+      .populate('products.product', 'name')
+      .sort({ createdAt: -1 });
+    res.status(200).json(sales);
+});
+
+// @desc    Get single sale by ID
+// @route   GET /api/sales/:id
+// @access  Private
+const getSaleById = asyncHandler(async (req, res) => {
+    const sale = await Sale.findById(req.params.id)
+        .populate('customer', 'name')
+        .populate('products.product', 'name');
+    
+    if (sale && sale.user.toString() === req.user.id) {
+        res.json(sale);
     } else {
-      res.status(404).json({ message: 'Sale not found' });
+        res.status(404);
+        throw new Error('ไม่พบการขาย');
     }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+});
+
+// @desc    Delete a sale
+// @route   DELETE /api/sales/:id
+// @access  Private
+const deleteSale = asyncHandler(async (req, res) => {
+    const sale = await Sale.findById(req.params.id);
+
+    if (!sale || sale.user.toString() !== req.user.id) {
+        res.status(404);
+        throw new Error('ไม่พบการขาย');
+    }
+    // Optional: Add logic here to return stock if a sale is deleted
+    await sale.deleteOne();
+    res.json({ id: req.params.id });
+});
 
 module.exports = {
+  createSale,
   getSales,
   getSaleById,
-  createSale,
   deleteSale,
 };

@@ -57,12 +57,11 @@ function ProductsPage() {
     setExpandedRows(expandedRows.includes(id) ? expandedRows.filter(rowId => rowId !== id) : [...expandedRows, id]);
   };
 
-  if (isLoading && !products.length) return <Spinner />;
+  if (isLoading && (!products || products.length === 0)) return <Spinner />;
 
   return (
     <>
       <div className="space-y-6">
-        {/* ... (ส่วน Header และ Buttons เหมือนเดิม) ... */}
         <div className="flex flex-wrap justify-between items-center gap-4 non-printable">
           <div>
              <h1 className="text-3xl font-bold text-gray-800">สินค้าทั้งหมด</h1>
@@ -108,7 +107,7 @@ function ProductsPage() {
                 </tr>
                </thead>
                <tbody>
-                  {isLoading ? (
+                  {isLoading && products.length === 0 ? (
                     <tr><td colSpan="7" className="text-center py-10"><Spinner/></td></tr>
                   ) : filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
@@ -137,7 +136,7 @@ function ProductsPage() {
                             </div>
                           </td>
                         </tr>
-                        {expandedRows.includes(product._id) && product.sizes.map((size, index) => (
+                        {expandedRows.includes(product._id) && product.sizes && product.sizes.map((size, index) => (
                           <tr key={`${product._id}-${index}`} className="bg-purple-50 border-b border-purple-100">
                             <td colSpan="2" className="p-2 pl-16 text-sm text-gray-500">{size.sku || '-'}</td>
                             <td className="p-2 text-sm text-purple-800">{size.name}</td>

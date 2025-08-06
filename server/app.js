@@ -25,10 +25,13 @@ app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/proxy', require('./routes/proxyRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/product-categories', require('./routes/productCategoryRoutes')); // <-- **เพิ่มบรรทัดนี้**
+app.use('/api/product-categories', require('./routes/productCategoryRoutes'));
 app.use('/api/suppliers', require('./routes/supplierRoutes'));
 app.use('/api/customers', require('./routes/customerRoutes'));
-// --- END OF EDIT ---
+app.use('/api/sales', require('./routes/saleRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/pawns', require('./routes/pawnRoutes'));
+app.use('/api/shifts', require('./routes/shiftRoutes')); // <-- ADD THIS LINE
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

@@ -19,43 +19,37 @@ import LoginPage from './pages/LoginPage';
 import CalendarPage from './pages/CalendarPage';
 import ExpensesPage from './pages/ExpensesPage';
 import ProductsPage from './pages/ProductsPage';
-import PosPage from './pages/PosPage';
+import PosPageWrapper from './pages/PosPageWrapper';
 import CustomersPage from './pages/contacts/CustomersPage';
 import SuppliersPage from './pages/contacts/SuppliersPage';
 import GeneralPage from './pages/settings/GeneralPage';
 import UsersPage from './pages/settings/UsersPage';
 import RolesPage from './pages/settings/RolesPage';
+import PawnPage from './pages/PawnPage'; 
+import ReportsPage from './pages/ReportsPage'; // <-- IMPORT THIS
 
 // --- Redux Actions ---
 import { checkAuthStatus } from './features/auth/authSlice';
 
-
 // Placeholder pages
-const ReportsPage = () => <div className="text-center p-10">Reports Page is under construction.</div>;
+const SalesReportPage = () => <div className="text-center p-10">Sales Report Page is under construction.</div>;
+const InventoryReportPage = () => <div className="text-center p-10">Inventory Report Page is under construction.</div>;
+const PawnReportPage = () => <div className="text-center p-10">Pawn Report Page is under construction.</div>;
 const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
 const ReceiptsPage = () => <div className="text-center p-10">Receipts Page is under construction.</div>;
 const PurchaseOrdersPage = () => <div className="text-center p-10">Purchase Orders Page is under construction.</div>;
 const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
-const CategorySettingsPage = () => <div className="text-center p-10">This page has been integrated into Expenses and Products.</div>;
-
 
 function BottomBar() {
   const [currentDate, setCurrentDate] = useState(moment().format('YYYY-MM-DD'));
   const handleDateChange = (e) => { setCurrentDate(e.target.value); };
-
   return (
     <div className="h-10 bg-[#F5EBE0] border-t border-gray-200/80 flex items-center justify-end px-6 text-sm flex-shrink-0">
         <div className="flex items-center">
             <FaCalendarAlt className="mr-2 text-gray-500" />
             <label htmlFor="system-date" className="mr-2 font-medium text-gray-600 text-xs">วันที่ของระบบ:</label>
-            <input
-              type="date"
-              id="system-date"
-              value={currentDate}
-              onChange={handleDateChange}
-              className="bg-white border border-gray-300 rounded-md px-2 py-0.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-purple text-xs"
-            />
+            <input type="date" id="system-date" value={currentDate} onChange={handleDateChange} className="bg-white border border-gray-300 rounded-md px-2 py-0.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-purple text-xs"/>
         </div>
     </div>
   );
@@ -68,7 +62,6 @@ function DashboardLayout() {
         setIsSidebarOpen(false);
     }
   };
-
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 font-sans">
       <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
@@ -103,13 +96,19 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/sales/create" element={<PosPage />} />
+              <Route path="/sales/create" element={<PosPageWrapper />} />
+              <Route path="/pawn" element={<PawnPage />} /> 
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/contacts/customers" element={<CustomersPage />} />
               <Route path="/contacts/suppliers" element={<SuppliersPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              {/* Reports Routes */}
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/reports/sales" element={<SalesReportPage />} />
+              <Route path="/reports/inventory" element={<InventoryReportPage />} />
+              <Route path="/reports/pawn" element={<PawnReportPage />} />
+              {/* Other Routes */}
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/receipts" element={<ReceiptsPage />} />
@@ -118,7 +117,6 @@ function App() {
               <Route path="/settings/general" element={<GeneralPage />} />
               <Route path="/settings/users" element={<UsersPage />} />
               <Route path="/settings/roles" element={<RolesPage />} />
-              <Route path="/settings/categories" element={<CategorySettingsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" />} />

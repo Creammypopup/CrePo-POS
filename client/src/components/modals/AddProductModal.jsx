@@ -183,7 +183,6 @@ function AddProductModal({ isOpen, onClose }) {
             </div>
         )}
 
-        {/* --- START OF EDIT: Improved Sub-units UI --- */}
         {/* Sub-units Section */}
         {formData.hasSubUnits && (
             <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
@@ -212,7 +211,6 @@ function AddProductModal({ isOpen, onClose }) {
                 </div>
             </div>
         )}
-        {/* --- END OF EDIT --- */}
         </div>
         <div className="flex justify-end items-center mt-auto pt-4 border-t bg-white/50 rounded-b-2xl p-6 flex-shrink-0">
           <button type="button" onClick={onClose} className="btn bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4">ยกเลิก</button>

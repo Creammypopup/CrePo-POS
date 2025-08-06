@@ -11,9 +11,10 @@ import productReducer from "../features/product/productSlice";
 import productCategoryReducer from "../features/productCategory/productCategorySlice";
 import customerReducer from "../features/customer/customerSlice";
 import supplierReducer from "../features/supplier/supplierSlice";
-// --- START OF EDIT ---
 import saleReducer from "../features/sale/saleSlice";
-// --- END OF EDIT ---
+import dashboardReducer from "../features/dashboard/dashboardSlice";
+import pawnReducer from "../features/pawn/pawnSlice";
+import shiftReducer from "../features/shift/shiftSlice"; // <-- ADD THIS LINE
 
 export const store = configureStore({
   reducer: {
@@ -28,8 +29,9 @@ export const store = configureStore({
     productCategories: productCategoryReducer,
     customers: customerReducer,
     suppliers: supplierReducer,
-    // --- START OF EDIT ---
     sale: saleReducer,
-    // --- END OF EDIT ---
+    dashboard: dashboardReducer,
+    pawn: pawnReducer,
+    shift: shiftReducer, // <-- ADD THIS LINE
   },
 });

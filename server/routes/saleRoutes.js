@@ -1,5 +1,4 @@
-// D:\CrePo-POS\server\routes\saleRoutes.js
-
+// server/routes/saleRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
@@ -8,6 +7,10 @@ const {
   createSale,
   deleteSale,
 } = require('../controllers/saleController');
+const { protect } = require('../middleware/authMiddleware');
+
+// All routes are protected
+router.use(protect);
 
 router.route('/')
   .get(getSales)

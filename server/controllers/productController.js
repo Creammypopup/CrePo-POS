@@ -28,7 +28,7 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private
 const createProduct = asyncHandler(async (req, res) => {
-    const { name, category, price, cost, hasMultipleSizes, sizes } = req.body;
+    const { name, category, hasMultipleSizes, sizes, price, cost } = req.body;
 
     if (!name || !category) {
         res.status(400);
@@ -43,7 +43,6 @@ const createProduct = asyncHandler(async (req, res) => {
         // Auto-generate SKU for sizes if not provided
         req.body.sizes.forEach((size, index) => {
             if (!size.sku) {
-                // Sanitize size name for SKU
                 const sanitizedSizeName = size.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                 req.body.sizes[index].sku = `${req.body.sku || 'VAR'}-${sanitizedSizeName}`;
             }
@@ -82,7 +81,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     // Auto-generate SKU for new sizes if not provided
     if (req.body.hasMultipleSizes && req.body.sizes) {
         req.body.sizes.forEach((size, index) => {
-            if (!size.sku) {
+            if (size && !size.sku) {
                 const sanitizedSizeName = size.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                 req.body.sizes[index].sku = `${req.body.sku || 'VAR'}-${sanitizedSizeName}`;
             }

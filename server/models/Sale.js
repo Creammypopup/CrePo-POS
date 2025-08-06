@@ -1,40 +1,29 @@
-// D:\CrePo-POS\server\models\Sale.js
-
+// server/models/Sale.js
 const mongoose = require('mongoose');
 
 const saleSchema = mongoose.Schema(
   {
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Customer', // อ้างอิงถึงโมเดล Customer
-      required: false, // การขายอาจไม่มีลูกค้าเสมอไป (เช่น ขายปลีก)
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+    shift: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Shift' },
+    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
     products: [
       {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Product', // อ้างอิงถึงโมเดล Product
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1, // จำนวนสินค้าต้องมีอย่างน้อย 1 ชิ้น
-        },
-        priceAtSale: { // ราคา ณ เวลาที่ขาย (ป้องกันราคาเปลี่ยนในอนาคต)
-          type: Number,
-          required: true,
-        }
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+        quantity: { type: Number, required: true, min: 1 },
+        priceAtSale: { type: Number, required: true }
       },
     ],
-    totalAmount: {
-      type: Number,
-      required: true,
-    },
-    saleDate: {
-      type: Date,
-      default: Date.now, // วันที่ขายเริ่มต้นเป็นวันที่ปัจจุบัน
-    },
+    totalAmount: { type: Number, required: true },
+    paymentMethod: { type: String, enum: ['cash', 'transfer', 'credit'], required: true },
+    
+    // Delivery Fields
+    isDelivery: { type: Boolean, default: false },
+    deliveryFee: { type: Number, default: 0 },
+    deliveryAddress: { type: String, trim: true },
+    recipientName: { type: String, trim: true },
+    recipientPhone: { type: String, trim: true },
+    deliveryStatus: { type: String, enum: ['pending', 'preparing', 'shipping', 'delivered'], default: 'pending' },
+
   },
   {
     timestamps: true,

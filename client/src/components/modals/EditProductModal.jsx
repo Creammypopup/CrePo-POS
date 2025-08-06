@@ -57,16 +57,14 @@ function EditProductModal({ isOpen, onClose, product }) {
     setFormData(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  // --- START OF EDIT: Bug Fix for updating sizes ---
   const handleDynamicChange = (listName, index, e) => {
     const { name, value } = e.target;
     setFormData(prevFormData => {
-        const newList = [...prevFormData[listName]];
+        const newList = [...(prevFormData[listName] || [])];
         newList[index] = { ...newList[index], [name]: value };
         return { ...prevFormData, [listName]: newList };
     });
   };
-  // --- END OF EDIT ---
   
   const addDynamicItem = (listName, newItem) => {
     setFormData(p => ({ ...p, [listName]: [...(p[listName] || []), newItem] }));
@@ -98,6 +96,7 @@ function EditProductModal({ isOpen, onClose, product }) {
         </div>
         <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto">
             <div className="p-6 space-y-6">
+                {/* Basic Info */}
                 <div className="bg-white p-5 border rounded-2xl shadow-sm">
                     <h3 className="font-semibold text-lg mb-4 text-brand-purple">ข้อมูลพื้นฐาน</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,15 +113,17 @@ function EditProductModal({ isOpen, onClose, product }) {
                     </div>
                 </div>
                 
+                {/* Advanced Functions */}
                 <div className="bg-white p-5 border rounded-2xl shadow-sm">
                     <h3 className="font-semibold text-lg mb-4 text-orange-600">ฟังก์ชันเพิ่มเติม</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Switch label="สินค้าหลายขนาด" isEnabled={formData.hasMultipleSizes} onToggle={() => setFormData(p => ({...p, hasMultipleSizes: !p.hasMultipleSizes, price: '', cost: ''}))} />
-                        <Switch label="สินค้ามีหลายหน่วย" isEnabled={formData.hasSubUnits} onToggle={() => setFormData(p => ({...p, hasSubUnits: !p.hasSubUnits}))} />
+                        <Switch label="สินค้าหลายขนาด" isEnabled={formData.hasMultipleSizes || false} onToggle={() => setFormData(p => ({...p, hasMultipleSizes: !p.hasMultipleSizes, price: p.hasMultipleSizes ? p.price : '', cost: p.hasMultipleSizes ? p.cost : ''}))} />
+                        <Switch label="สินค้ามีหลายหน่วย" isEnabled={formData.hasSubUnits || false} onToggle={() => setFormData(p => ({...p, hasSubUnits: !p.hasSubUnits}))} />
                         <Switch label="สินค้าชั่งน้ำหนัก" isEnabled={formData.productType === 'weighted'} onToggle={() => setFormData(p => ({...p, productType: p.productType === 'weighted' ? 'standard' : 'weighted'}))} />
                     </div>
                 </div>
 
+                {/* Price & Cost */}
                 <div className="bg-white p-5 border rounded-2xl shadow-sm">
                     <h3 className="font-semibold text-lg mb-4 text-green-600">ราคาและต้นทุน (พื้นฐาน)</h3>
                     {formData.hasMultipleSizes && <p className="text-xs text-amber-600 -mt-3 mb-3 p-2 bg-amber-100 rounded-lg">เมื่อเปิดใช้งาน "สินค้าหลายขนาด" ราคาและต้นทุนหลักจะถูกใช้เป็นค่าเริ่มต้นเท่านั้น กรุณากำหนดราคาของแต่ละขนาดในส่วน "จัดการขนาดสินค้า"</p>}
@@ -136,6 +137,7 @@ function EditProductModal({ isOpen, onClose, product }) {
                     </div>
                 </div>
 
+                {/* Inventory */}
                 <div className="bg-white p-5 border rounded-2xl shadow-sm">
                     <h3 className="font-semibold text-lg mb-4 text-blue-600">คลังสินค้า</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -145,6 +147,7 @@ function EditProductModal({ isOpen, onClose, product }) {
                     </div>
                 </div>
                 
+                {/* Multiple Sizes Section */}
                 {formData.hasMultipleSizes && (
                      <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
                         <div className="flex justify-between items-center mb-4">
@@ -167,6 +170,35 @@ function EditProductModal({ isOpen, onClose, product }) {
                                 <input type="number" step="any" name="price" value={size.price} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0.00" className="form-input !py-1.5 col-span-2" required/>
                                 <input type="number" name="stock" value={size.stock} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0" className="form-input !py-1.5 col-span-2" />
                                 <button type="button" onClick={() => removeDynamicItem('sizes', index)} className="btn p-2 bg-red-100 text-red-600 col-span-1"><FaTrash/></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                 {/* Sub-units Section */}
+                {formData.hasSubUnits && (
+                    <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-semibold text-lg text-teal-600">จัดการหน่วยย่อย</h3>
+                            <button type="button" onClick={() => addDynamicItem('sellingUnits', { name: '', conversionRate: '', price: '' })} className="btn btn-3d-pastel bg-teal-200 text-teal-800 text-xs py-1 px-3"><FaPlus className="mr-2"/>เพิ่มหน่วยย่อย</button>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-12 gap-2 px-2 text-xs font-semibold text-gray-500">
+                                <div className="col-span-4">ชื่อหน่วยย่อย*</div>
+                                <div className="col-span-4">อัตราส่วนต่อหน่วยหลัก*</div>
+                                <div className="col-span-3">ราคาขาย*</div>
+                            </div>
+                            {formData.sellingUnits && formData.sellingUnits.map((unit, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                                <input type="text" name="name" value={unit.name} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="เช่น แพ็ค" className="form-input !py-1.5 col-span-4" required/>
+                                <div className="col-span-4 relative flex items-center">
+                                        <span className="absolute left-3 text-gray-500 text-sm">1 {unit.name || 'หน่วย'} =</span>
+                                        <input type="number" step="any" name="conversionRate" value={unit.conversionRate} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="จำนวน" className="form-input !py-1.5 pl-24 pr-12 text-center" required/>
+                                        <span className="absolute right-3 text-gray-500">{formData.mainUnit}</span>
+                                </div>
+                                <input type="number" step="any" name="price" value={unit.price} onChange={e => handleDynamicChange('sellingUnits', index, e)} placeholder="ราคาขาย" className="form-input !py-1.5 col-span-3" required/>
+                                <button type="button" onClick={() => removeDynamicItem('sellingUnits', index)} className="btn p-2 bg-red-100 text-red-600 col-span-1"><FaTrash/></button>
                                 </div>
                             ))}
                         </div>
