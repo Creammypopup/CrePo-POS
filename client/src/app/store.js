@@ -14,7 +14,8 @@ import supplierReducer from "../features/supplier/supplierSlice";
 import saleReducer from "../features/sale/saleSlice";
 import dashboardReducer from "../features/dashboard/dashboardSlice";
 import pawnReducer from "../features/pawn/pawnSlice";
-import shiftReducer from "../features/shift/shiftSlice"; // <-- ADD THIS LINE
+import shiftReducer from "../features/shift/shiftSlice";
+import reportReducer from "../features/report/reportSlice"; // <-- ADD THIS LINE
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ export const store = configureStore({
     sale: saleReducer,
     dashboard: dashboardReducer,
     pawn: pawnReducer,
-    shift: shiftReducer, // <-- ADD THIS LINE
+    shift: shiftReducer,
+    report: reportReducer, // <-- ADD THIS LINE
   },
 });

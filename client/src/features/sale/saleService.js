@@ -10,8 +10,14 @@ const createSale = async (saleData) => {
     return response.data;
 };
 
+const getSaleById = async (id) => {
+    const response = await axios.get(API_URL + id, getConfig());
+    return response.data;
+};
+
 const saleService = {
     createSale,
+    getSaleById,
 };
 
 export default saleService;

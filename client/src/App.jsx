@@ -8,36 +8,37 @@ import { FaCalendarAlt } from 'react-icons/fa';
 import moment from 'moment';
 
 // --- Core Components ---
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import PrivateRoute from './components/PrivateRoute';
-import Spinner from './components/Spinner';
+import Sidebar from './components/Sidebar.jsx';
+import Header from './components/Header.jsx';
+import PrivateRoute from './components/PrivateRoute.jsx';
+import Spinner from './components/Spinner.jsx';
 
 // --- Page Imports ---
-import Dashboard from './pages/Dashboard';
-import LoginPage from './pages/LoginPage';
-import CalendarPage from './pages/CalendarPage';
-import ExpensesPage from './pages/ExpensesPage';
-import ProductsPage from './pages/ProductsPage';
-import PosPageWrapper from './pages/PosPageWrapper';
-import CustomersPage from './pages/contacts/CustomersPage';
-import SuppliersPage from './pages/contacts/SuppliersPage';
-import GeneralPage from './pages/settings/GeneralPage';
-import UsersPage from './pages/settings/UsersPage';
-import RolesPage from './pages/settings/RolesPage';
-import PawnPage from './pages/PawnPage'; 
-import ReportsPage from './pages/ReportsPage'; // <-- IMPORT THIS
+import Dashboard from './pages/Dashboard.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import CalendarPage from './pages/CalendarPage.jsx';
+import ExpensesPage from './pages/ExpensesPage.jsx';
+import ProductsPage from './pages/ProductsPage.jsx';
+import PosPageWrapper from './pages/PosPageWrapper.jsx';
+import CustomersPage from './pages/contacts/CustomersPage.jsx';
+import SuppliersPage from './pages/contacts/SuppliersPage.jsx';
+import GeneralPage from './pages/settings/GeneralPage.jsx';
+import UsersPage from './pages/settings/UsersPage.jsx';
+import RolesPage from './pages/settings/RolesPage.jsx';
+import PawnPage from './pages/PawnPage.jsx';
+import ReportsPage from './pages/ReportsPage.jsx';
+import SalesReportPage from './pages/reports/SalesReportPage.jsx';
+import InventoryReportPage from './pages/reports/InventoryReportPage.jsx';
+import PawnReportPage from './pages/reports/PawnReportPage.jsx';
+import ReceiptPage from './pages/ReceiptPage.jsx';
 
 // --- Redux Actions ---
-import { checkAuthStatus } from './features/auth/authSlice';
+import { checkAuthStatus } from './features/auth/authSlice.js';
 
 // Placeholder pages
-const SalesReportPage = () => <div className="text-center p-10">Sales Report Page is under construction.</div>;
-const InventoryReportPage = () => <div className="text-center p-10">Inventory Report Page is under construction.</div>;
-const PawnReportPage = () => <div className="text-center p-10">Pawn Report Page is under construction.</div>;
 const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
-const ReceiptsPage = () => <div className="text-center p-10">Receipts Page is under construction.</div>;
+const ReceiptsListPage = () => <div className="text-center p-10">Receipts List Page is under construction.</div>;
 const PurchaseOrdersPage = () => <div className="text-center p-10">Purchase Orders Page is under construction.</div>;
 const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
 
@@ -108,10 +109,11 @@ function App() {
               <Route path="/reports/sales" element={<SalesReportPage />} />
               <Route path="/reports/inventory" element={<InventoryReportPage />} />
               <Route path="/reports/pawn" element={<PawnReportPage />} />
-              {/* Other Routes */}
+              {/* Document Routes */}
+              <Route path="/receipts/:id" element={<ReceiptPage />} />
+              <Route path="/receipts" element={<ReceiptsListPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/receipts" element={<ReceiptsPage />} />
               <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
               <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />
