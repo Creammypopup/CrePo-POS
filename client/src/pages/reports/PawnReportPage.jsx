@@ -35,6 +35,13 @@ function PawnReportPage() {
         }
     };
 
+    const statusTranslations = {
+        active: 'ดำเนินการ',
+        redeemed: 'ไถ่ถอนแล้ว',
+        expired: 'หมดอายุ',
+        forfeited: 'หลุดจำนำ'
+    }
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-gray-800">รายงานการรับฝาก/จำนำ</h1>
@@ -59,7 +66,7 @@ function PawnReportPage() {
                                         <td className="p-3">{p.customer?.name}</td>
                                         <td className="p-3 text-right">{formatCurrency(p.pawnAmount)}</td>
                                         <td className="p-3 text-center">{moment(p.endDate).format('DD/MM/YYYY')}</td>
-                                        <td className="p-3 text-center"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusChip(p.status)}`}>{p.status}</span></td>
+                                        <td className="p-3 text-center"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusChip(p.status)}`}>{statusTranslations[p.status]}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
