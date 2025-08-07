@@ -104,7 +104,7 @@ function ProductsPage() {
                 </button>
              </div>
         </div>
-
+      </div>
 
 
       <AddProductModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />

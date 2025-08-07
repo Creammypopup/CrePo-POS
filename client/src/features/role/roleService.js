@@ -24,7 +24,8 @@ const createRole = async (roleData) => {
 
 // Update a role
 const updateRole = async (roleData) => {
-    const response = await axios.put(API_URL + roleData.id, roleData, getConfig());
+    // FIXED: Changed roleData.id to roleData._id
+    const response = await axios.put(API_URL + roleData._id, roleData, getConfig());
     return response.data;
 };
 

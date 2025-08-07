@@ -10,6 +10,7 @@ const protect = asyncHandler(async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+      // Populate role to get access to permissions
       req.user = await User.findById(decoded.id).populate('role').select('-password');
 
       if (!req.user) {
@@ -18,6 +19,7 @@ const protect = asyncHandler(async (req, res, next) => {
       }
       next();
     } catch (error) {
+      console.error(error);
       res.status(401);
       throw new Error('ไม่ได้รับอนุญาต, Token ไม่ถูกต้อง');
     }
@@ -28,18 +30,28 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-const authorize = (...roles) => {
-    return (req, res, next) => {
-        const userRole = req.user?.role?.name;
-        // **START OF EDIT: Convert roles to lowercase for case-insensitive check**
-        const allowedRoles = roles.map(r => r.toLowerCase());
-        if (!userRole || !allowedRoles.includes(userRole.toLowerCase())) {
-        // **END OF EDIT**
-            res.status(403);
-            throw new Error(`สิทธิ์ผู้ใช้ '${userRole || 'ไม่มีตำแหน่ง'}' ไม่ได้รับอนุญาตให้เข้าถึงส่วนนี้`);
-        }
-        next();
+// New authorize middleware that checks for specific permissions
+const authorize = (...requiredPermissions) => {
+  return (req, res, next) => {
+    const userPermissions = req.user?.role?.permissions;
+
+    if (!userPermissions) {
+        res.status(403); // Forbidden
+        throw new Error('ผู้ใช้งานไม่มีตำแหน่งหรือสิทธิ์ที่ถูกกำหนด');
     }
-}
+
+    // Check if the user has ALL of the required permissions
+    const hasRequiredPermissions = requiredPermissions.every(permission =>
+      userPermissions.includes(permission)
+    );
+
+    if (hasRequiredPermissions) {
+      next(); // User has the required permissions, proceed to the route
+    } else {
+      res.status(403); // Forbidden
+      throw new Error('ไม่มีสิทธิ์ในการเข้าถึงส่วนนี้');
+    }
+  };
+};
 
 module.exports = { protect, authorize };

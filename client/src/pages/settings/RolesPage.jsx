@@ -1,154 +1,55 @@
+
 // client/src/pages/settings/RolesPage.jsx
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { getRoles, createRole, updateRole, deleteRole, reset } from '../../features/role/roleSlice';
-import { toast } from 'react-toastify';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import { ALL_PERMISSIONS } from '../../permissions';
-import Spinner from '../../components/Spinner';
+import React, { useState } from 'react';
+import { FaUsersCog, FaPlus } from 'react-icons/fa';
+import RoleList from '../../components/settings/RoleList';
+import RoleModal from '../../components/modals/RoleModal';
 
 function RolesPage() {
-  const dispatch = useDispatch();
-  const { roles, isLoading, isError, message } = useSelector((state) => state.role);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
 
-  const [modalState, setModalState] = useState({ isOpen: false, mode: 'add', currentRole: null });
-  const [roleName, setRoleName] = useState('');
-  const [selectedPermissions, setSelectedPermissions] = useState([]);
-  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, roleId: null, roleName: '' });
-
-  useEffect(() => {
-    dispatch(getRoles());
-    return () => { dispatch(reset()); };
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (isError) {
-      toast.error(message);
-    }
-  }, [isError, message]);
-
-  const handlePermissionChange = (permissionId) => {
-    setSelectedPermissions((prev) =>
-      prev.includes(permissionId) ? prev.filter((p) => p !== permissionId) : [...prev, permissionId]
-    );
+  const handleOpenModal = (role = null) => {
+    setSelectedRole(role);
+    setIsModalOpen(true);
   };
 
-  const openModal = (mode = 'add', role = null) => {
-    setModalState({ isOpen: true, mode, currentRole: role });
-    if (mode === 'edit' && role) {
-      setRoleName(role.name);
-      setSelectedPermissions(role.permissions);
-    } else {
-      setRoleName('');
-      setSelectedPermissions([]);
-    }
-  };
-
-  const closeModal = () => {
-    setModalState({ isOpen: false, mode: 'add', currentRole: null });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!roleName) {
-      toast.error('กรุณาใส่ชื่อตำแหน่ง');
-      return;
-    }
-    const roleData = { name: roleName, permissions: selectedPermissions };
-
-    if (modalState.mode === 'edit') {
-        dispatch(updateRole({ ...roleData, id: modalState.currentRole._id }));
-        toast.success(`อัปเดตตำแหน่ง "${roleName}" สำเร็จ!`);
-    } else {
-        dispatch(createRole(roleData));
-        toast.success(`สร้างตำแหน่ง "${roleName}" สำเร็จ!`);
-    }
-    closeModal();
-  };
-
-  const handleDelete = (roleId) => {
-    dispatch(deleteRole(roleId));
-    toast.success('ลบตำแหน่งเรียบร้อยแล้ว');
-    setDeleteConfirm({ isOpen: false, roleId: null, roleName: '' });
+  const handleCloseModal = () => {
+    setSelectedRole(null);
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">ตำแหน่งและสิทธิ์</h1>
-        <button onClick={() => openModal('add')} className="btn btn-3d-pastel btn-primary">
-          <FaPlus className="mr-2" /> สร้างตำแหน่งใหม่
+    <div className="p-8 bg-pastel-purple-lightest min-h-screen animate-fade-in">
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white rounded-2xl shadow-md">
+            <FaUsersCog className="text-4xl text-pastel-purple" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-pastel-purple-dark">จัดการตำแหน่งและสิทธิ์</h1>
+            <p className="text-pastel-gray-dark mt-1">กำหนดบทบาทและสิทธิ์การเข้าถึงสำหรับผู้ใช้งาน</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => handleOpenModal()} 
+          className="btn btn-3d-pastel btn-primary-pastel flex items-center gap-2 transform hover:scale-105 transition-transform duration-200"
+        >
+          <FaPlus />
+          เพิ่มตำแหน่งใหม่
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        {isLoading && roles.length === 0 ? <Spinner /> : (
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                    <tr className="border-b-2">
-                        <th className="p-3 text-left text-sm font-semibold text-gray-500 uppercase tracking-wider">ชื่อตำแหน่ง</th>
-                        <th className="p-3 text-left text-sm font-semibold text-gray-500 uppercase tracking-wider">จำนวนสิทธิ์</th>
-                        <th className="p-3 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">การกระทำ</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {roles.map((role) => (
-                        <tr key={role._id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 font-medium text-gray-800">{role.name}</td>
-                        <td className="p-4 text-gray-600">{role.permissions.length}</td>
-                        <td className="p-4 flex justify-center space-x-2">
-                            <button onClick={() => openModal('edit', role)} className="btn btn-3d-pastel bg-brand-warning text-yellow-800 p-2.5"><FaEdit /></button>
-                            <button onClick={() => setDeleteConfirm({ isOpen: true, roleId: role._id, roleName: role.name })} className="btn btn-3d-pastel bg-brand-danger text-red-800 p-2.5"><FaTrash /></button>
-                        </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-            </div>
-        )}
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+        <RoleList onEdit={handleOpenModal} />
       </div>
 
-      {modalState.isOpen && (
-         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 p-4 animate-fade-in">
-         <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col transform transition-all duration-300">
-            <h2 className="text-2xl font-bold mb-6 text-gray-700">{modalState.mode === 'add' ? 'สร้างตำแหน่งใหม่' : 'แก้ไขตำแหน่ง'}</h2>
-            <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto pr-2 space-y-6">
-                <div>
-                    <label className="block text-sm font-bold mb-2 text-gray-600">ชื่อตำแหน่ง</label>
-                    <input type="text" value={roleName} onChange={(e) => setRoleName(e.target.value)} className="form-input" placeholder="เช่น พนักงานแคชเชียร์"/>
-                </div>
-                <div>
-                    <label className="block text-sm font-bold mb-4 text-gray-600">กำหนดสิทธิ์การเข้าถึง</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl">
-                        {ALL_PERMISSIONS.map((permission) => (
-                            <label key={permission.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white cursor-pointer">
-                                <input type="checkbox" className="form-checkbox h-5 w-5 text-brand-purple rounded-md border-gray-300 focus:ring-brand-purple" checked={selectedPermissions.includes(permission.id)} onChange={() => handlePermissionChange(permission.id)}/>
-                                <span className="text-gray-700 select-none">{permission.name}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            </form>
-            <div className="flex items-center justify-end mt-8 pt-6 border-t border-gray-200">
-               <button type="button" onClick={closeModal} className="btn bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4">ยกเลิก</button>
-               <button onClick={handleSubmit} className="btn btn-3d-pastel btn-primary">บันทึก</button>
-             </div>
-         </div>
-       </div>
-      )}
-
-      {deleteConfirm.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 animate-fade-in">
-            <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
-                <h3 className="text-xl font-bold text-gray-800">ยืนยันการลบ</h3>
-                <p className="text-gray-600 my-4">คุณแน่ใจหรือไม่ว่าต้องการลบตำแหน่ง <strong className='text-red-500'>{deleteConfirm.roleName}</strong>? <br/>การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-                <div className="flex justify-center space-x-4">
-                    <button onClick={() => setDeleteConfirm({ isOpen: false, roleId: null, roleName: '' })} className="btn bg-gray-200 hover:bg-gray-300">ยกเลิก</button>
-                    <button onClick={() => handleDelete(deleteConfirm.roleId)} className="btn btn-3d-pastel btn-danger">ยืนยันการลบ</button>
-                </div>
-            </div>
-        </div>
+      {isModalOpen && (
+        <RoleModal 
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal} 
+          role={selectedRole} 
+        />
       )}
     </div>
   );

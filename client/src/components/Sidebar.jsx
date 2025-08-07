@@ -47,12 +47,10 @@ const SubMenu = ({ item, isSidebarOpen, setIsSidebarOpen, userPermissions }) => 
     <>
       <button onClick={handleSubMenuClick} className={getParentButtonClass()} data-tooltip-id="nav-tooltip" data-tooltip-content={item.title} data-tooltip-place="right">
         <div className="flex items-center">
-            {/* --- START OF EDIT --- */}
             <span className="w-6 flex items-center justify-center text-xl" style={{ color: isParentActive ? 'white' : item.color }}>
                 {item.icon}
             </span>
             {isSidebarOpen && <span className="ml-4 font-medium text-white">{item.title}</span>}
-            {/* --- END OF EDIT --- */}
         </div>
         {isSidebarOpen && <FaChevronDown className={`transition-transform duration-300 text-white ${isSubmenuOpen ? 'rotate-180' : ''}`} />}
       </button>
