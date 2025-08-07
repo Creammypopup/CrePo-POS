@@ -9,17 +9,19 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
+// All product routes require login
 router.use(protect);
 
-router.route('/')
-  .get(getProducts)
-  .post(authorize('Admin', 'Manager'), createProduct);
+// Routes for viewing products and finding by barcode - requires view permission
+router.route('/').get(authorize(PERMISSIONS.PRODUCTS_VIEW), getProducts);
+router.get('/barcode/:barcode', authorize(PERMISSIONS.POS_ACCESS), findProductByBarcode);
 
-router.get('/barcode/:barcode', findProductByBarcode); // New route for barcode scanning
-
+// Routes for managing products - requires manage permission
+router.route('/').post(authorize(PERMISSIONS.PRODUCTS_MANAGE), createProduct);
 router.route('/:id')
-  .put(authorize('Admin', 'Manager'), updateProduct)
-  .delete(authorize('Admin', 'Manager'), deleteProduct);
+  .put(authorize(PERMISSIONS.PRODUCTS_MANAGE), updateProduct)
+  .delete(authorize(PERMISSIONS.PRODUCTS_MANAGE), deleteProduct);
 
 module.exports = router;

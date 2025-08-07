@@ -1,15 +1,14 @@
-    // server/routes/settingRoutes.js
-    const express = require('express');
-    const router = express.Router();
-    const { getSettings, updateSettings } = require('../controllers/settingController');
-    const { protect, authorize } = require('../middleware/authMiddleware');
+// server/routes/settingRoutes.js
+const express = require('express');
+const router = express.Router();
+const { getSettings, updateSettings } = require('../controllers/settingController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
-    // All routes are protected
-    router.use(protect);
+router.use(protect);
 
-    router.route('/')
-      .get(getSettings) // Any logged-in user can view settings
-      .put(authorize('Admin', 'Manager'), updateSettings); // Only Admin/Manager can update
+router.route('/')
+  .get(authorize(PERMISSIONS.SETTINGS_MANAGE_GENERAL), getSettings)
+  .put(authorize(PERMISSIONS.SETTINGS_MANAGE_GENERAL), updateSettings);
 
-    module.exports = router;
-    
+module.exports = router;

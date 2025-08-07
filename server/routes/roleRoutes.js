@@ -6,13 +6,19 @@ const {
   updateRole,
   deleteRole,
 } = require('../controllers/roleController');
-
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
-// ทุกเส้นทางในนี้ต้องเป็น Admin เท่านั้น
-router.use(protect, authorize('admin'));
+// Protect all routes in this file, ensuring user is logged in
+router.use(protect);
 
-router.route('/').get(getRoles).post(createRole);
-router.route('/:id').put(updateRole).delete(deleteRole);
+// Now, apply specific permission checks for each route
+router.route('/')
+  .get(authorize(PERMISSIONS.SETTINGS_MANAGE_ROLES), getRoles)
+  .post(authorize(PERMISSIONS.SETTINGS_MANAGE_ROLES), createRole);
+
+router.route('/:id')
+  .put(authorize(PERMISSIONS.SETTINGS_MANAGE_ROLES), updateRole)
+  .delete(authorize(PERMISSIONS.SETTINGS_MANAGE_ROLES), deleteRole);
 
 module.exports = router;

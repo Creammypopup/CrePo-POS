@@ -5,18 +5,19 @@ const {
   getEvents,
   createEvent,
   deleteEvent,
-} = require('../controllers/calendarController'); // ตรวจสอบให้แน่ใจว่า controller มีฟังก์ชันครบ
-const { protect } = require('../middleware/authMiddleware');
+} = require('../controllers/calendarController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
-// ใช้ middleware `protect` กับทุก route ในไฟล์นี้
 router.use(protect);
 
+// Assuming anyone who can log in can view/manage the calendar.
+// If not, add a specific permission like PERMISSIONS.CALENDAR_VIEW
 router.route('/')
   .get(getEvents)
   .post(createEvent);
 
 router.route('/:id')
-  // .put(updateEvent) // เรายังไม่มีฟังก์ชัน update ใน controller จึงคอมเมนต์ออกไปก่อน
   .delete(deleteEvent);
 
 module.exports = router;

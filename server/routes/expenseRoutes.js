@@ -7,18 +7,16 @@ const {
     deleteExpense
 } = require('../controllers/expenseController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
-// ทุก Route ในนี้ต้อง Login ก่อน
 router.use(protect);
 
-// อนุญาตให้ 'admin' และ 'manager' (สมมติว่ามี) เข้าถึงได้
-// ถ้าต้องการให้ทุกคนเข้าถึงได้ ให้ใช้แค่ protect
 router.route('/')
-    .get(getExpenses)
-    .post(createExpense);
+    .get(authorize(PERMISSIONS.ACCOUNTING_VIEW), getExpenses)
+    .post(authorize(PERMISSIONS.ACCOUNTING_MANAGE), createExpense);
 
 router.route('/:id')
-    .put(updateExpense)
-    .delete(deleteExpense);
+    .put(authorize(PERMISSIONS.ACCOUNTING_MANAGE), updateExpense)
+    .delete(authorize(PERMISSIONS.ACCOUNTING_MANAGE), deleteExpense);
 
 module.exports = router;

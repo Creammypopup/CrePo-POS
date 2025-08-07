@@ -7,17 +7,18 @@ const {
   createSale,
   deleteSale,
 } = require('../controllers/saleController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
 // All routes are protected
 router.use(protect);
 
 router.route('/')
-  .get(getSales)
-  .post(createSale);
+  .get(authorize(PERMISSIONS.SALES_VIEW), getSales)
+  .post(authorize(PERMISSIONS.POS_ACCESS), createSale);
 
 router.route('/:id')
-  .get(getSaleById)
-  .delete(deleteSale);
+  .get(authorize(PERMISSIONS.SALES_VIEW), getSaleById)
+  .delete(authorize(PERMISSIONS.SALES_VIEW), deleteSale); // Assuming viewing sales allows deleting
 
 module.exports = router;

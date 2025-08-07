@@ -6,16 +6,16 @@ const {
     createCategory,
     deleteCategory
 } = require('../controllers/categoryController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../utils/permissions');
 
-// All routes in this file are protected
 router.use(protect);
 
 router.route('/')
-    .get(getCategories)
-    .post(createCategory);
+    .get(authorize(PERMISSIONS.PRODUCTS_VIEW), getCategories)
+    .post(authorize(PERMISSIONS.PRODUCTS_MANAGE), createCategory);
 
 router.route('/:id')
-    .delete(deleteCategory);
+    .delete(authorize(PERMISSIONS.PRODUCTS_MANAGE), deleteCategory);
 
 module.exports = router;
