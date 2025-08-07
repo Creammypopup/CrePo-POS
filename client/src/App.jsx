@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch } from 'react-redux';
-import { FaCalendarAlt } from 'react-icons/fa';
 import moment from 'moment';
 
 // --- Core Components ---
@@ -31,47 +30,27 @@ import SalesReportPage from './pages/reports/SalesReportPage.jsx';
 import InventoryReportPage from './pages/reports/InventoryReportPage.jsx';
 import PawnReportPage from './pages/reports/PawnReportPage.jsx';
 import ReceiptPage from './pages/ReceiptPage.jsx';
-import ReceiveStockPage from './pages/inventory/ReceiveStockPage.jsx'; // <-- ADD THIS LINE
+import ReceiptsListPage from './pages/ReceiptsListPage.jsx';
+import ReceiveStockPage from './pages/inventory/ReceiveStockPage.jsx';
+import StockAdjustmentsPage from './pages/inventory/StockAdjustmentsPage.jsx';
+import QuotationsPage from './pages/QuotationsPage.jsx';
 
 // --- Redux Actions ---
 import { checkAuthStatus } from './features/auth/authSlice.js';
 
 // Placeholder pages
-const QuotationsPage = () => <div className="text-center p-10">Quotations Page is under construction.</div>;
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
-const ReceiptsListPage = () => <div className="text-center p-10">Receipts List Page is under construction.</div>;
-const StockAdjustmentsPage = () => <div className="text-center p-10">Stock Adjustments Page is under construction.</div>;
-
-function BottomBar() {
-  const [currentDate, setCurrentDate] = useState(moment().format('YYYY-MM-DD'));
-  const handleDateChange = (e) => { setCurrentDate(e.target.value); };
-  return (
-    <div className="h-10 bg-[#F5EBE0] border-t border-gray-200/80 flex items-center justify-end px-6 text-sm flex-shrink-0">
-        <div className="flex items-center">
-            <FaCalendarAlt className="mr-2 text-gray-500" />
-            <label htmlFor="system-date" className="mr-2 font-medium text-gray-600 text-xs">วันที่ของระบบ:</label>
-            <input type="date" id="system-date" value={currentDate} onChange={handleDateChange} className="bg-white border border-gray-300 rounded-md px-2 py-0.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-purple text-xs"/>
-        </div>
-    </div>
-  );
-}
 
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const handleContentClick = (e) => { 
-    if (isSidebarOpen && e.target.closest('aside') === null) {
-        setIsSidebarOpen(false);
-    }
-  };
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 font-sans">
       <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto" onClick={handleContentClick}>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
           <div className="container mx-auto px-6 py-8"><Outlet /></div>
         </main>
-        <BottomBar />
       </div>
     </div>
   );
@@ -100,22 +79,20 @@ function App() {
               <Route path="/sales/create" element={<PosPageWrapper />} />
               <Route path="/pawn" element={<PawnPage />} /> 
               <Route path="/products" element={<ProductsPage />} />
-              <Route path="/inventory/receive" element={<ReceiveStockPage />} /> {/* <-- ADD THIS LINE */}
+              <Route path="/inventory/receive" element={<ReceiveStockPage />} />
+              <Route path="/inventory/adjust" element={<StockAdjustmentsPage />} />
               <Route path="/contacts/customers" element={<CustomersPage />} />
               <Route path="/contacts/suppliers" element={<SuppliersPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
-              {/* Reports Routes */}
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/reports/sales" element={<SalesReportPage />} />
               <Route path="/reports/inventory" element={<InventoryReportPage />} />
               <Route path="/reports/pawn" element={<PawnReportPage />} />
-              {/* Document Routes */}
               <Route path="/receipts/:id" element={<ReceiptPage />} />
               <Route path="/receipts" element={<ReceiptsListPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
-              <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />
               <Route path="/settings/users" element={<UsersPage />} />
               <Route path="/settings/roles" element={<RolesPage />} />

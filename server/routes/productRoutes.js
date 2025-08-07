@@ -1,8 +1,9 @@
+// server/routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
   getProducts,
-  getProductById,
+  findProductByBarcode,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -15,8 +16,9 @@ router.route('/')
   .get(getProducts)
   .post(authorize('Admin', 'Manager'), createProduct);
 
+router.get('/barcode/:barcode', findProductByBarcode); // New route for barcode scanning
+
 router.route('/:id')
-  .get(getProductById)
   .put(authorize('Admin', 'Manager'), updateProduct)
   .delete(authorize('Admin', 'Manager'), deleteProduct);
 

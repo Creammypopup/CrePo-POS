@@ -10,7 +10,7 @@ const notificationService = require('./services/notificationService');
 
 connectDB();
 
-const app = express();
+const app = express(); // <-- MOVED THIS LINE UP
 
 app.use(cors());
 app.use(express.json());
@@ -33,7 +33,9 @@ app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/pawns', require('./routes/pawnRoutes'));
 app.use('/api/shifts', require('./routes/shiftRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
-app.use('/api/purchase-orders', require('./routes/purchaseOrderRoutes')); // <-- ADD THIS LINE
+app.use('/api/purchase-orders', require('./routes/purchaseOrderRoutes'));
+app.use('/api/stock', require('./routes/stockRoutes'));
+app.use('/api/quotations', require('./routes/quotationRoutes'));
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

@@ -16,6 +16,7 @@
     "@fullcalendar/timegrid": "^6.1.18",
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.2.5",
+    "@zxing/library": "^0.21.0",
     "axios": "^1.7.2",
     "crepo-pos-runner": "file:..",
     "date-fns": "^3.6.0",
@@ -32,6 +33,7 @@
     "react-to-print": "^2.15.1",
     "react-toastify": "^10.0.5",
     "react-tooltip": "^5.29.1",
+    "react-zxing": "^2.0.0",
     "recharts": "^3.1.0"
   },
   "devDependencies": {

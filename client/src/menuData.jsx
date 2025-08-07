@@ -10,7 +10,7 @@ export const menuData = [
   // Main Menu
   { title: 'ภาพรวม', icon: <FaTachometerAlt />, path: '/', color: '#2ECC71', permission: permissions.VIEW_DASHBOARD.id },
   { title: 'ขายหน้าร้าน (POS)', icon: <FaCashRegister />, path: '/sales/create', color: '#3498DB', permission: permissions.MANAGE_POS.id },
-  { title: 'รับฝาก/จำนำ', icon: <FaHandHoldingUsd />, path: '/pawn', color: '#E67E22', permission: permissions.MANAGE_PRODUCTS.id }, // Placeholder permission
+  { title: 'รับฝาก/จำนำ', icon: <FaHandHoldingUsd />, path: '/pawn', color: '#E67E22', permission: permissions.MANAGE_PRODUCTS.id },
 
   // Products & Stock Management
   { title: 'สินค้า', icon: <FaBoxOpen />, path: '/products', color: '#E74C3C', permission: permissions.MANAGE_PRODUCTS.id },
@@ -23,7 +23,7 @@ export const menuData = [
   },
 
   // Contacts
-  { title: 'ผู้ติดต่อ', icon: <FaAddressBook />, color: '#1ABC9C', permission: permissions.MANAGE_CONTACTS.id,
+  { title: 'ผู้ติดต่อ', icon: <FaAddressBook />, path: '/contacts/customers', color: '#1ABC9C', permission: permissions.MANAGE_CONTACTS.id,
       submenu: [
           { title: 'ลูกค้า', path: '/contacts/customers', permission: permissions.MANAGE_CONTACTS.id },
           { title: 'ผู้จำหน่าย', path: '/contacts/suppliers', permission: permissions.MANAGE_CONTACTS.id },
@@ -31,7 +31,7 @@ export const menuData = [
   },
 
   // Accounting & Documents
-  { title: 'บัญชีและการเงิน', icon: <FaBook />, color: '#34495E',
+  { title: 'บัญชีและการเงิน', icon: <FaBook />, path: '/expenses', color: '#34495E',
       permission: [permissions.MANAGE_ACCOUNTING.id, permissions.MANAGE_EXPENSES.id],
       submenu: [
           { title: 'บันทึกค่าใช้จ่าย', path: '/expenses', permission: permissions.MANAGE_EXPENSES.id },
@@ -46,7 +46,7 @@ export const menuData = [
   { title: 'ปฏิทิน', icon: <FaCalendarAlt />, path: '/calendar', color: '#F1C40F', permission: permissions.VIEW_CALENDAR.id },
 
   // Settings Group
-  { title: 'ตั้งค่า', icon: <FaCog />, color: '#7F8C8D',
+  { title: 'ตั้งค่า', icon: <FaCog />, path: '/settings/general', color: '#7F8C8D',
     permission: [permissions.MANAGE_SETTINGS.id, permissions.MANAGE_USERS.id, permissions.MANAGE_ROLES.id],
     submenu: [
         { title: 'ข้อมูลองค์กร', path: '/settings/general', permission: permissions.MANAGE_SETTINGS.id },

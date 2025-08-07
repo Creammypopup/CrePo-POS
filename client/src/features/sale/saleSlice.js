@@ -3,17 +3,17 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import saleService from './saleService';
 import { handleApiError } from '../../utils/errorHandler';
 import { getProducts } from '../product/productSlice';
+import { getCustomers } from '../customer/customerSlice';
 
 const walkInCustomer = { _id: 'walk-in', name: 'ลูกค้าทั่วไป' };
 
 const initialState = {
   cart: [],
   selectedCustomer: walkInCustomer,
-  heldBills: [],
-  selectedSale: null, // For viewing single receipt
+  discount: { type: null, value: 0 },
+  selectedSale: null,
   isLoading: false,
   isError: false,
-  isSuccess: false,
   message: '',
 };
 
@@ -21,12 +21,14 @@ export const createSale = createAsyncThunk('sale/create', async (saleData, thunk
     try {
         const result = await saleService.createSale(saleData);
         thunkAPI.dispatch(getProducts());
+        thunkAPI.dispatch(getCustomers());
         return result;
     } catch (error) {
         return thunkAPI.rejectWithValue(handleApiError(error));
     }
 });
 
+// --- START OF FIX: Added getSaleById Thunk back ---
 export const getSaleById = createAsyncThunk('sale/getById', async (id, thunkAPI) => {
     try {
         return await saleService.getSaleById(id);
@@ -34,6 +36,7 @@ export const getSaleById = createAsyncThunk('sale/getById', async (id, thunkAPI)
         return thunkAPI.rejectWithValue(handleApiError(error));
     }
 });
+// --- END OF FIX ---
 
 export const saleSlice = createSlice({
   name: 'sale',
@@ -42,48 +45,51 @@ export const saleSlice = createSlice({
     resetSale: (state) => {
       state.cart = [];
       state.selectedCustomer = walkInCustomer;
+      state.discount = { type: null, value: 0 };
       state.selectedSale = null;
-      state.isLoading = false;
-      state.isError = false;
-      state.isSuccess = false;
-      state.message = '';
     },
-    selectCustomer: (state, action) => { state.selectedCustomer = action.payload; },
-    clearCustomer: (state) => { state.selectedCustomer = walkInCustomer; },
     addToCart: (state, action) => {
-        const itemInCart = state.cart.find((item) => item._id === action.payload._id);
-        if (itemInCart) { itemInCart.quantity++; } 
-        else { state.cart.push({ ...action.payload, quantity: 1 }); }
+        const { product, size, quantity, isFreebie = false } = action.payload;
+        const itemId = size ? `${product._id}-${size._id}` : product._id;
+        const itemInCart = state.cart.find((item) => item.itemId === itemId && !item.isFreebie);
+
+        if (itemInCart) {
+            itemInCart.quantity += quantity || 1;
+        } else {
+            const price = isFreebie ? 0 : (size ? size.price : product.price);
+            const cost = size ? size.cost : product.cost;
+            state.cart.push({
+                ...product,
+                itemId,
+                productId: product._id,
+                quantity: quantity || 1,
+                priceAtSale: price,
+                originalPrice: price,
+                costAtSale: cost,
+                unitAtSale: product.mainUnit,
+                sizeId: size ? size._id : null,
+                sizeName: size ? size.name : null,
+                name: size ? `${product.name} - ${size.name}` : product.name,
+                isFreebie,
+                itemDiscount: { type: 'amount', value: 0 },
+            });
+        }
     },
-    incrementQuantity: (state, action) => {
-        const item = state.cart.find((item) => item._id === action.payload);
-        if(item) item.quantity++;
-    },
-    decrementQuantity: (state, action) => {
-        const item = state.cart.find((item) => item._id === action.payload);
-        if (item && item.quantity > 1) { item.quantity--; }
+    updateCartItem: (state, action) => {
+        const { itemId, ...updates } = action.payload;
+        const itemIndex = state.cart.findIndex(item => item.itemId === itemId);
+        if(itemIndex !== -1) {
+            state.cart[itemIndex] = { ...state.cart[itemIndex], ...updates };
+        }
     },
     removeFromCart: (state, action) => {
-        state.cart = state.cart.filter((item) => item._id !== action.payload);
+        state.cart = state.cart.filter((item) => item.itemId !== action.payload);
     },
-    clearCart: (state) => {
-        state.cart = [];
-        state.selectedCustomer = walkInCustomer;
+    applyDiscount: (state, action) => {
+        state.discount = action.payload;
     },
-    holdBill: (state) => {
-        if (state.cart.length > 0) {
-            state.heldBills.push({ cart: state.cart, customer: state.selectedCustomer, timestamp: new Date().toISOString() });
-            state.cart = [];
-            state.selectedCustomer = walkInCustomer;
-        }
-    },
-    recallBill: (state, action) => {
-        const billToRecall = state.heldBills[action.payload];
-        if (billToRecall) {
-            state.cart = billToRecall.cart;
-            state.selectedCustomer = billToRecall.customer;
-            state.heldBills.splice(action.payload, 1);
-        }
+    selectCustomer: (state, action) => {
+        state.selectedCustomer = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -91,10 +97,10 @@ export const saleSlice = createSlice({
         .addCase(createSale.pending, (state) => { state.isLoading = true; })
         .addCase(createSale.fulfilled, (state, action) => {
             state.isLoading = false;
-            state.isSuccess = true;
-            state.selectedSale = action.payload; // Set the newly created sale as selected
+            state.selectedSale = action.payload; // Keep the created sale for receipt view
             state.cart = [];
             state.selectedCustomer = walkInCustomer;
+            state.discount = { type: null, value: 0 };
         })
         .addCase(createSale.rejected, (state, action) => {
             state.isLoading = false;
@@ -114,5 +120,5 @@ export const saleSlice = createSlice({
   }
 });
 
-export const { resetSale, addToCart, incrementQuantity, decrementQuantity, removeFromCart, clearCart, selectCustomer, clearCustomer, holdBill, recallBill } = saleSlice.actions;
+export const { resetSale, addToCart, updateCartItem, removeFromCart, applyDiscount, selectCustomer } = saleSlice.actions;
 export default saleSlice.reducer;
