@@ -4,15 +4,10 @@ import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch } from 'react-redux';
-import moment from 'moment';
-
-// --- Core Components ---
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import Spinner from './components/Spinner.jsx';
-
-// --- Page Imports ---
 import Dashboard from './pages/Dashboard.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import CalendarPage from './pages/CalendarPage.jsx';
@@ -34,21 +29,24 @@ import ReceiptsListPage from './pages/ReceiptsListPage.jsx';
 import ReceiveStockPage from './pages/inventory/ReceiveStockPage.jsx';
 import StockAdjustmentsPage from './pages/inventory/StockAdjustmentsPage.jsx';
 import QuotationsPage from './pages/QuotationsPage.jsx';
-
-// --- Redux Actions ---
 import { checkAuthStatus } from './features/auth/authSlice.js';
 
-// Placeholder pages
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
 
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const handleContentClick = (e) => {
+    if (window.innerWidth < 768 && isSidebarOpen && e.target.closest('aside') === null) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50 font-sans">
       <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto" onClick={handleContentClick}>
           <div className="container mx-auto px-6 py-8"><Outlet /></div>
         </main>
       </div>
@@ -64,9 +62,7 @@ function App() {
     dispatch(checkAuthStatus()).finally(() => setAuthChecked(true));
   }, [dispatch]);
 
-  if (!authChecked) {
-    return <Spinner />;
-  }
+  if (!authChecked) return <Spinner />;
 
   return (
     <>
