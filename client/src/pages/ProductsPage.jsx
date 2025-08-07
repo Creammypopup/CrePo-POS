@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo, Fragment } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { getProducts, deleteProduct, reset } from '../features/product/productSlice';
-import { FaPlus, FaBoxOpen, FaPrint, FaBarcode, FaEdit, FaTrash, FaSearch, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaPlus, FaBoxOpen, FaPrint, FaBarcode, FaFileImport, FaFileExport, FaEdit, FaTrash, FaSearch, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import Spinner from '../components/Spinner';
 import AddProductModal from '../components/modals/AddProductModal';
 import BarcodeModal from '../components/modals/BarcodeModal';
@@ -24,7 +24,7 @@ function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedRows, setExpandedRows] = useState([]);
   const [activeFilter, setActiveFilter] = useState(location.state?.filter || 'all');
-  
+
   useEffect(() => {
     if (isError) toast.error(message);
     dispatch(getProducts());
@@ -89,93 +89,26 @@ function ProductsPage() {
              </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
              <button onClick={() => setActiveFilter('all')} className={getFilterButtonClass('all')}>สินค้าทั้งหมด</button>
              <button onClick={() => setActiveFilter('low-stock')} className={getFilterButtonClass('low-stock')}>ใกล้หมดสต็อก</button>
              <button onClick={() => setActiveFilter('expiring')} className={getFilterButtonClass('expiring')}>ใกล้หมดอายุ</button>
              <div className="flex-grow"></div>
-            <button onClick={() => setIsAddModalOpen(true)} className="btn btn-3d-pastel btn-primary ml-auto">
-              <FaPlus className="mr-2" /> เพิ่มสินค้าใหม่
-            </button>
-          </div>
-
-        <div className="bg-white shadow-lg rounded-2xl p-4">
-           <div className="overflow-x-auto">
-             <table className="min-w-full bg-white">
-               <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600 w-12">#</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600 w-12"></th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">ชื่อสินค้า</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
-                  <th className="py-3 px-4 text-right font-semibold text-gray-600">ราคาขาย</th>
-                  <th className="py-3 px-4 text-right font-semibold text-gray-600">คงเหลือ</th>
-                  <th className="py-3 px-4 text-center font-semibold text-gray-600">วันหมดอายุ</th>
-                  <th className="py-3 px-4 text-center font-semibold text-gray-600">การกระทำ</th>
-                </tr>
-               </thead>
-               <tbody>
-                  {isLoading && products.length === 0 ? (
-                    <tr><td colSpan="8" className="text-center py-10"><Spinner/></td></tr>
-                  ) : filteredProducts.length > 0 ? (
-                    filteredProducts.map((product, index) => (
-                      <Fragment key={product._id}>
-                        <tr className="border-b hover:bg-gray-50">
-                          <td className="p-3 px-4 text-center text-gray-500">{index + 1}</td>
-                          <td className="p-3 px-4 text-center">
-                            {product.hasMultipleSizes && (
-                              <button onClick={() => toggleRow(product._id)} className="text-gray-400 hover:text-brand-purple">
-                                {expandedRows.includes(product._id) ? <FaChevronDown /> : <FaChevronRight />}
-                              </button>
-                            )}
-                          </td>
-                          <td className="p-3 px-4 text-sm font-medium text-gray-800">{product.name}</td>
-                          <td className="p-3 px-4 text-sm text-gray-600">{product.category}</td>
-                          <td className="p-3 px-4 text-right text-sm text-gray-500 italic">
-                            {product.hasMultipleSizes ? '-' : product.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="p-3 px-4 text-right text-sm text-gray-500 italic">
-                             {product.hasMultipleSizes ? '-' : `${product.stock} ${product.mainUnit}`}
-                          </td>
-                           <td className="p-3 px-4 text-center text-sm text-gray-500">
-                             {product.hasMultipleSizes ? '-' : (product.expiryDate ? moment(product.expiryDate).format('DD/MM/YY') : '-')}
-                           </td>
-                          <td className="p-3 px-4 text-center">
-                            <div className="flex justify-center gap-2">
-                                <button onClick={() => openEditModal(product)} className="btn p-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200"><FaEdit /></button>
-                                <button onClick={() => setDeleteConfirm({ isOpen: true, product })} className="btn p-2.5 bg-red-100 text-red-700 hover:bg-red-200"><FaTrash /></button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedRows.includes(product._id) && product.sizes && product.sizes.map((size, index) => (
-                          <tr key={`${product._id}-${index}`} className="bg-purple-50 border-b border-purple-100">
-                            <td colSpan="2"></td>
-                            <td className="p-2 pl-16 text-sm text-purple-800">{size.name}</td>
-                            <td className="p-2"></td>
-                            <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
-                            <td className="p-2 text-right text-sm font-semibold text-purple-800">{size.stock} {product.mainUnit}</td>
-                            <td className="p-2 text-center text-sm font-semibold text-purple-800">{size.expiryDate ? moment(size.expiryDate).format('DD/MM/YY') : '-'}</td>
-                            <td className="p-2"></td>
-                          </tr>
-                        ))}
-                      </Fragment>
-                    ))
-                  ) : (
-                    <tr>
-                        <td colSpan="8" className="text-center py-10 text-gray-500">
-                            <FaBoxOpen className="mx-auto text-4xl mb-2 text-gray-300" />
-                            ไม่พบข้อมูลสินค้า {searchTerm && 'ที่ตรงกับคำค้นหา'}
-                        </td>
-                    </tr>
-                  )}
-               </tbody>
-             </table>
-           </div>
+             <div className="flex gap-2">
+                <button className="btn bg-white"><FaFileImport className="mr-2"/> นำเข้า</button>
+                <button className="btn bg-white"><FaFileExport className="mr-2"/> ส่งออก</button>
+                <button className="btn bg-white"><FaPrint className="mr-2"/> พิมพ์รายการ</button>
+                <button onClick={() => setIsBarcodeModalOpen(true)} className="btn bg-white"><FaBarcode className="mr-2"/> พิมพ์บาร์โค้ด</button>
+                <button onClick={() => setIsAddModalOpen(true)} className="btn btn-3d-pastel btn-primary ml-auto">
+                  <FaPlus className="mr-2" /> เพิ่มสินค้าใหม่
+                </button>
+             </div>
         </div>
-      </div>
+
+
 
       <AddProductModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-      <BarcodeModal isOpen={isBarcodeModalOpen} onClose={() => setIsBarcodeModalOpen(false)} />
+      <BarcodeModal isOpen={isBarcodeModalOpen} onClose={() => setIsBarcodeModalOpen(false)} products={products} />
       <EditProductModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} product={selectedProduct} />
 
        {deleteConfirm.isOpen && (

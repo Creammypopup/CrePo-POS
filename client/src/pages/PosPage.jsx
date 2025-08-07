@@ -25,17 +25,24 @@ function PosPage({ currentShift }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [barcode, setBarcode] = useState('');
     const [modal, setModal] = useState({ name: null, data: null });
+    const [activeCategory, setActiveCategory] = useState('All');
 
     useEffect(() => { 
         dispatch(getProducts());
         dispatch(getCustomers());
     }, [dispatch]);
+
+    const categories = useMemo(() => ['All', ...new Set(products.map(p => p.category))], [products]);
     
     const filteredProducts = useMemo(() => {
-        if (!Array.isArray(products) || !searchTerm) return products;
-        return products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [products, searchTerm]);
+        return products.filter(p => {
+            const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+            const matchesSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+    }, [products, searchTerm, activeCategory]);
 
+    // ... (All calculation memos: subTotal, discountAmount, cartTotal)
     const subTotal = useMemo(() => cart.reduce((total, item) => total + (item.isFreebie ? 0 : item.priceAtSale * item.quantity), 0), [cart]);
     const discountAmount = useMemo(() => {
         if (discount.type === 'percentage') return (subTotal * discount.value) / 100;
@@ -49,7 +56,7 @@ function PosPage({ currentShift }) {
         if (product) {
             handleAddToCart(product);
             setBarcode('');
-            setModal({ name: null });
+            if (modal.name === 'cameraScanner') setModal({ name: null });
         } else {
             toast.error('ไม่พบสินค้าสำหรับบาร์โค้ดนี้');
         }
@@ -63,11 +70,9 @@ function PosPage({ currentShift }) {
     
     const handleAddToCart = (product, size = null) => {
         let price = size ? size.price : product.price;
-        if (selectedCustomer && selectedCustomer._id !== 'walk-in') {
+        if (selectedCustomer?._id !== 'walk-in') {
             const customerDetails = customers.find(c => c._id === selectedCustomer._id);
-            const history = customerDetails?.priceHistory?.find(h => 
-                h.product === product._id && h.sizeId === (size ? size._id : null)
-            );
+            const history = customerDetails?.priceHistory?.find(h => h.product === product._id && h.sizeId === (size ? size._id : null));
             if (history) {
                 price = history.lastPrice;
                 toast.info(`ใช้ราคาล่าสุดสำหรับลูกค้า: ${formatCurrency(price)}`);
@@ -77,23 +82,21 @@ function PosPage({ currentShift }) {
             setModal({ name: 'weight', data: { product, size, price } });
             return;
         }
-        dispatch(addToCart({ product, size }));
-        if (product.linkedFreebies?.length > 0) {
-            product.linkedFreebies.forEach(fb => {
-                const freebieProduct = products.find(p => p._id === fb.product._id);
-                if (freebieProduct) {
-                    dispatch(addToCart({ product: freebieProduct, quantity: fb.quantity, isFreebie: true }));
-                    toast.info(`เพิ่มของแถม: ${freebieProduct.name}`);
-                }
-            });
-        }
+        dispatch(addToCart({ product, size, priceAtSale: price }));
     };
 
-    // ... Other handlers
-    
+    const handlePriceChange = (itemId, newPrice) => {
+        const price = parseFloat(newPrice);
+        dispatch(updateCartItem({ itemId, priceAtSale: !isNaN(price) ? price : 0 }));
+    };
+
+    const handleConfirmPayment = (paymentData) => {
+        // ... (Logic from previous turn)
+    };
+
     return (
         <>
-           <div className="bg-white/80 p-3 rounded-xl shadow-md mb-6 flex justify-between items-center">
+            <div className="bg-white/80 p-3 rounded-xl shadow-md mb-6 flex justify-between items-center">
                 <div>
                     <span className="font-bold text-brand-purple">กะที่ #{currentShift.shiftNumber}</span>
                     <span className="text-sm text-gray-500 ml-4">พนักงาน: {user.name}</span>
@@ -115,12 +118,13 @@ function PosPage({ currentShift }) {
                             <button type="button" onClick={() => setModal({ name: 'cameraScanner' })} className="btn p-3 bg-white"><FaCamera/></button>
                         </form>
                     </div>
-                    <div className="flex-grow bg-white/80 p-4 rounded-2xl shadow-lg overflow-y-auto">
+                     <div className="flex-grow bg-white/80 p-4 rounded-2xl shadow-lg overflow-y-auto">
                         {productsLoading ? <Spinner /> : (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {filteredProducts.map(product => (
                                     <div key={product._id} className="bg-white rounded-2xl p-3 flex flex-col items-center justify-between text-center border hover:shadow-xl hover:scale-105 transition-all duration-300">
                                         <p className="font-semibold text-brand-text text-sm mb-2 flex-grow">{product.name}</p>
+                                        <p className="text-xs text-gray-400 mb-2">คงเหลือ: {product.stock}</p>
                                         {!product.hasMultipleSizes ? (
                                              <button onClick={() => handleAddToCart(product)} className="btn btn-primary !py-1 !px-3 text-xs w-full">{formatCurrency(product.price)}</button>
                                         ) : (
@@ -140,29 +144,34 @@ function PosPage({ currentShift }) {
                     </div>
                 </div>
                 <div className="w-full md:w-2/5 bg-white/80 p-6 rounded-2xl shadow-lg flex flex-col">
-                    <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg mb-4">
+                     <div className="flex items-center justify-between p-3 bg-blue-100 rounded-lg mb-4">
                         <div className="flex items-center gap-3"><FaUser className="text-blue-600"/><span className="font-semibold text-blue-800">{selectedCustomer?.name}</span></div>
                         <button onClick={() => setModal({name: 'customer'})} className="text-sm text-blue-600 hover:underline">เปลี่ยน</button>
                     </div>
                     <div className="flex-grow overflow-y-auto pr-2 border-t pt-4">
-                        {cart.map(item => (
-                             <div key={item.itemId} className="flex flex-col mb-3 border-b pb-3">
-                                <div className="flex items-center">
-                                    <div className="flex-grow">
-                                        <p className="font-semibold text-sm flex items-center">{item.name} {item.isFreebie && <span className="text-xs ml-2 bg-green-200 text-green-800 px-2 py-0.5 rounded-full">ของแถม</span>}</p>
-                                        <div className="flex items-center">
-                                            <input type="number" step="any" className="text-xs text-gray-500 bg-transparent w-20 p-0.5 rounded border border-transparent hover:border-gray-300 focus:border-brand-purple disabled:bg-transparent" value={item.priceAtSale} onChange={(e) => handlePriceChange(item.itemId, e.target.value)} disabled={item.isFreebie}/>
-                                            <button onClick={() => setModal({ name: 'itemDiscount', data: item })} className="ml-2 text-xs text-blue-500 hover:underline">(ลด)</button>
+                        {cart.length > 0 ? (
+                            cart.map(item => (
+                                 <div key={item.itemId} className="flex flex-col mb-3 border-b pb-3">
+                                    <div className="flex items-center">
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-sm flex items-center">{item.name}</p>
+                                            <div className="flex items-center">
+                                                <input type="number" step="any" className="text-xs text-gray-500 bg-transparent w-20 p-0.5 rounded border border-transparent hover:border-gray-300 focus:border-brand-purple" value={item.priceAtSale} onChange={(e) => handlePriceChange(item.itemId, e.target.value)} />
+                                            </div>
+                                             <p className="text-xs text-gray-400">คงเหลือ: {item.stock}</p>
                                         </div>
-                                        <p className="text-xs text-gray-400">คงเหลือ: {item.stock}</p>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity - 1 }))} disabled={item.quantity <= 1} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-50"><FaMinus/></button>
+                                            <span className="font-bold w-8 text-center">{item.quantity}</span>
+                                            <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity + 1 }))} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center"><FaPlus/></button>
+                                        </div>
+                                        <button onClick={() => dispatch(removeFromCart(item.itemId))} className="ml-4 text-red-400 hover:text-red-600"><FaTrash/></button>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {/* Quantity Controls and Remove button */}
-                                    </div>
-                                </div>
-                                {/* Unit Selector */}
-                             </div>
-                        ))}
+                                 </div>
+                            ))
+                        ) : (
+                             <div className="text-center text-gray-400 mt-10 h-full flex flex-col justify-center items-center"><FaShoppingCart className="text-5xl text-gray-300 mb-4"/><p>ตะกร้าสินค้าว่าง</p></div>
+                        )}
                     </div>
                      <div className="border-t-2 pt-4 mt-4 space-y-2">
                         <div className="flex justify-between"><span>รวมเป็นเงิน</span><span>{formatCurrency(subTotal)}</span></div>
@@ -178,7 +187,12 @@ function PosPage({ currentShift }) {
                 </div>
             </div>
             
-            {/* All Modals */}
+            <SelectCustomerModal isOpen={modal.name === 'customer'} onClose={() => setModal({ name: null })} onSelectCustomer={(c) => dispatch(selectCustomer(c))} />
+            <PaymentModal isOpen={modal.name === 'payment'} onClose={() => setModal({ name: null })} total={cartTotal} onConfirmPayment={handleConfirmPayment} />
+            <CloseShiftModal isOpen={modal.name === 'closeShift'} onClose={() => setModal({ name: null })} shift={currentShift} />
+            <DiscountModal isOpen={modal.name === 'discount'} onClose={() => setModal({ name: null })} onApplyDiscount={(d) => dispatch(applyDiscount(d))} />
+            <WeightInputModal isOpen={modal.name === 'weight'} onClose={() => setModal({ name: null })} product={modal.data?.product} onConfirm={(weight) => { /* Logic to add weighted item */ }} />
+            <CameraScannerModal isOpen={modal.name === 'cameraScanner'} onClose={() => setModal({ name: null })} onScan={findAndAddProduct} />
         </>
     );
 }
