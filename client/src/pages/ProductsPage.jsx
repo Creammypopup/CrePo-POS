@@ -71,7 +71,7 @@ function ProductsPage() {
         toast.success(`ลบสินค้า "${deleteConfirm.product.name}" สำเร็จ!`);
         setDeleteConfirm({ isOpen: false, product: null });
       })
-      .catch((e) => toast.error(e || 'เกิดข้อผิดพลาดในการลบ'));
+      .catch((e) => toast.error(e || 'เกิดข้อผิดพลาด'));
   };
 
   if (isLoading && (!products || products.length === 0)) return <Spinner />;
@@ -106,8 +106,8 @@ function ProductsPage() {
         </div>
       )}
 
-      <AddProductModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-      <BarcodeModal isOpen={isBarcodeModalOpen} onClose={() => setIsBarcodeModalOpen(false)} products={products} />
+      {isAddModalOpen && <AddProductModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />}
+      {isBarcodeModalOpen && <BarcodeModal isOpen={isBarcodeModalOpen} onClose={() => setIsBarcodeModalOpen(false)} products={products} />}
       {isEditModalOpen && <EditProductModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} product={selectedProduct} />}
 
       {deleteConfirm.isOpen && (

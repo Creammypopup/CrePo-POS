@@ -34,7 +34,11 @@ function ProductGrid({ products, onEdit, onDelete }) {
             <h3 className="font-bold text-lg text-gray-800 truncate mt-1 flex-grow" title={product.name}>{product.name}</h3>
             <div className="mt-4">
               <p className="text-sm text-pastel-gray-dark">ราคาขาย</p>
-              <p className="font-bold text-2xl text-pastel-purple">{product.price.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</p>
+              <p className="font-bold text-2xl text-pastel-purple">
+                {product.price !== null && product.price !== undefined 
+                  ? product.price.toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) 
+                  : '-'}
+              </p>
             </div>
           </div>
           <div className="p-4 bg-gray-50 border-t border-pastel-gray-light flex justify-end gap-3">

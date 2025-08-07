@@ -52,7 +52,11 @@ function ProductTable({ products, onEdit, onDelete }) {
               </td>
               <td className="py-4 px-6 whitespace-nowrap text-pastel-gray-dark">{product.sku || '-'}</td>
               <td className="py-4 px-6 whitespace-nowrap text-pastel-gray-dark">{product.category?.name || '-'}</td>
-              <td className="py-4 px-6 whitespace-nowrap text-right font-semibold text-gray-700">{product.price.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+              <td className="py-4 px-6 whitespace-nowrap text-right font-semibold text-gray-700">
+                {product.price !== null && product.price !== undefined 
+                  ? product.price.toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) 
+                  : '-'}
+              </td>
               <td className="py-4 px-6 whitespace-nowrap text-center">
                 <StockStatus stock={product.stock} stockAlert={product.stockAlert} />
               </td>
