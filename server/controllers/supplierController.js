@@ -1,56 +1,55 @@
-// server/controllers/supplierController.js
-const asyncHandler = require('express-async-handler');
-const Supplier = require('../models/Supplier');
+const Supplier = require('../models/Supplier.js');
+const asyncHandler = require('../middleware/asyncHandler.js');
 
-// @desc    Get all suppliers for a user
+// @desc    Get all suppliers
 // @route   GET /api/suppliers
-// @access  Private
 const getSuppliers = asyncHandler(async (req, res) => {
-    const suppliers = await Supplier.find({ user: req.user.id }).sort({ name: 1 });
-    res.status(200).json(suppliers);
+  const suppliers = await Supplier.find({});
+  res.json(suppliers);
 });
 
-// @desc    Create a new supplier
-// @route   POST /api/suppliers
-// @access  Private
-const createSupplier = asyncHandler(async (req, res) => {
-    const { name } = req.body;
-    if (!name) {
-        res.status(400);
-        throw new Error('กรุณาใส่ชื่อผู้จำหน่าย');
-    }
+// @desc    Get supplier by ID
+// @route   GET /api/suppliers/:id
+const getSupplierById = asyncHandler(async (req, res) => {
+  const supplier = await Supplier.findById(req.params.id);
+  if (supplier) return res.json(supplier);
+  res.status(404);
+  throw new Error('ไม่พบผู้จัดจำหน่าย');
+});
 
-    const supplier = await Supplier.create({
-        ...req.body,
-        user: req.user.id,
-    });
-    res.status(201).json(supplier);
+// @desc    Create a supplier
+// @route   POST /api/suppliers
+const createSupplier = asyncHandler(async (req, res) => {
+  const supplier = new Supplier({ ...req.body, user: req.user._id });
+  const createdSupplier = await supplier.save();
+  res.status(201).json(createdSupplier);
 });
 
 // @desc    Update a supplier
 // @route   PUT /api/suppliers/:id
-// @access  Private
 const updateSupplier = asyncHandler(async (req, res) => {
-    const supplier = await Supplier.findById(req.params.id);
-    if (!supplier || supplier.user.toString() !== req.user.id) {
-        res.status(404);
-        throw new Error('ไม่พบผู้จำหน่าย');
-    }
-    const updatedSupplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.status(200).json(updatedSupplier);
+  const supplier = await Supplier.findById(req.params.id);
+  if (supplier) {
+    Object.assign(supplier, req.body);
+    const updatedSupplier = await supplier.save();
+    res.json(updatedSupplier);
+  } else {
+    res.status(404);
+    throw new Error('ไม่พบผู้จัดจำหน่าย');
+  }
 });
 
 // @desc    Delete a supplier
 // @route   DELETE /api/suppliers/:id
-// @access  Private
 const deleteSupplier = asyncHandler(async (req, res) => {
-    const supplier = await Supplier.findById(req.params.id);
-     if (!supplier || supplier.user.toString() !== req.user.id) {
-        res.status(404);
-        throw new Error('ไม่พบผู้จำหน่าย');
-    }
-    await supplier.deleteOne();
-    res.status(200).json({ id: req.params.id });
+  const supplier = await Supplier.findById(req.params.id);
+  if (supplier) {
+    await Supplier.deleteOne({ _id: supplier._id });
+    res.status(200).json({ message: 'ลบผู้จัดจำหน่ายเรียบร้อยแล้ว' });
+  } else {
+    res.status(404);
+    throw new Error('ไม่พบผู้จัดจำหน่าย');
+  }
 });
 
-module.exports = { getSuppliers, createSupplier, updateSupplier, deleteSupplier };
+module.exports = { getSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier };

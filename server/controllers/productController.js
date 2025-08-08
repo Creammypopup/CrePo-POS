@@ -1,134 +1,93 @@
-const asyncHandler = require('express-async-handler');
-const Product = require('../models/Product');
+const Product = require('../models/Product.js');
+const asyncHandler = require('../middleware/asyncHandler.js');
 
 /**
- * @desc    Create a new product
- * @route   POST /api/products
- * @access  Private (needs authentication)
- */
-const createProduct = asyncHandler(async (req, res) => {
-  // ดึงข้อมูลจาก request body ที่ส่งมาจาก client
-  const { name, description, category, baseUnit, productType, sizes, primarySupplier } = req.body;
-
-  // ตรวจสอบข้อมูลเบื้องต้น
-  if (!name || !category || !baseUnit) {
-    res.status(400);
-    throw new Error('กรุณากรอกข้อมูลที่จำเป็น: ชื่อ, หมวดหมู่, และหน่วยนับหลัก');
-  }
-
-  // สร้างสินค้าใหม่ใน database
-  const product = await Product.create({
-    user: req.user.id, // เราจะเพิ่ม req.user เข้ามาใน middleware ของการยืนยันตัวตนทีหลัง
-    name,
-    description,
-    category,
-    baseUnit,
-    productType,
-    sizes,
-    primarySupplier,
-  });
-
-  if (product) {
-    res.status(201).json(product);
-  } else {
-    res.status(400);
-    throw new Error('ข้อมูลสินค้าไม่ถูกต้อง');
-  }
-});
-
-/**
- * @desc    Get all products for a user
+ * @desc    Fetch all products
  * @route   GET /api/products
  * @access  Private
  */
 const getProducts = asyncHandler(async (req, res) => {
-  // สามารถเพิ่มการค้นหาและแบ่งหน้าได้ในภายหลัง
-  const products = await Product.find({ user: req.user.id })
+  // .populate() จะดึงข้อมูลชื่อจาก collection ที่เกี่ยวข้องมาด้วย (Category และ Supplier)
+  const products = await Product.find({})
     .populate('category', 'name')
-    .populate('primarySupplier', 'name')
-    .sort({ createdAt: -1 });
-  res.status(200).json(products);
+    .populate('supplier', 'name');
+  res.json(products);
 });
 
 /**
- * @desc    Get a single product by ID
+ * @desc    Fetch a single product by ID
  * @route   GET /api/products/:id
  * @access  Private
  */
 const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
     .populate('category', 'name')
-    .populate('primarySupplier', 'name');
+    .populate('supplier', 'name');
 
-  if (!product) {
+  if (product) {
+    res.json(product);
+  } else {
     res.status(404);
     throw new Error('ไม่พบสินค้า');
   }
+});
 
-  // ตรวจสอบว่าสินค้าเป็นของผู้ใช้ที่ล็อกอินอยู่
-  if (product.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('ไม่ได้รับอนุญาตให้เข้าถึงข้อมูลนี้');
-  }
+/**
+ * @desc    Create a new product
+ * @route   POST /api/products
+ * @access  Private/Admin
+ */
+const createProduct = asyncHandler(async (req, res) => {
+  const product = new Product({
+    ...req.body,
+    user: req.user._id, // ผูกสินค้ากับผู้ใช้ที่สร้างโดยอัตโนมัติ
+  });
 
-  res.status(200).json(product);
+  const createdProduct = await product.save();
+  res.status(201).json(createdProduct);
 });
 
 /**
  * @desc    Update a product
  * @route   PUT /api/products/:id
- * @access  Private
+ * @access  Private/Admin
  */
 const updateProduct = asyncHandler(async (req, res) => {
-  let product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id);
 
-  if (!product) {
+  if (product) {
+    // อัปเดตข้อมูลทั้งหมดที่ส่งมาจาก req.body อย่างมีประสิทธิภาพ
+    Object.assign(product, req.body);
+
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
+  } else {
     res.status(404);
     throw new Error('ไม่พบสินค้า');
   }
-
-  if (product.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('ไม่ได้รับอนุญาตให้แก้ไขข้อมูลนี้');
-  }
-
-  const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  }).populate('category', 'name').populate('primarySupplier', 'name');
-
-  res.status(200).json(updatedProduct);
 });
 
 /**
  * @desc    Delete a product
  * @route   DELETE /api/products/:id
- * @access  Private
+ * @access  Private/Admin
  */
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
-  if (!product) {
+  if (product) {
+    await Product.deleteOne({ _id: product._id });
+    res.status(200).json({ message: 'ลบสินค้าเรียบร้อยแล้ว' });
+  } else {
     res.status(404);
     throw new Error('ไม่พบสินค้า');
   }
-
-  if (product.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('ไม่ได้รับอนุญาตให้ลบข้อมูลนี้');
-  }
-
-  // ข้อควรระวัง: ในระบบจริง เราอาจไม่ควรลบสินค้าที่มีประวัติการขาย
-  // แต่อาจจะเปลี่ยนสถานะเป็น 'archived' แทน
-  await product.deleteOne();
-
-  res.status(200).json({ id: req.params.id, message: 'ลบสินค้าเรียบร้อยแล้ว' });
 });
 
 module.exports = {
-  createProduct,
   getProducts,
   getProductById,
+  createProduct,
   updateProduct,
   deleteProduct,
 };

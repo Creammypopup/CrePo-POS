@@ -1,28 +1,25 @@
-// server/models/Category.js
 const mongoose = require('mongoose');
 
-const categorySchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User',
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'กรุณาใส่ชื่อหมวดหมู่'],
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
   },
-  name: {
-    type: String,
-    required: [true, 'Please add a category name'],
-    trim: true,
-  },
-  source: {
-    type: String,
-    required: [true, 'Please specify a source (ทุน or กำไร)'],
-    enum: ['ทุน', 'กำไร'],
-    default: 'กำไร',
-  },
-}, {
-  timestamps: true,
-});
+  { timestamps: true }
+);
 
-// Prevent duplicate category names for the same user
-categorySchema.index({ user: 1, name: 1 }, { unique: true });
-
-module.exports = mongoose.model('Category', categorySchema);
+const Category = mongoose.model('Category', categorySchema);
+module.exports = Category;

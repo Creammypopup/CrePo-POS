@@ -1,31 +1,50 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const { PERMISSIONS } = require('../utils/permissions');
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Please add a name'],
+      required: [true, 'กรุณาใส่ชื่อผู้ใช้งาน'],
     },
-    // เพิ่ม username สำหรับการ login โดยเฉพาะ
-    username: {
+    email: {
       type: String,
-      required: [true, 'Please add a username'],
+      required: [true, 'กรุณาใส่อีเมล'],
       unique: true,
+      match: [/.+\@.+\..+/, 'รูปแบบอีเมลไม่ถูกต้อง'],
     },
-    // ลบ email field ออก
     password: {
       type: String,
-      required: [true, 'Please add a password'],
+      required: [true, 'กรุณาใส่รหัสผ่าน'],
+      minlength: 6,
     },
-    role: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'Role',
+    permissions: {
+      type: [String],
+      // กำหนดสิทธิ์เริ่มต้นสำหรับผู้ใช้ใหม่
+      default: [
+        PERMISSIONS.PRODUCTS_VIEW,
+        PERMISSIONS.CATEGORIES_VIEW,
+        PERMISSIONS.SUPPLIERS_VIEW,
+      ],
     },
   },
-  {
-    timestamps: true,
-  }
-)
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('User', userSchema)
+// Middleware: เข้ารหัสรหัสผ่านก่อนบันทึก
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Method: เปรียบเทียบรหัสผ่านที่ป้อนเข้ามากับรหัสผ่านใน DB
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const User = mongoose.model('User', userSchema);
+module.exports = User;

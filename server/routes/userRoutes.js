@@ -1,32 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const {
-  registerUser,
   loginUser,
-  getMe,
+  registerUser,
+  logoutUser,
+  getUserProfile,
+  updateUserProfile,
   getUsers,
+  getUserById,
   updateUser,
   deleteUser,
-} = require('../controllers/userController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-const { PERMISSIONS } = require('../utils/permissions');
+} = require('../controllers/userController.js');
+const { protect, authorize } = require('../middleware/authMiddleware.js');
+const { PERMISSIONS } = require('../utils/permissions.js');
 
-// Public route for login
+router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/logout', logoutUser);
 
-// All subsequent routes are protected and require login
-router.use(protect);
+router
+  .route('/profile')
+  .get(protect, getUserProfile)
+  .put(protect, updateUserProfile);
 
-// Route for a user to get their own details
-router.get('/me', getMe);
+// --- Admin Routes ---
+router
+  .route('/')
+  .get(protect, authorize(PERMISSIONS.ADMIN), getUsers);
 
-// Routes for managing users, requires specific permission
-router.route('/')
-  .get(authorize(PERMISSIONS.SETTINGS_MANAGE_USERS), getUsers)
-  .post(authorize(PERMISSIONS.SETTINGS_MANAGE_USERS), registerUser); // Renamed from /register
-
-router.route('/:id')
-  .put(authorize(PERMISSIONS.SETTINGS_MANAGE_USERS), updateUser)
-  .delete(authorize(PERMISSIONS.SETTINGS_MANAGE_USERS), deleteUser);
-
+router
+  .route('/:id')
+  .get(protect, authorize(PERMISSIONS.ADMIN), getUserById)
+  .put(protect, authorize(PERMISSIONS.ADMIN), updateUser)
+  .delete(protect, authorize(PERMISSIONS.ADMIN), deleteUser);
 module.exports = router;

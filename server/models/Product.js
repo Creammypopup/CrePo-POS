@@ -1,69 +1,77 @@
 const mongoose = require('mongoose');
 
-/**
- * Schema สำหรับเก็บข้อมูลขนาดหรือรูปแบบต่างๆ ของสินค้า (Product Variants)
- * เช่น สี 1 ลิตร, สี 5 ลิตร หรือ ท่อ PVC 1/2 นิ้ว, ท่อ PVC 3/4 นิ้ว
- */
-const productSizeSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true }, // e.g., "5 ลิตร", "1/2 นิ้ว"
-  sku: { type: String, unique: true, sparse: true, trim: true },
-  barcode: { type: String, unique: true, sparse: true, trim: true },
-  price: { type: Number, required: true, min: 0 },
-  cost: { type: Number, default: 0, min: 0 }, // ต้นทุนสำหรับขนาดนี้โดยเฉพาะ
-  stock: { type: Number, required: true, default: 0 },
+const variantSchema = new mongoose.Schema({
+  name: { type: String, required: true }, // e.g., "4 หุน", "6 หุน", "สีแดง"
+  sku: { type: String, required: true, unique: true }, // Stock Keeping Unit for this specific variant
+  barcode: { type: String, unique: true, sparse: true },
+  costPrice: { type: Number, required: true, default: 0 }, // ต้นทุน
+  sellingPrice: { type: Number, required: true, default: 0 }, // ราคาขาย
+  quantity: { type: Number, required: true, default: 0 }, // จำนวนในสต็อก
+  reorderPoint: { type: Number, default: 0 }, // จุดสั่งซื้อ
 });
 
-/**
- * Schema หลักสำหรับเก็บข้อมูลสินค้า
- * ออกแบบมาเพื่อรองรับธุรกิจวัสดุก่อสร้างโดยเฉพาะ
- */
 const productSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-    },
     name: {
       type: String,
-      required: [true, 'กรุณาระบุชื่อสินค้า'],
+      required: [true, 'กรุณาใส่ชื่อสินค้า'],
       trim: true,
-      // e.g., "สีทาภายใน TOA Supershield Duraclean A+"
     },
     description: {
       type: String,
       trim: true,
     },
-    // เชื่อมโยงไปยัง Model ProductCategory
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'ProductCategory',
-      required: [true, 'กรุณาระบุหมวดหมู่สินค้า'],
-    },
-    // หน่วยนับหลักของสินค้ากลุ่มนี้ เช่น กระป๋อง, เส้น, ถุง
-    baseUnit: {
-      type: String,
-      required: [true, 'กรุณาระบุหน่วยนับหลัก'],
-    },
-    // ประเภทสินค้าเพื่อการจัดการที่แตกต่างกัน
     productType: {
       type: String,
-      enum: ['standard', 'weighted', 'service'], // standard (นับชิ้น/หน่วย), weighted (ชั่งน้ำหนัก), service (ค่าบริการ)
+      required: true,
+      enum: [
+        'standard', // สินค้าทั่วไป (นับเป็นชิ้น)
+        'by_unit',  // สินค้าแบ่งขาย (เช่น ทรายเป็นคิว)
+        'by_weight',// สินค้าชั่งน้ำหนัก (เช่น ตะปูเป็นกิโล)
+        'service',  // สินค้าบริการ (ไม่ตัดสต็อก เช่น ค่าจัดส่ง)
+        'gift',     // สินค้าของแถม
+      ],
       default: 'standard',
     },
-    // เก็บรายการขนาด/รูปแบบทั้งหมดของสินค้านี้
-    sizes: [productSizeSchema],
-    // ผู้จำหน่ายหลัก (ไม่บังคับ)
-    primarySupplier: {
+    category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Supplier',
-    }
-  },
-  { timestamps: true } // เพิ่ม field createdAt และ updatedAt อัตโนมัติ
-);
+      ref: 'Category', // เราจะต้องสร้าง Category model ในอนาคต
+      // required: true,
+    },
+    supplier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier', // เราจะต้องสร้าง Supplier model ในอนาคต
+    },
+    trackStock: {
+      type: Boolean,
+      default: true, // true = จัดการสต็อก, false = สินค้า non-stock
+    },
+    // สำหรับสินค้าที่ไม่มีหลายขนาด/รูปแบบ (Simple Product)
+    sku: { type: String, unique: true, sparse: true },
+    barcode: { type: String, unique: true, sparse: true },
+    costPrice: { type: Number, default: 0 },
+    sellingPrice: { type: Number, default: 0 },
+    quantity: { type: Number, default: 0 },
+    reorderPoint: { type: Number, default: 0 },
 
-// สร้าง Index เพื่อการค้นหาที่มีประสิทธิภาพ
-productSchema.index({ user: 1, name: 1 });
+    // สำหรับสินค้าที่มีหลายขนาด/รูปแบบ (Variable Product)
+    variants: [variantSchema],
+
+    // รูปภาพสินค้า
+    image: {
+      type: String,
+      default: '/images/placeholder.png',
+    },
+    
+    isActive: {
+      type: Boolean,
+      default: true, // ใช้สำหรับซ่อนสินค้าโดยไม่ต้องลบ
+    },
+  },
+  {
+    timestamps: true, // เพิ่ม createdAt และ updatedAt อัตโนมัติ
+  }
+);
 
 const Product = mongoose.model('Product', productSchema);
 
