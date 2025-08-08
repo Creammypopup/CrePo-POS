@@ -1,7 +1,6 @@
 const asyncHandler = require('../middleware/asyncHandler.js');
 const User = require('../models/User.js');
 const generateToken = require('../utils/generateToken.js');
-const { PERMISSIONS } = require('../utils/permissions.js');
 
 // @desc    Auth user & get token (Login)
 // @route   POST /api/users/login
@@ -28,28 +27,21 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // @desc    Register a new user
 // @route   POST /api/users
-// @access  Public (สำหรับคนแรก) / Private/Admin (สำหรับคนถัดไป)
+// @access  Public (หรืออาจจะ Private/Admin ในอนาคต)
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   const userExists = await User.findOne({ email });
+
   if (userExists) {
     res.status(400); // Bad Request
     throw new Error('อีเมลนี้มีผู้ใช้งานในระบบแล้ว');
   }
 
-  // ตรวจสอบว่าเป็นผู้ใช้คนแรกหรือไม่
-  const isFirstAccount = (await User.countDocuments({})) === 0;
-
-  const permissions = isFirstAccount
-    ? Object.values(PERMISSIONS) // ถ้าเป็นคนแรก ให้สิทธิ์ทั้งหมด
-    : undefined; // คนถัดไปใช้สิทธิ์ default จาก Model
-
   const user = await User.create({
     name,
     email,
     password,
-    permissions,
   });
 
   if (user) {
