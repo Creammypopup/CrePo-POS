@@ -10,10 +10,9 @@
     "data:import": "npm run data:import --prefix server",
     "data:destroy": "npm run data:destroy --prefix server"
   },
-  "author": "Your Name",
+  "author": "CrePo Developer",
   "license": "MIT",
   "dependencies": {
-    "concurrently": "^8.2.2",
-    "mongodb": "^6.18.0"
+    "concurrently": "^8.2.2"
   }
 }

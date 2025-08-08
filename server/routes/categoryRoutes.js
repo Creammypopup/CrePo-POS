@@ -1,21 +1,16 @@
-// server/routes/categoryRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
-    getCategories,
-    createCategory,
-    deleteCategory
+  getCategories,
+  createCategory,
+  deleteCategory,
 } = require('../controllers/categoryController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
 router.use(protect);
 
-router.route('/')
-    .get(authorize(PERMISSIONS.PRODUCTS_VIEW), getCategories)
-    .post(authorize(PERMISSIONS.PRODUCTS_MANAGE), createCategory);
-
-router.route('/:id')
-    .delete(authorize(PERMISSIONS.PRODUCTS_MANAGE), deleteCategory);
+router.route('/').get(authorize(PERMISSIONS.PRODUCTS_VIEW), getCategories).post(authorize(PERMISSIONS.PRODUCTS_MANAGE), createCategory);
+router.route('/:id').delete(authorize(PERMISSIONS.PRODUCTS_MANAGE), deleteCategory);
 
 module.exports = router;

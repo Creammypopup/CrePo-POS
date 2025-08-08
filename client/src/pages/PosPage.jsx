@@ -5,7 +5,7 @@ import { FaSearch, FaPlus, FaMinus, FaTrash, FaUser, FaShoppingCart, FaLock, FaT
 import { getProducts } from '../features/product/productSlice';
 import { getCustomers } from '../features/customer/customerSlice';
 import { addToCart, updateCartItem, removeFromCart, createSale, selectCustomer, resetSale, applyDiscount } from '../features/sale/saleSlice';
-import Spinner from '../components/Spinner';
+import Spinner from '../components/Spinner'; // This seems to be a custom component
 import SelectCustomerModal from '../components/modals/SelectCustomerModal';
 import PaymentModal from '../components/modals/PaymentModal';
 import CloseShiftModal from '../components/modals/CloseShiftModal';
@@ -91,7 +91,23 @@ function PosPage({ currentShift }) {
     };
 
     const handleConfirmPayment = (paymentData) => {
-        // ... (Logic from previous turn)
+        const saleData = {
+            customerId: selectedCustomer._id,
+            products: cart.map(item => ({
+                productId: item.productId,
+                sizeId: item.sizeId,
+                quantity: item.quantity,
+                priceAtSale: item.priceAtSale,
+                costAtSale: item.costAtSale,
+            })),
+            subTotal,
+            discountType: discount.type,
+            discountValue: discount.value,
+            discountAmount,
+            totalAmount: cartTotal,
+            paymentMethod: paymentData.method,
+        };
+        dispatch(createSale(saleData)).then(() => setModal({ name: null }));
     };
 
     return (

@@ -1,168 +1,154 @@
-// client/src/components/modals/EditProductModal.jsx
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
 import Modal from 'react-modal';
-import { FaTimes, FaSave, FaPlus, FaTrash } from 'react-icons/fa';
-import { updateProduct } from '../../features/product/productSlice';
+import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import { updateProduct, reset as resetProduct } from '../../features/product/productSlice';
 import { getProductCategories } from '../../features/productCategory/productCategorySlice';
-import ProductCategoryModal from './ProductCategoryModal';
-import moment from 'moment';
+import { toast } from 'react-toastify';
+import Spinner from '../Spinner';
 
-const customModalStyles = {
-  content: { top: '50%', left: '50%', right: 'auto', bottom: 'auto', marginRight: '-50%', transform: 'translate(-50%, -50%)', borderRadius: '1.5rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '0', width: '90%', maxWidth: '800px', background: '#FDF7FF', maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
-  overlay: { backgroundColor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(4px)', zIndex: 50 }
+const customStyles = {
+  content: { top: '50%', left: '50%', right: 'auto', bottom: 'auto', marginRight: '-50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: '700px', maxHeight: '90vh', padding: '2rem', borderRadius: '1rem' },
+  overlay: { backgroundColor: 'rgba(0, 0, 0, 0.6)' }
 };
-
-Modal.setAppElement('#root');
-
-const Switch = ({ label, isEnabled, onToggle }) => (
-    <label className="flex items-center cursor-pointer">
-        <div className="relative">
-            <input type="checkbox" className="sr-only" checked={isEnabled} onChange={onToggle} />
-            <div className={`block w-14 h-8 rounded-full transition-colors ${isEnabled ? 'bg-brand-purple' : 'bg-gray-300'}`}></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isEnabled ? 'transform translate-x-6' : ''}`}></div>
-        </div>
-        <div className="ml-3 text-gray-700 font-medium">{label}</div>
-    </label>
-);
 
 function EditProductModal({ isOpen, onClose, product }) {
   const dispatch = useDispatch();
-  const { categories: productCategories } = useSelector((state) => state.productCategories);
-  const [formData, setFormData] = useState({});
-  const [profit, setProfit] = useState(0);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const { isLoading, isSuccess, isError, message } = useSelector((state) => state.products);
+  const { productCategories, isLoading: categoriesLoading } = useSelector((state) => state.productCategories);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    baseUnit: 'ชิ้น',
+    productType: 'standard',
+  });
+  const [sizes, setSizes] = useState([{ name: 'ปกติ', price: '', stock: '', sku: '', barcode: '' }]);
 
   useEffect(() => {
-    if (product && isOpen) {
-        setFormData({
-            ...product,
-            expiryDate: product.expiryDate ? moment(product.expiryDate).format('YYYY-MM-DD') : '',
-            sizes: product.sizes ? product.sizes.map(s => ({...s, expiryDate: s.expiryDate ? moment(s.expiryDate).format('YYYY-MM-DD') : ''})) : [],
-            sellingUnits: product.sellingUnits || [],
-        });
-        dispatch(getProductCategories());
+    if (isOpen) {
+      dispatch(getProductCategories());
     }
-  }, [product, isOpen, dispatch]);
+  }, [isOpen, dispatch]);
 
   useEffect(() => {
-      if (formData.price !== undefined && formData.cost !== undefined) {
-          const price = parseFloat(formData.price) || 0;
-          const cost = parseFloat(formData.cost) || 0;
-          setProfit(price >= cost ? price - cost : 0);
-      }
-  }, [formData.price, formData.cost]);
+    if (product) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        category: product.category?._id || '',
+        baseUnit: product.baseUnit || 'ชิ้น',
+        productType: product.productType || 'standard',
+      });
+      setSizes(product.sizes.length > 0 ? product.sizes.map(s => ({...s})) : [{ name: 'ปกติ', price: '', stock: '', sku: '', barcode: '' }]);
+    }
+  }, [product]);
 
-  const onChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  useEffect(() => {
+    if (isError) toast.error(message);
+    if (isSuccess && message.includes('updated')) {
+      toast.success('แก้ไขสินค้าสำเร็จ!');
+      onClose();
+    }
+    dispatch(resetProduct());
+  }, [isSuccess, isError, message, onClose, dispatch]);
+
+  const handleFormChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleDynamicChange = (listName, index, e) => {
-    const { name, value } = e.target;
-    setFormData(prevFormData => {
-        const newList = [...(prevFormData[listName] || [])];
-        newList[index] = { ...newList[index], [name]: value };
-        return { ...prevFormData, [listName]: newList };
-    });
-  };
-  
-  const addDynamicItem = (listName, newItem) => {
-    setFormData(p => ({ ...p, [listName]: [...(p[listName] || []), newItem] }));
+  const handleSizeChange = (index, e) => {
+    const newSizes = [...sizes];
+    newSizes[index][e.target.name] = e.target.value;
+    setSizes(newSizes);
   };
 
-  const removeDynamicItem = (listName, index) => {
-    setFormData(p => ({ ...p, [listName]: p[listName].filter((_, i) => i !== index) }));
+  const addSize = () => {
+    setSizes([...sizes, { name: '', price: '', stock: '', sku: '', barcode: '' }]);
+  };
+
+  const removeSize = (index) => {
+    if (sizes.length > 1) {
+      const newSizes = sizes.filter((_, i) => i !== index);
+      setSizes(newSizes);
+    } else {
+      toast.warn('ต้องมีขนาด/ราคาอย่างน้อย 1 รายการ');
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(updateProduct(formData))
-        .unwrap()
-        .then(() => {
-            toast.success(`อัปเดตสินค้า "${formData.name}" สำเร็จ!`);
-            onClose();
-        })
-        .catch((error) => toast.error(error.message || 'เกิดข้อผิดพลาด'));
+    if (!formData.name || !formData.category || !formData.baseUnit) {
+      return toast.error('กรุณากรอกข้อมูลสินค้าที่จำเป็นให้ครบถ้วน');
+    }
+    if (sizes.some(s => !s.name || s.price === '' || s.stock === '')) {
+      return toast.error('กรุณากรอกข้อมูล ขนาด, ราคา และสต็อกให้ครบทุกรายการ');
+    }
+
+    const productData = {
+      ...formData,
+      sizes: sizes.map(s => ({
+        _id: s._id,
+        name: s.name,
+        price: Number(s.price),
+        stock: Number(s.stock),
+        sku: s.sku,
+        barcode: s.barcode,
+      }))
+    };
+
+    dispatch(updateProduct({ id: product._id, productData }));
   };
 
-  if (!product) return null;
-
   return (
-    <>
-    <Modal isOpen={isOpen} onRequestClose={onClose} style={customModalStyles}>
-        <div className="bg-white/50 p-6 flex justify-between items-center rounded-t-2xl border-b flex-shrink-0">
-            <h2 className="text-2xl font-bold text-gray-800">แก้ไขสินค้า</h2>
-            <button onClick={onClose}><FaTimes className="text-gray-400 hover:text-red-500 text-2xl"/></button>
+    <Modal isOpen={isOpen} onRequestClose={onClose} style={customStyles} contentLabel="Edit Product Modal" appElement={document.getElementById('root')}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">แก้ไขสินค้า</h2>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+          <FaTimes size={24} />
+        </button>
+      </div>
+
+      {isLoading && <Spinner />}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input name="name" value={formData.name} onChange={handleFormChange} placeholder="ชื่อสินค้า*" className="input-style" required />
+          <select name="category" value={formData.category} onChange={handleFormChange} className="input-style" required>
+            <option value="">-- เลือกหมวดหมู่* --</option>
+            {categoriesLoading ? <option>กำลังโหลด...</option> : productCategories.map(cat => (
+              <option key={cat._id} value={cat._id}>{cat.name}</option>
+            ))}
+          </select>
+          <input name="baseUnit" value={formData.baseUnit} onChange={handleFormChange} placeholder="หน่วยนับหลัก* (เช่น ชิ้น, กล่อง)" className="input-style" required />
+          <input name="description" value={formData.description} onChange={handleFormChange} placeholder="คำอธิบายสินค้า (ไม่บังคับ)" className="input-style" />
         </div>
-        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto">
-            <div className="p-6 space-y-6">
-                {/* Basic Info */}
-                <div className="bg-white p-5 border rounded-2xl shadow-sm">
-                    <h3 className="font-semibold text-lg mb-4 text-brand-purple">ข้อมูลพื้นฐาน</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="name" placeholder="ชื่อสินค้า*" value={formData.name || ''} onChange={onChange} className="form-input md:col-span-2" required />
-                        <div className="flex items-center gap-2">
-                            <select name="category" value={formData.category || ''} onChange={onChange} className="form-input" required>
-                                <option value="" disabled>-- เลือกหมวดหมู่* --</option>
-                                {productCategories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-                            </select>
-                            <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="btn p-2.5 bg-blue-100 text-blue-700 hover:bg-blue-200"><FaPlus/></button>
-                        </div>
-                        <input type="text" name="sku" value={formData.sku || ''} onChange={onChange} className="form-input" placeholder="รหัสสินค้า (SKU)" />
-                        <input type="text" name="description" value={formData.description || ''} onChange={onChange} className="form-input md:col-span-2" placeholder="รายละเอียดสินค้า" />
-                    </div>
-                </div>
-                
-                {/* Inventory */}
-                <div className="bg-white p-5 border rounded-2xl shadow-sm">
-                    <h3 className="font-semibold text-lg mb-4 text-blue-600">คลังสินค้า</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <input type="number" name="stock" value={formData.stock ?? ''} onChange={onChange} className="form-input" placeholder="จำนวนตั้งต้น" disabled={formData.hasMultipleSizes}/>
-                        <input type="text" name="mainUnit" value={formData.mainUnit || ''} onChange={onChange} className="form-input" placeholder="หน่วยนับหลัก*" required />
-                        <input type="number" name="stockAlert" value={formData.stockAlert ?? ''} onChange={onChange} className="form-input" placeholder="แจ้งเตือนเมื่อต่ำกว่า" />
-                        <input type="date" name="expiryDate" value={formData.expiryDate} onChange={onChange} className="form-input" disabled={formData.hasMultipleSizes}/>
-                    </div>
-                </div>
-                
-                {/* Multiple Sizes Section */}
-                {formData.hasMultipleSizes && (
-                     <div className="bg-white p-5 border rounded-2xl shadow-sm animate-fade-in">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-semibold text-lg text-indigo-600">จัดการขนาดสินค้า</h3>
-                            <button type="button" onClick={() => addDynamicItem('sizes', { name: '', sku: '', cost: '', price: '', stock: '', expiryDate: '' })} className="btn btn-3d-pastel bg-indigo-200 text-indigo-800 text-xs py-1 px-3"><FaPlus className="mr-2"/>เพิ่มขนาด</button>
-                        </div>
-                        <div className="space-y-2">
-                             <div className="grid grid-cols-12 gap-2 px-2 text-xs font-semibold text-gray-500">
-                                <div className="col-span-3">ชื่อขนาด*</div>
-                                <div className="col-span-2">ต้นทุน</div>
-                                <div className="col-span-2">ราคาขาย*</div>
-                                <div className="col-span-2">สต็อก</div>
-                                <div className="col-span-2">วันหมดอายุ</div>
-                            </div>
-                            {formData.sizes && formData.sizes.map((size, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                                <input type="text" name="name" value={size.name} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="เช่น S, M" className="form-input !py-1.5 col-span-3" required/>
-                                <input type="number" step="any" name="cost" value={size.cost} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0.00" className="form-input !py-1.5 col-span-2"/>
-                                <input type="number" step="any" name="price" value={size.price} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0.00" className="form-input !py-1.5 col-span-2" required/>
-                                <input type="number" name="stock" value={size.stock} onChange={e => handleDynamicChange('sizes', index, e)} placeholder="0" className="form-input !py-1.5 col-span-2" />
-                                <input type="date" name="expiryDate" value={size.expiryDate} onChange={e => handleDynamicChange('sizes', index, e)} className="form-input !py-1.5 col-span-2"/>
-                                <button type="button" onClick={() => removeDynamicItem('sizes', index)} className="btn p-2 bg-red-100 text-red-600 col-span-1"><FaTrash/></button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+        <div className="pt-4">
+          <h3 className="text-lg font-semibold mb-2">ขนาด / ราคา / สต็อก</h3>
+          {sizes.map((size, index) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-2 items-center">
+              <input name="name" value={size.name} onChange={(e) => handleSizeChange(index, e)} placeholder="ขนาด (เช่น 1 ลิตร)" className="input-style md:col-span-2" required />
+              <input name="price" type="number" value={size.price} onChange={(e) => handleSizeChange(index, e)} placeholder="ราคาขาย*" className="input-style" required />
+              <input name="stock" type="number" value={size.stock} onChange={(e) => handleSizeChange(index, e)} placeholder="สต็อก*" className="input-style" required />
+              <button type="button" onClick={() => removeSize(index)} className="text-red-500 hover:text-red-700 justify-self-center"><FaTrash /></button>
             </div>
-            <div className="flex justify-end items-center mt-auto pt-4 border-t bg-white/50 rounded-b-2xl p-6 flex-shrink-0">
-                <button type="button" onClick={onClose} className="btn bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4">ยกเลิก</button>
-                <button type="submit" className="btn btn-3d-pastel btn-primary flex items-center"><FaSave className="mr-2" /> บันทึกการเปลี่ยนแปลง</button>
-            </div>
-        </form>
+          ))}
+          <button type="button" onClick={addSize} className="mt-2 flex items-center text-sm text-purple-600 hover:text-purple-800">
+            <FaPlus className="mr-2" /> เพิ่มขนาด/ราคา
+          </button>
+        </div>
+        {/* Actions */}
+        <div className="flex items-center justify-end space-x-4 pt-6">
+          <button type="button" onClick={onClose} className="btn-secondary">
+            ยกเลิก
+          </button>
+          <button type="submit" className="btn-primary" disabled={isLoading}>
+            {isLoading ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+          </button>
+        </div>
+      </form>
     </Modal>
-    <ProductCategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} />
-    </>
   );
 }
 

@@ -1,39 +1,34 @@
-// server/models/Sale.js
 const mongoose = require('mongoose');
 
-const saleSchema = mongoose.Schema(
+const saleProductSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
-    shift: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Shift' },
-    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
-    products: [
-      {
-        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-        sizeId: { type: String },
-        sizeName: { type: String },
-        quantity: { type: Number, required: true },
-        priceAtSale: { type: Number, required: true },
-        unitAtSale: { type: String },
-        originalPrice: { type: Number },
-        costAtSale: { type: Number, required: true, default: 0 },
-        isFreebie: { type: Boolean, default: false },
-        itemDiscountType: { type: String, enum: ['percentage', 'amount'] },
-        itemDiscountValue: { type: Number, default: 0 },
-      },
-    ],
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    sizeId: { type: mongoose.Schema.Types.ObjectId }, // For products with variants/sizes
+    name: { type: String, required: true }, // Denormalized for easier reporting
+    quantity: { type: Number, required: true },
+    priceAtSale: { type: Number, required: true },
+    costAtSale: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+const saleSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    shift: { type: mongoose.Schema.Types.ObjectId, ref: 'Shift', required: true },
+    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+    products: [saleProductSchema],
     subTotal: { type: Number, required: true },
-    discountType: { type: String, enum: ['percentage', 'amount'] },
+    discountType: { type: String, enum: ['amount', 'percentage'] },
     discountValue: { type: Number, default: 0 },
     discountAmount: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ['cash', 'transfer', 'credit'], required: true },
-    isDelivery: { type: Boolean, default: false },
-    deliveryStatus: { type: String, enum: ['pending', 'preparing', 'shipping', 'delivered'], default: 'pending' },
+    paymentMethod: { type: String, required: true, enum: ['cash', 'transfer', 'credit', 'qr', 'mixed'] },
+    status: { type: String, default: 'completed', enum: ['completed', 'voided', 'pending'] },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Sale = mongoose.model('Sale', saleSchema);
-module.exports = Sale;
+saleSchema.index({ createdAt: -1 });
+
+module.exports = mongoose.model('Sale', saleSchema);

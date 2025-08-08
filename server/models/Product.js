@@ -1,60 +1,70 @@
-// server/models/Product.js
 const mongoose = require('mongoose');
-const { customAlphabet } = require('nanoid');
 
-const skuGenerator = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
-
-const sellingUnitSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    conversionRate: { type: Number, required: true },
-    price: { type: Number, required: true },
-});
-
+/**
+ * Schema สำหรับเก็บข้อมูลขนาดหรือรูปแบบต่างๆ ของสินค้า (Product Variants)
+ * เช่น สี 1 ลิตร, สี 5 ลิตร หรือ ท่อ PVC 1/2 นิ้ว, ท่อ PVC 3/4 นิ้ว
+ */
 const productSizeSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    sku: { type: String, uppercase: true },
-    price: { type: Number, required: true, default: 0 },
-    cost: { type: Number, default: 0 },
-    stock: { type: Number, default: 0 },
+  name: { type: String, required: true, trim: true }, // e.g., "5 ลิตร", "1/2 นิ้ว"
+  sku: { type: String, unique: true, sparse: true, trim: true },
+  barcode: { type: String, unique: true, sparse: true, trim: true },
+  price: { type: Number, required: true, min: 0 },
+  cost: { type: Number, default: 0, min: 0 }, // ต้นทุนสำหรับขนาดนี้โดยเฉพาะ
+  stock: { type: Number, required: true, default: 0 },
 });
 
-const productSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
-  name: { type: String, required: [true, 'กรุณาใส่ชื่อสินค้า'], trim: true },
-  sku: { type: String, unique: true, uppercase: true, sparse: true },
-  barcode: { type: String, unique: true, sparse: true },
-  category: { type: String, required: [true, 'กรุณาระบุหมวดหมู่'] },
-  mainUnit: { type: String, required: true, default: 'ชิ้น' },
-  stock: { type: Number, default: 0 },
-  price: { type: Number, default: 0 },
-  cost: { type: Number, default: 0 },
-  stockAlert: { type: Number, default: 0 },
-  allowNegativeStock: { type: Boolean, default: true }, // Default to true
-  
-  productType: { type: String, enum: ['standard', 'weighted', 'service', 'gift'], default: 'standard' },
-  pricePerKg: { type: Number, default: 0 },
-
-  hasMultipleSizes: { type: Boolean, default: false },
-  sizes: [productSizeSchema],
-  
-  hasSubUnits: { type: Boolean, default: false },
-  sellingUnits: [sellingUnitSchema],
-
-  linkedFreebies: [{
-      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-      quantity: { type: Number, default: 1 },
-  }],
-
-}, { timestamps: true });
-
-productSchema.pre('save', function(next) {
-    if (this.isNew && !this.sku) {
-        this.sku = `SKU-${skuGenerator()}`;
+/**
+ * Schema หลักสำหรับเก็บข้อมูลสินค้า
+ * ออกแบบมาเพื่อรองรับธุรกิจวัสดุก่อสร้างโดยเฉพาะ
+ */
+const productSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
+    name: {
+      type: String,
+      required: [true, 'กรุณาระบุชื่อสินค้า'],
+      trim: true,
+      // e.g., "สีทาภายใน TOA Supershield Duraclean A+"
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    // เชื่อมโยงไปยัง Model ProductCategory
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductCategory',
+      required: [true, 'กรุณาระบุหมวดหมู่สินค้า'],
+    },
+    // หน่วยนับหลักของสินค้ากลุ่มนี้ เช่น กระป๋อง, เส้น, ถุง
+    baseUnit: {
+      type: String,
+      required: [true, 'กรุณาระบุหน่วยนับหลัก'],
+    },
+    // ประเภทสินค้าเพื่อการจัดการที่แตกต่างกัน
+    productType: {
+      type: String,
+      enum: ['standard', 'weighted', 'service'], // standard (นับชิ้น/หน่วย), weighted (ชั่งน้ำหนัก), service (ค่าบริการ)
+      default: 'standard',
+    },
+    // เก็บรายการขนาด/รูปแบบทั้งหมดของสินค้านี้
+    sizes: [productSizeSchema],
+    // ผู้จำหน่ายหลัก (ไม่บังคับ)
+    primarySupplier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
     }
-    next();
-});
+  },
+  { timestamps: true } // เพิ่ม field createdAt และ updatedAt อัตโนมัติ
+);
 
-productSchema.index({ user: 1, name: 1 }, { unique: true });
+// สร้าง Index เพื่อการค้นหาที่มีประสิทธิภาพ
+productSchema.index({ user: 1, name: 1 });
 
 const Product = mongoose.model('Product', productSchema);
+
 module.exports = Product;
