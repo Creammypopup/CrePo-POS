@@ -7,12 +7,13 @@ const generateToken = require('../utils/generateToken.js');
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
+  if (!email || !password) {
+    res.status(400);
+    throw new Error('กรุณากรอกอีเมลและรหัสผ่าน');
+  }
   const user = await User.findOne({ email });
-
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
-
     res.status(200).json({
       _id: user._id,
       name: user.name,
@@ -30,20 +31,20 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access  Public (หรืออาจจะ Private/Admin ในอนาคต)
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-
-  const userExists = await User.findOne({ email });
-
-  if (userExists) {
-    res.status(400); // Bad Request
-    throw new Error('อีเมลนี้มีผู้ใช้งานในระบบแล้ว');
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error('กรุณากรอกชื่อ อีเมล และรหัสผ่าน');
   }
-
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    res.status(400);
+    throw new Error('User already exists');
+  }
   const user = await User.create({
     name,
     email,
     password,
   });
-
   if (user) {
     generateToken(res, user._id);
     res.status(201).json({
@@ -54,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(400);
-    throw new Error('ข้อมูลผู้ใช้ไม่ถูกต้อง');
+    throw new Error('Invalid user data');
   }
 });
 
@@ -92,17 +93,21 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @access  Private
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
-
   if (user) {
+    if (req.body.name !== undefined && req.body.name.trim() === '') {
+      res.status(400);
+      throw new Error('ชื่อห้ามว่าง');
+    }
+    if (req.body.email !== undefined && req.body.email.trim() === '') {
+      res.status(400);
+      throw new Error('อีเมลห้ามว่าง');
+    }
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-
     if (req.body.password) {
       user.password = req.body.password;
     }
-
     const updatedUser = await user.save();
-
     res.status(200).json({
       _id: updatedUser._id,
       name: updatedUser.name,
@@ -111,7 +116,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(404);
-    throw new Error('ไม่พบผู้ใช้งาน');
+    throw new Error('User not found');
   }
 });
 
