@@ -14,6 +14,7 @@ const API_URL = '/api/purchase-orders/';
 function ReceiveStockPage() {
     const dispatch = useDispatch();
     const { products } = useSelector(state => state.products);
+    const { user } = useSelector(state => state.auth);
     const { suppliers } = useSelector(state => state.suppliers);
 
     const [items, setItems] = useState([]);
@@ -65,7 +66,13 @@ function ReceiveStockPage() {
 
     const handleItemChange = (index, field, value) => {
         const newItems = [...items];
-        newItems[index][field] = value;
+        // แปลงค่า 'quantity' และ 'cost' เป็นตัวเลขเสมอ
+        if (field === 'quantity' || field === 'cost') {
+            // ใช้ parseFloat เพื่อรองรับทศนิยมสำหรับ 'cost' และปล่อยให้เป็น string ว่างถ้าผู้ใช้ลบข้อมูล
+            newItems[index][field] = value === '' ? '' : parseFloat(value);
+        } else {
+            newItems[index][field] = value;
+        }
         setItems(newItems);
     };
     
@@ -79,8 +86,7 @@ function ReceiveStockPage() {
             toast.error('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
             return;
         }
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
         const payload = { supplier, items, totalCost, notes, orderDate, paymentMethod };
 
         try {

@@ -21,7 +21,8 @@ function InventoryReportPage() {
         return () => { dispatch(reset()); };
     }, [dispatch]);
 
-    const { products, summary } = inventoryReport;
+    // ป้องกัน error กรณี inventoryReport เป็น null หรือ undefined ในช่วงเวลาสั้นๆ
+    const { products = [], summary = {} } = inventoryReport || {};
 
     return (
         <div className="space-y-6">
