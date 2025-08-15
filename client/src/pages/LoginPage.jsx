@@ -12,7 +12,6 @@
         username: "",
         password: "",
       });
-      const [showPassword, setShowPassword] = useState(false);
 
       const { username, password } = formData;
 

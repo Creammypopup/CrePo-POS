@@ -6,12 +6,18 @@ const generateToken = require('../utils/generateToken.js');
 // @route   POST /api/users/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
     res.status(400);
-    throw new Error('กรุณากรอกอีเมลและรหัสผ่าน');
+    throw new Error('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
   }
-  const user = await User.findOne({ email });
+
+  // Find user by either email or name (which the user calls username)
+  const user = await User.findOne({
+    $or: [{ email: username }, { name: username }],
+  });
+
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
     res.status(200).json({
@@ -21,8 +27,8 @@ const loginUser = asyncHandler(async (req, res) => {
       permissions: user.permissions,
     });
   } else {
-    res.status(401); // Unauthorized
-    throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    res.status(401);
+    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
 });
 
