@@ -21,10 +21,11 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.18.0",
     "mongoose": "^8.4.1",
-    "morgan": "^1.10.0",
+    "morgan": "^1.10.1",
     "nanoid": "^5.1.5",
     "node-ical": "^0.20.1",
     "node-schedule": "^2.1.1"
