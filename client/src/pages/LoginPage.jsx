@@ -14,6 +14,7 @@
       });
 
       const { username, password } = formData;
+      const [showPassword, setShowPassword] = useState(false);
 
       const navigate = useNavigate();
       const dispatch = useDispatch();

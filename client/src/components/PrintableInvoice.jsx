@@ -67,3 +67,4 @@ export const PrintableInvoice = React.forwardRef((props, ref) => {
         </div>
     );
 });
+PrintableInvoice.displayName = 'PrintableInvoice';
