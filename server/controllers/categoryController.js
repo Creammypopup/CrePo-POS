@@ -21,6 +21,10 @@ const getCategoryById = asyncHandler(async (req, res) => {
 // @route   POST /api/categories
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
+  if (!name || name.trim() === '') {
+    res.status(400);
+    throw new Error('กรุณากรอกชื่อหมวดหมู่');
+  }
   const category = new Category({ name, description, user: req.user._id });
   const createdCategory = await category.save();
   res.status(201).json(createdCategory);
@@ -31,6 +35,10 @@ const createCategory = asyncHandler(async (req, res) => {
 const updateCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
   if (category) {
+    if (req.body.name !== undefined && req.body.name.trim() === '') {
+      res.status(400);
+      throw new Error('ชื่อหมวดหมู่ห้ามว่าง');
+    }
     category.name = req.body.name || category.name;
     category.description = req.body.description || category.description;
     const updatedCategory = await category.save();

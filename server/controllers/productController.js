@@ -38,11 +38,19 @@ const getProductById = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 const createProduct = asyncHandler(async (req, res) => {
+  const { name, price, category } = req.body;
+  if (!name || name.trim() === '') {
+    res.status(400);
+    throw new Error('กรุณากรอกชื่อสินค้า');
+  }
+  if (price === undefined || isNaN(price)) {
+    res.status(400);
+    throw new Error('กรุณากรอกราคาสินค้าให้ถูกต้อง');
+  }
   const product = new Product({
     ...req.body,
-    user: req.user._id, // ผูกสินค้ากับผู้ใช้ที่สร้างโดยอัตโนมัติ
+    user: req.user._id,
   });
-
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
 });
@@ -54,11 +62,16 @@ const createProduct = asyncHandler(async (req, res) => {
  */
 const updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-
   if (product) {
-    // อัปเดตข้อมูลทั้งหมดที่ส่งมาจาก req.body อย่างมีประสิทธิภาพ
+    if (req.body.name !== undefined && req.body.name.trim() === '') {
+      res.status(400);
+      throw new Error('ชื่อสินค้าห้ามว่าง');
+    }
+    if (req.body.price !== undefined && isNaN(req.body.price)) {
+      res.status(400);
+      throw new Error('ราคาสินค้าต้องเป็นตัวเลข');
+    }
     Object.assign(product, req.body);
-
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } else {

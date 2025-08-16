@@ -20,6 +20,10 @@ const getSupplierById = asyncHandler(async (req, res) => {
 // @desc    Create a supplier
 // @route   POST /api/suppliers
 const createSupplier = asyncHandler(async (req, res) => {
+  if (!req.body.name || req.body.name.trim() === '') {
+    res.status(400);
+    throw new Error('กรุณากรอกชื่อซัพพลายเออร์');
+  }
   const supplier = new Supplier({ ...req.body, user: req.user._id });
   const createdSupplier = await supplier.save();
   res.status(201).json(createdSupplier);
@@ -30,6 +34,10 @@ const createSupplier = asyncHandler(async (req, res) => {
 const updateSupplier = asyncHandler(async (req, res) => {
   const supplier = await Supplier.findById(req.params.id);
   if (supplier) {
+    if (req.body.name !== undefined && req.body.name.trim() === '') {
+      res.status(400);
+      throw new Error('ชื่อซัพพลายเออร์ห้ามว่าง');
+    }
     Object.assign(supplier, req.body);
     const updatedSupplier = await supplier.save();
     res.json(updatedSupplier);

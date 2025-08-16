@@ -13,14 +13,22 @@
 
     // Get settings
     const getSettings = async () => {
-      const response = await axios.get(API_URL, getConfig());
-      return response.data;
+      try {
+        const response = await axios.get(API_URL, getConfig());
+        return response.data;
+      } catch (error) {
+        throw error.response?.data?.message || error.message;
+      }
     };
 
     // Update settings
     const updateSettings = async (settingsData) => {
-      const response = await axios.put(API_URL, settingsData, getConfig());
-      return response.data;
+      try {
+        const response = await axios.put(API_URL, settingsData, getConfig());
+        return response.data;
+      } catch (error) {
+        throw error.response?.data?.message || error.message;
+      }
     };
 
     const settingService = {

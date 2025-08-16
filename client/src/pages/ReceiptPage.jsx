@@ -80,6 +80,7 @@ const ReceiptContent = React.forwardRef(({ sale, settings }, ref) => {
         </div>
     );
 });
+ReceiptContent.displayName = 'ReceiptContent';
 
 
 function ReceiptPage() {
