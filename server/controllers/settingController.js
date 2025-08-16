@@ -6,12 +6,8 @@
     // @route   GET /api/settings
     // @access  Private
     const getSettings = asyncHandler(async (req, res) => {
-      // Find the single settings document, or create it if it doesn't exist
-      let settings = await Setting.findOne({ singleton: 'main_settings' });
-      if (!settings) {
-        settings = await Setting.create({});
-      }
-      res.status(200).json(settings);
+      // Temporarily return a dummy response to debug 500 error
+      res.status(200).json({ message: 'Dummy settings response' });
     });
 
     // @desc    Update settings

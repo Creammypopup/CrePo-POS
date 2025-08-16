@@ -29,6 +29,8 @@ import ReceiptsListPage from './pages/ReceiptsListPage.jsx';
 import ReceiveStockPage from './pages/inventory/ReceiveStockPage.jsx';
 import StockAdjustmentsPage from './pages/inventory/StockAdjustmentsPage.jsx';
 import QuotationsPage from './pages/QuotationsPage.jsx';
+import CreateQuotationPage from './pages/CreateQuotationPage.jsx';
+import QuotationDetailPage from './pages/QuotationDetailPage.jsx';
 import { checkAuthStatus } from './features/auth/authSlice.js';
 
 const InvoicesPage = () => <div className="text-center p-10">Invoices Page is under construction.</div>;
@@ -88,6 +90,8 @@ function App() {
               <Route path="/receipts/:id" element={<ReceiptPage />} />
               <Route path="/receipts" element={<ReceiptsListPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
+              <Route path="/quotations/new" element={<CreateQuotationPage />} />
+              <Route path="/quotations/:id" element={<QuotationDetailPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/settings/general" element={<GeneralPage />} />
               <Route path="/settings/users" element={<UsersPage />} />

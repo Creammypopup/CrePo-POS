@@ -12,6 +12,7 @@ import roleReducer from '../features/role/roleSlice';
 import shiftReducer from '../features/shift/shiftSlice';
 import dashboardReducer from '../features/dashboard/dashboardSlice';
 import settingsReducer from '../features/settings/settingsSlice';
+import quotationReducer from '../features/quotation/quotationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -28,5 +29,6 @@ export const store = configureStore({
     shift: shiftReducer,
     dashboard: dashboardReducer,
     settings: settingsReducer,
+    quotations: quotationReducer,
   },
 });

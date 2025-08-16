@@ -10,7 +10,7 @@ const notificationService = require('./services/notificationService');
 
 connectDB();
 
-const app = express(); // <-- MOVED THIS LINE UP
+const app = express();
 
 app.use(cors());
 app.use(express.json());
