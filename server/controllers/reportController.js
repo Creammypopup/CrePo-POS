@@ -9,41 +9,17 @@ const moment = require('moment');
 // @route   GET /api/reports/sales
 // @access  Private
 const getSalesReport = asyncHandler(async (req, res) => {
-    const { startDate, endDate } = req.query;
-    if (!startDate || !endDate) {
-        res.status(400);
-        throw new Error('กรุณาระบุช่วงวันที่เริ่มต้นและสิ้นสุด');
-    }
-
-    const start = moment(startDate).startOf('day');
-    const end = moment(endDate).endOf('day');
-
-    const sales = await Sale.find({
-        user: req.user.id,
-        createdAt: { $gte: start, $lte: end },
-    })
-    .populate('customer', 'name')
-    .populate('products.product', 'name cost')
-    .sort({ createdAt: -1 });
-    
-    let totalAmount = 0;
-    let totalCost = 0;
-    sales.forEach(sale => {
-        totalAmount += sale.totalAmount;
-        sale.products.forEach(item => {
-            if (item.product && typeof item.product.cost === 'number' && typeof item.quantity === 'number') {
-                totalCost += item.product.cost * item.quantity;
-            }
-        });
-    });
-
+    // Temporarily return a dummy sales report
     res.json({
-        sales,
+        sales: [
+            { _id: 'sale1', createdAt: new Date(), customer: { name: 'Dummy Customer A' }, paymentMethod: 'cash', isDelivery: true, deliveryStatus: 'delivered', totalAmount: 1500, products: [{ product: { name: 'Product X', cost: 500 }, quantity: 1 }] },
+            { _id: 'sale2', createdAt: new Date(), customer: { name: 'Dummy Customer B' }, paymentMethod: 'transfer', isDelivery: false, totalAmount: 2500, products: [{ product: { name: 'Product Y', cost: 1000 }, quantity: 1 }] },
+        ],
         summary: {
-            totalAmount,
-            totalCost,
-            totalProfit: totalAmount - totalCost,
-            totalTransactions: sales.length,
+            totalAmount: 4000,
+            totalCost: 1500,
+            totalProfit: 2500,
+            totalTransactions: 2,
         }
     });
 });

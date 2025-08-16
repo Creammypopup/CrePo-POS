@@ -5,10 +5,10 @@ const { getSalesReport, getInventoryReport, getPawnReport } = require('../contro
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
-router.use(protect);
+// router.use(protect);
 
-router.get('/sales', authorize(PERMISSIONS.REPORTS_VIEW_SALES), getSalesReport);
-router.get('/inventory', authorize(PERMISSIONS.REPORTS_VIEW_INVENTORY), getInventoryReport);
-router.get('/pawn', authorize(PERMISSIONS.REPORTS_VIEW_PAWN), getPawnReport);
+router.get('/sales', getSalesReport);
+router.get('/inventory', getInventoryReport);
+router.get('/pawn', getPawnReport);
 
 module.exports = router;

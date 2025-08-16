@@ -14,6 +14,8 @@ import dashboardReducer from '../features/dashboard/dashboardSlice';
 import settingsReducer from '../features/settings/settingsSlice';
 import quotationReducer from '../features/quotation/quotationSlice';
 
+import reportReducer from '../features/report/reportSlice'; // Import reportReducer
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -30,5 +32,6 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     settings: settingsReducer,
     quotations: quotationReducer,
+    report: reportReducer, // Add reportReducer
   },
 });
