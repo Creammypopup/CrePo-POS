@@ -34,14 +34,16 @@ const createSale = asyncHandler(async (req, res) => {
       const product = await Product.findById(item.productId).session(session);
       if (!product) throw new Error(`ไม่พบสินค้า ID: ${item.productId}`);
 
-      if (item.sizeId) {
-        const size = product.sizes.id(item.sizeId);
-        if (!size) throw new Error(`ไม่พบขนาดสินค้า ID: ${item.sizeId}`);
-        size.stock -= item.quantity;
-      } else {
-        product.stock -= item.quantity;
+      // Only deduct stock for standard and weight_based products
+      if (product.productType !== 'service') {
+        const deductionAmount = item.quantity * item.stockConversionFactor;
+
+        if (product.stockQuantity < deductionAmount) {
+          throw new Error(`สต็อกไม่เพียงพอสำหรับ ${product.name}. มีอยู่ ${product.stockQuantity} ${product.stockUnit}, ต้องการ ${deductionAmount} ${product.stockUnit}`);
+        }
+        product.stockQuantity -= deductionAmount;
+        await product.save({ session });
       }
-      await product.save({ session });
     }
 
     // 2. Create the sale document

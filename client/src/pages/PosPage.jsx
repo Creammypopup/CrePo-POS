@@ -1,11 +1,10 @@
-// client/src/pages/PosPage.jsx
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaSearch, FaPlus, FaMinus, FaTrash, FaUser, FaShoppingCart, FaLock, FaTag, FaExclamationCircle, FaBarcode, FaCamera } from 'react-icons/fa';
 import { getProducts } from '../features/product/productSlice';
 import { getCustomers } from '../features/customer/customerSlice';
 import { addToCart, updateCartItem, removeFromCart, createSale, selectCustomer, resetSale, applyDiscount } from '../features/sale/saleSlice';
-import Spinner from '../components/Spinner'; // This seems to be a custom component
+import Spinner from '../components/Spinner';
 import SelectCustomerModal from '../components/modals/SelectCustomerModal';
 import PaymentModal from '../components/modals/PaymentModal';
 import CloseShiftModal from '../components/modals/CloseShiftModal';
@@ -32,17 +31,16 @@ function PosPage({ currentShift }) {
         dispatch(getCustomers());
     }, [dispatch]);
 
-    const categories = useMemo(() => ['All', ...new Set(products.map(p => p.category))], [products]);
+    const categories = useMemo(() => ['All', ...new Set(products.map(p => p.category?.name || 'Uncategorized'))], [products]);
     
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
-            const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+            const matchesCategory = activeCategory === 'All' || p.category?.name === activeCategory;
             const matchesSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesCategory && matchesSearch;
         });
     }, [products, searchTerm, activeCategory]);
 
-    // ... (All calculation memos: subTotal, discountAmount, cartTotal)
     const subTotal = useMemo(() => cart.reduce((total, item) => total + (item.isFreebie ? 0 : item.priceAtSale * item.quantity), 0), [cart]);
     const discountAmount = useMemo(() => {
         if (discount.type === 'percentage') return (subTotal * discount.value) / 100;
@@ -68,26 +66,81 @@ function PosPage({ currentShift }) {
         findAndAddProduct(barcode);
     };
     
-    const handleAddToCart = (product, size = null) => {
-        let price = size ? size.price : product.price;
-        if (selectedCustomer?._id !== 'walk-in') {
-            const customerDetails = customers.find(c => c._id === selectedCustomer._id);
-            const history = customerDetails?.priceHistory?.find(h => h.product === product._id && h.sizeId === (size ? size._id : null));
-            if (history) {
-                price = history.lastPrice;
-                toast.info(`ใช้ราคาล่าสุดสำหรับลูกค้า: ${formatCurrency(price)}`);
-            }
-        }
-        if (product.productType === 'weighted') {
-            setModal({ name: 'weight', data: { product, size, price } });
+    const handleAddToCart = (product, selectedSellingUnit = null) => {
+        // If product is weight_based, open the modal
+        if (product.productType === 'weight_based') {
+            setModal({ name: 'weight', data: { product } });
             return;
         }
-        dispatch(addToCart({ product, size, priceAtSale: price }));
+
+        // For standard or service products
+        let unitToUse = selectedSellingUnit;
+        if (!unitToUse && product.sellingUnits && product.sellingUnits.length > 0) {
+            unitToUse = product.sellingUnits[0]; // Default to the first selling unit if not specified
+        }
+
+        if (!unitToUse) {
+            toast.error('ไม่พบหน่วยขายสำหรับสินค้านี้');
+            return;
+        }
+
+        let price = unitToUse.price;
+        // Apply customer specific pricing if available (logic from original code)
+        if (selectedCustomer?._id !== 'walk-in') {
+            const customerDetails = customers.find(c => c._id === selectedCustomer._id);
+            // This part needs adjustment if priceHistory is per sellingUnit
+            // For now, we'll use the default unit price
+        }
+
+        dispatch(addToCart({
+            productId: product._id,
+            name: product.name,
+            sellingUnit: unitToUse, // Pass the entire selling unit object
+            quantity: 1, // Default quantity for standard/service products
+            priceAtSale: price,
+            costAtSale: product.costPerStockUnit * unitToUse.stockConversionFactor, // Cost based on stock unit
+            productType: product.productType,
+            stockUnit: product.stockUnit,
+            stockConversionFactor: unitToUse.stockConversionFactor,
+        }));
+    };
+
+    const handleConfirmWeightedItem = (product, selectedUnit, quantityInSellingUnit, priceAtSale) => {
+        dispatch(addToCart({
+            productId: product._id,
+            name: product.name,
+            sellingUnit: selectedUnit, // The specific selling unit used
+            quantity: quantityInSellingUnit, // Quantity in terms of the selected selling unit
+            priceAtSale: priceAtSale,
+            costAtSale: product.costPerStockUnit * selectedUnit.stockConversionFactor * quantityInSellingUnit, // Total cost for this item
+            productType: product.productType,
+            stockUnit: product.stockUnit,
+            stockConversionFactor: selectedUnit.stockConversionFactor,
+        }));
     };
 
     const handlePriceChange = (itemId, newPrice) => {
         const price = parseFloat(newPrice);
-        dispatch(updateCartItem({ itemId, priceAtSale: !isNaN(price) ? price : 0 }));
+        const item = cart.find(i => i.itemId === itemId);
+        if (!item) return;
+
+        let updatedQuantity = item.quantity;
+        if (item.productType === 'weight_based' && item.sellingUnit && item.sellingUnit.price > 0) {
+            updatedQuantity = price / item.sellingUnit.price;
+        }
+        dispatch(updateCartItem({ itemId, priceAtSale: !isNaN(price) ? price : 0, quantity: updatedQuantity }));
+    };
+
+    const handleQuantityChange = (itemId, newQuantity) => {
+        const quantity = parseFloat(newQuantity);
+        const item = cart.find(i => i.itemId === itemId);
+        if (!item) return;
+
+        let updatedPriceAtSale = item.priceAtSale;
+        if (item.productType === 'weight_based' && item.sellingUnit) {
+            updatedPriceAtSale = quantity * item.sellingUnit.price;
+        }
+        dispatch(updateCartItem({ itemId, quantity: !isNaN(quantity) ? quantity : 0, priceAtSale: updatedPriceAtSale }));
     };
 
     const handleConfirmPayment = (paymentData) => {
@@ -95,10 +148,11 @@ function PosPage({ currentShift }) {
             customerId: selectedCustomer._id,
             products: cart.map(item => ({
                 productId: item.productId,
-                sizeId: item.sizeId,
-                quantity: item.quantity,
+                sellingUnitName: item.sellingUnit.name, // Store the name of the selling unit
+                quantity: item.quantity, // Quantity in terms of selling unit
                 priceAtSale: item.priceAtSale,
                 costAtSale: item.costAtSale,
+                stockConversionFactor: item.stockConversionFactor, // For backend to calculate stock deduction
             })),
             subTotal,
             discountType: discount.type,
@@ -140,18 +194,20 @@ function PosPage({ currentShift }) {
                                 {filteredProducts.map(product => (
                                     <div key={product._id} className="bg-white rounded-2xl p-3 flex flex-col items-center justify-between text-center border hover:shadow-xl hover:scale-105 transition-all duration-300">
                                         <p className="font-semibold text-brand-text text-sm mb-2 flex-grow">{product.name}</p>
-                                        <p className="text-xs text-gray-400 mb-2">คงเหลือ: {product.stock}</p>
-                                        {!product.hasMultipleSizes ? (
-                                             <button onClick={() => handleAddToCart(product)} className="btn btn-primary !py-1 !px-3 text-xs w-full">{formatCurrency(product.price)}</button>
-                                        ) : (
+                                        <p className="text-xs text-gray-400 mb-2">คงเหลือ: {product.stockQuantity} {product.stockUnit}</p>
+                                        
+                                        {/* Display selling units or a single button */}
+                                        {product.sellingUnits && product.sellingUnits.length > 0 ? (
                                             <div className="w-full space-y-1">
-                                                {product.sizes.map(size => (
-                                                    <button key={size._id} onClick={() => handleAddToCart(product, size)} className="btn bg-gray-200 text-gray-800 !py-1 !px-2 text-xs w-full text-left flex justify-between">
-                                                        <span>{size.name}</span>
-                                                        <span>{formatCurrency(size.price)}</span>
+                                                {product.sellingUnits.map(unit => (
+                                                    <button key={unit.name} onClick={() => handleAddToCart(product, unit)} className="btn bg-gray-200 text-gray-800 !py-1 !px-2 text-xs w-full text-left flex justify-between">
+                                                        <span>{unit.name}</span>
+                                                        <span>{formatCurrency(unit.price)}</span>
                                                     </button>
                                                 ))}
                                             </div>
+                                        ) : (
+                                            <button onClick={() => handleAddToCart(product)} className="btn btn-primary !py-1 !px-3 text-xs w-full">เพิ่มสินค้า</button>
                                         )}
                                     </div>
                                 ))}
@@ -166,25 +222,39 @@ function PosPage({ currentShift }) {
                     </div>
                     <div className="flex-grow overflow-y-auto pr-2 border-t pt-4">
                         {cart.length > 0 ? (
-                            cart.map(item => (
-                                 <div key={item.itemId} className="flex flex-col mb-3 border-b pb-3">
-                                    <div className="flex items-center">
-                                        <div className="flex-grow">
-                                            <p className="font-semibold text-sm flex items-center">{item.name}</p>
-                                            <div className="flex items-center">
-                                                <input type="number" step="any" className="text-xs text-gray-500 bg-transparent w-20 p-0.5 rounded border border-transparent hover:border-gray-300 focus:border-brand-purple" value={item.priceAtSale} onChange={(e) => handlePriceChange(item.itemId, e.target.value)} />
+                            <>
+                                {cart.map(item => (
+                                     <div key={item.itemId} className="flex flex-col mb-3 border-b pb-3">
+                                        <div className="flex items-center">
+                                            <div className="flex-grow">
+                                                <p className="font-semibold text-sm flex items-center">{item.name} {item.sellingUnit ? `(${item.sellingUnit.name})` : ''}</p>
+                                                <div className="flex items-center">
+                                                    <input type="number" step="any" className="text-xs text-gray-500 bg-transparent w-20 p-0.5 rounded border border-transparent hover:border-gray-300 focus:border-brand-purple" value={item.priceAtSale} onChange={(e) => handlePriceChange(item.itemId, e.target.value)} />
+                                                </div>
+                                                 <p className="text-xs text-gray-400">คงเหลือ: {item.stockQuantity} {item.stockUnit}</p>
                                             </div>
-                                             <p className="text-xs text-gray-400">คงเหลือ: {item.stock}</p>
+                                            <div className="flex items-center gap-2">
+                                                {item.productType === 'weight_based' ? (
+                                                    <input
+                                                        type="number"
+                                                        step="any"
+                                                        value={item.quantity.toFixed(3)} // Display with 3 decimal places for weight
+                                                        onChange={(e) => handleQuantityChange(item.itemId, e.target.value)}
+                                                        className="form-input text-center w-24 p-1 rounded border border-gray-300 focus:border-brand-purple"
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity - 1 }))} disabled={item.quantity <= 1} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-50"><FaMinus/></button>
+                                                        <span className="font-bold w-8 text-center">{item.quantity}</span>
+                                                        <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity + 1 }))} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center"><FaPlus/></button>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <button onClick={() => dispatch(removeFromCart(item.itemId))} className="ml-4 text-red-400 hover:text-red-600"><FaTrash/></button>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity - 1 }))} disabled={item.quantity <= 1} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-50"><FaMinus/></button>
-                                            <span className="font-bold w-8 text-center">{item.quantity}</span>
-                                            <button onClick={() => dispatch(updateCartItem({ itemId: item.itemId, quantity: item.quantity + 1 }))} className="btn !p-2 bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center"><FaPlus/></button>
-                                        </div>
-                                        <button onClick={() => dispatch(removeFromCart(item.itemId))} className="ml-4 text-red-400 hover:text-red-600"><FaTrash/></button>
-                                    </div>
-                                 </div>
-                            ))
+                                     </div>
+                                ))}
+                            </>
                         ) : (
                              <div className="text-center text-gray-400 mt-10 h-full flex flex-col justify-center items-center"><FaShoppingCart className="text-5xl text-gray-300 mb-4"/><p>ตะกร้าสินค้าว่าง</p></div>
                         )}
@@ -207,7 +277,7 @@ function PosPage({ currentShift }) {
             <PaymentModal isOpen={modal.name === 'payment'} onClose={() => setModal({ name: null })} total={cartTotal} onConfirmPayment={handleConfirmPayment} />
             <CloseShiftModal isOpen={modal.name === 'closeShift'} onClose={() => setModal({ name: null })} shift={currentShift} />
             <DiscountModal isOpen={modal.name === 'discount'} onClose={() => setModal({ name: null })} onApplyDiscount={(d) => dispatch(applyDiscount(d))} />
-            <WeightInputModal isOpen={modal.name === 'weight'} onClose={() => setModal({ name: null })} product={modal.data?.product} onConfirm={(weight) => { /* Logic to add weighted item */ }} />
+            <WeightInputModal isOpen={modal.name === 'weight'} onClose={() => setModal({ name: null })} product={modal.data?.product} onConfirm={handleConfirmWeightedItem} />
             <CameraScannerModal isOpen={modal.name === 'cameraScanner'} onClose={() => setModal({ name: null })} onScan={findAndAddProduct} />
         </>
     );

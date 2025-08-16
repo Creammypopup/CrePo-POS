@@ -47,24 +47,25 @@ export const saleSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { product, size, priceAtSale } = action.payload;
-      const itemId = size ? `${product._id}-${size._id}` : product._id;
+      const { productId, name, sellingUnit, quantity, priceAtSale, costAtSale, productType, stockUnit, stockConversionFactor } = action.payload;
+      const itemId = `${productId}-${sellingUnit.name}`;
       const existingItem = state.cart.find((item) => item.itemId === itemId);
 
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += quantity;
       } else {
         state.cart.push({
           itemId,
-          productId: product._id,
-          sizeId: size ? size._id : null,
-          name: size ? `${product.name} (${size.name})` : product.name,
-          quantity: 1,
+          productId,
+          name: `${name} (${sellingUnit.name})`,
+          sellingUnit,
+          quantity,
           priceAtSale,
           originalPrice: priceAtSale,
-          costAtSale: size ? size.cost : product.cost,
-          stock: size ? size.stock : product.stock,
-          productType: product.productType,
+          costAtSale,
+          productType,
+          stockUnit,
+          stockConversionFactor,
         });
       }
     },

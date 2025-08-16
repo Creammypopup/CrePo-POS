@@ -6,9 +6,9 @@ const generateToken = require('../utils/generateToken.js');
 // @route   POST /api/users/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ username });
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
@@ -16,12 +16,12 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(200).json({
       _id: user._id,
       name: user.name,
-      email: user.email,
+      username: user.username,
       permissions: user.permissions,
     });
   } else {
     res.status(401); // Unauthorized
-    throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
 });
 
@@ -29,18 +29,18 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public (หรืออาจจะ Private/Admin ในอนาคต)
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, username, password } = req.body;
 
-  const userExists = await User.findOne({ email });
+  const userExists = await User.findOne({ username });
 
   if (userExists) {
     res.status(400); // Bad Request
-    throw new Error('อีเมลนี้มีผู้ใช้งานในระบบแล้ว');
+    throw new Error('ชื่อผู้ใช้นี้มีผู้ใช้งานในระบบแล้ว');
   }
 
   const user = await User.create({
     name,
-    email,
+    username,
     password,
   });
 
@@ -49,7 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(201).json({
       _id: user._id,
       name: user.name,
-      email: user.email,
+      username: user.username,
       permissions: user.permissions,
     });
   } else {
@@ -78,7 +78,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     res.status(200).json({
       _id: user._id,
       name: user.name,
-      email: user.email,
+      username: user.username,
       permissions: user.permissions,
     });
   } else {
@@ -95,7 +95,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   if (user) {
     user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
+    user.username = req.body.username || user.username;
 
     if (req.body.password) {
       user.password = req.body.password;
@@ -106,7 +106,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     res.status(200).json({
       _id: updatedUser._id,
       name: updatedUser.name,
-      email: updatedUser.email,
+      username: updatedUser.username,
       permissions: updatedUser.permissions,
     });
   } else {
@@ -144,14 +144,14 @@ const updateUser = asyncHandler(async (req, res) => {
 
   if (user) {
     user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
+    user.username = req.body.username || user.username;
     user.permissions = req.body.permissions || user.permissions;
 
     const updatedUser = await user.save();
     res.status(200).json({
       _id: updatedUser._id,
       name: updatedUser.name,
-      email: updatedUser.email,
+      username: updatedUser.username,
       permissions: updatedUser.permissions,
     });
   } else {

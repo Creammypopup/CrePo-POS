@@ -1,14 +1,25 @@
 const mongoose = require('mongoose');
 
-const variantSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // e.g., "4 หุน", "6 หุน", "สีแดง"
-  sku: { type: String, required: true, unique: true }, // Stock Keeping Unit for this specific variant
-  barcode: { type: String, unique: true, sparse: true },
-  costPrice: { type: Number, required: true, default: 0 }, // ต้นทุน
-  sellingPrice: { type: Number, required: true, default: 0 }, // ราคาขาย
-  quantity: { type: Number, required: true, default: 0 }, // จำนวนในสต็อก
-  reorderPoint: { type: Number, default: 0 }, // จุดสั่งซื้อ
-});
+// โครงสร้างสำหรับหน่วยขายแต่ละหน่วย
+const sellingUnitSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'กรุณาใส่ชื่อหน่วยขาย (เช่น ลัง, กิโลกรัม, ขีด)'],
+  },
+  price: {
+    type: Number,
+    required: [true, 'กรุณาใส่ราคาขายสำหรับหน่วยนี้'],
+    min: 0,
+  },
+  // ตัวคูณสำหรับแปลงหน่วยขายนี้กลับไปเป็นหน่วยสต็อกหลัก
+  // เช่น หน่วยสต็อกคือ kg, หน่วยขายคือ 'ขีด' >> stockConversionFactor คือ 0.1
+  // เช่น หน่วยสต็อกคือ kg, หน่วยขายคือ 'ลัง (18kg)' >> stockConversionFactor คือ 18
+  stockConversionFactor: {
+    type: Number,
+    required: [true, 'กรุณาใส่ตัวคูณแปลงค่ากลับเป็นหน่วยสต็อก'],
+    min: 0,
+  },
+}, { _id: false });
 
 const productSchema = new mongoose.Schema(
   {
@@ -25,53 +36,63 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        'standard', // สินค้าทั่วไป (นับเป็นชิ้น)
-        'by_unit',  // สินค้าแบ่งขาย (เช่น ทรายเป็นคิว)
-        'by_weight',// สินค้าชั่งน้ำหนัก (เช่น ตะปูเป็นกิโล)
-        'service',  // สินค้าบริการ (ไม่ตัดสต็อก เช่น ค่าจัดส่ง)
-        'gift',     // สินค้าของแถม
+        'standard',     // สินค้ามาตรฐาน นับสต็อกเป็นชิ้น
+        'weight_based', // สินค้าตามน้ำหนัก สต็อกเป็นหน่วยน้ำหนัก (kg, g)
+        'service',      // สินค้าบริการ ไม่ตัดสต็อก
       ],
       default: 'standard',
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category', // เราจะต้องสร้าง Category model ในอนาคต
-      // required: true,
+      ref: 'Category',
     },
     supplier: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Supplier', // เราจะต้องสร้าง Supplier model ในอนาคต
+      ref: 'Supplier',
     },
-    trackStock: {
-      type: Boolean,
-      default: true, // true = จัดการสต็อก, false = สินค้า non-stock
+    // --- ส่วนจัดการสต็อกแบบใหม่ ---
+    stockUnit: {
+      type: String, // หน่วยของสต็อกหลัก เช่น 'kg', 'g', 'piece', 'meter'
+      required: function() { return this.productType !== 'service'; },
     },
-    // สำหรับสินค้าที่ไม่มีหลายขนาด/รูปแบบ (Simple Product)
+    stockQuantity: {
+      type: Number, // จำนวนสต็อกในหน่วยหลัก
+      default: 0,
+    },
+    costPerStockUnit: {
+      type: Number, // ต้นทุนต่อหน่วยสต็อกหลัก
+      default: 0,
+    },
+    reorderPoint: {
+      type: Number, // จุดสั่งซื้อ (ในหน่วยสต็อกหลัก)
+      default: 0,
+    },
+    // --- หน่วยสำหรับขาย ---
+    sellingUnits: [sellingUnitSchema],
+
     sku: { type: String, unique: true, sparse: true },
     barcode: { type: String, unique: true, sparse: true },
-    costPrice: { type: Number, default: 0 },
-    sellingPrice: { type: Number, default: 0 },
-    quantity: { type: Number, default: 0 },
-    reorderPoint: { type: Number, default: 0 },
-
-    // สำหรับสินค้าที่มีหลายขนาด/รูปแบบ (Variable Product)
-    variants: [variantSchema],
-
-    // รูปภาพสินค้า
     image: {
       type: String,
       default: '/images/placeholder.png',
     },
-    
     isActive: {
       type: Boolean,
-      default: true, // ใช้สำหรับซ่อนสินค้าโดยไม่ต้องลบ
+      default: true,
     },
   },
   {
-    timestamps: true, // เพิ่ม createdAt และ updatedAt อัตโนมัติ
+    timestamps: true,
   }
 );
+
+// Validation เพื่อให้แน่ใจว่าถ้าเป็นสินค้า standard ต้องมีอย่างน้อย 1 หน่วยขาย
+productSchema.path('sellingUnits').validate(function(value) {
+  if (this.productType === 'standard' || this.productType === 'weight_based') {
+    return value.length > 0;
+  }
+  return true;
+}, 'สินค้าต้องมีอย่างน้อย 1 หน่วยสำหรับขาย');
 
 const Product = mongoose.model('Product', productSchema);
 

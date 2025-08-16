@@ -10,8 +10,17 @@ const quotationSchema = new mongoose.Schema({
     name: { type: String },
     quantity: { type: Number },
     price: { type: Number },
+    // เพิ่มข้อมูลหน่วยขายที่ใช้ในการเสนอราคา
+    sellingUnit: {
+      name: { type: String },
+      price: { type: Number },
+      stockConversionFactor: { type: Number },
+    },
+    productType: { type: String }, // standard, weight_based, service
+    stockUnit: { type: String }, // หน่วยสต็อกหลักของสินค้านั้นๆ
   }],
   subTotal: { type: Number },
+  approvalToken: { type: String, unique: true, sparse: true }, // Token สำหรับลิงก์อนุมัติ
   discountAmount: { type: Number, default: 0 },
   totalAmount: { type: Number },
   notes: { type: String },

@@ -8,11 +8,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'กรุณาใส่ชื่อผู้ใช้งาน'],
     },
-    email: {
+    username: {
       type: String,
-      required: [true, 'กรุณาใส่อีเมล'],
+      required: [true, 'กรุณาใส่ชื่อผู้ใช้'],
       unique: true,
-      match: [/.+\@.+\..+/, 'รูปแบบอีเมลไม่ถูกต้อง'],
+      trim: true,
     },
     password: {
       type: String,
