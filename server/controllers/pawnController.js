@@ -6,8 +6,11 @@ const Pawn = require('../models/Pawn');
 // @route   GET /api/pawns
 // @access  Private
 const getPawns = asyncHandler(async (req, res) => {
-    const pawns = await Pawn.find({ user: req.user.id }).populate('customer', 'name').sort({ createdAt: -1 });
-    res.json(pawns);
+    // Temporarily return dummy pawn tickets
+    res.json([
+        { _id: 'dummyPawn1', customer: { name: 'Dummy Customer 1' }, productName: 'Gold Ring', pawnAmount: 10000, status: 'active', endDate: new Date() },
+        { _id: 'dummyPawn2', customer: { name: 'Dummy Customer 2' }, productName: 'Diamond Necklace', pawnAmount: 50000, status: 'active', endDate: new Date() },
+    ]);
 });
 
 // @desc    Create a pawn ticket

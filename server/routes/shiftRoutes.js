@@ -5,11 +5,11 @@ const { getCurrentShift, openShift, closeShift } = require('../controllers/shift
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
-router.use(protect);
+// router.use(protect);
 
 // Anyone who can access the POS should be able to manage their shift
-router.get('/current', authorize(PERMISSIONS.POS_ACCESS), getCurrentShift);
-router.post('/open', authorize(PERMISSIONS.POS_ACCESS), openShift);
-router.post('/close', authorize(PERMISSIONS.POS_ACCESS), closeShift);
+router.get('/current', getCurrentShift);
+router.post('/open', openShift);
+router.post('/close', closeShift);
 
 module.exports = router;

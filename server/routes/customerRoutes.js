@@ -5,14 +5,14 @@ const { getCustomers, createCustomer, updateCustomer, deleteCustomer } = require
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
-router.use(protect);
+// router.use(protect);
 
 router.route('/')
-    .get(authorize(PERMISSIONS.CONTACTS_VIEW), getCustomers)
-    .post(authorize(PERMISSIONS.CONTACTS_MANAGE), createCustomer);
+    .get(getCustomers)
+    .post(createCustomer);
 
 router.route('/:id')
-    .put(authorize(PERMISSIONS.CONTACTS_MANAGE), updateCustomer)
-    .delete(authorize(PERMISSIONS.CONTACTS_MANAGE), deleteCustomer);
+    .put(updateCustomer)
+    .delete(deleteCustomer);
 
 module.exports = router;

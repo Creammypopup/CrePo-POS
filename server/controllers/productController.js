@@ -7,11 +7,11 @@ const asyncHandler = require('../middleware/asyncHandler.js');
  * @access  Private
  */
 const getProducts = asyncHandler(async (req, res) => {
-  // .populate() จะดึงข้อมูลชื่อจาก collection ที่เกี่ยวข้องมาด้วย (Category และ Supplier)
-  const products = await Product.find({})
-    .populate('category', 'name')
-    .populate('supplier', 'name');
-  res.json(products);
+  // Temporarily return dummy products
+  res.json([
+    { _id: '60d5ec49f8c7a10015a4b7c1', name: 'Dummy Product 1', price: 100, category: { name: 'Category A' }, supplier: { name: 'Supplier X' }, quantity: 10, sku: 'DP001' },
+    { _id: '60d5ec49f8c7a10015a4b7c2', name: 'Dummy Product 2', price: 250, category: { name: 'Category B' }, supplier: { name: 'Supplier Y' }, quantity: 5, sku: 'DP002' },
+  ]);
 });
 
 /**

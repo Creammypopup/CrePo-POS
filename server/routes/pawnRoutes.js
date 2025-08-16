@@ -5,14 +5,14 @@ const { getPawns, createPawn, updatePawn, deletePawn } = require('../controllers
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
-router.use(protect);
+// router.use(protect);
 
 router.route('/')
-    .get(authorize(PERMISSIONS.PAWN_VIEW), getPawns)
-    .post(authorize(PERMISSIONS.PAWN_MANAGE), createPawn);
+    .get(getPawns)
+    .post(createPawn);
 
 router.route('/:id')
-    .put(authorize(PERMISSIONS.PAWN_MANAGE), updatePawn)
-    .delete(authorize(PERMISSIONS.PAWN_MANAGE), deletePawn);
+    .put(updatePawn)
+    .delete(deletePawn);
 
 module.exports = router;

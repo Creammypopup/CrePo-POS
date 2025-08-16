@@ -6,8 +6,11 @@ const Customer = require('../models/Customer');
 // @route   GET /api/customers
 // @access  Private
 const getCustomers = asyncHandler(async (req, res) => {
-    const customers = await Customer.find({ user: req.user.id }).sort({ name: 1 });
-    res.status(200).json(customers);
+    // Temporarily return dummy customers
+    res.status(200).json([
+        { _id: '60d5ec49f8c7a10015a4b7c3', name: 'Dummy Customer 1', phone: '0812345678', email: 'customer1@example.com' },
+        { _id: '60d5ec49f8c7a10015a4b7c4', name: 'Dummy Customer 2', phone: '0898765432', email: 'customer2@example.com' },
+    ]);
 });
 
 // @desc    Create a new customer

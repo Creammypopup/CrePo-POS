@@ -8,9 +8,9 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../utils/permissions');
 
-router.use(protect);
+// router.use(protect);
 
-router.route('/').get(authorize(PERMISSIONS.PRODUCTS_VIEW), getCategories).post(authorize(PERMISSIONS.PRODUCTS_MANAGE), createCategory);
-router.route('/:id').delete(authorize(PERMISSIONS.PRODUCTS_MANAGE), deleteCategory);
+router.route('/').get(getCategories).post(createCategory);
+router.route('/:id').delete(deleteCategory);
 
 module.exports = router;

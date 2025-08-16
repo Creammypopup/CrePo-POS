@@ -15,7 +15,7 @@ const customStyles = {
 function AddProductModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { isLoading, isSuccess, isError, message } = useSelector((state) => state.products);
-  const { productCategories, isLoading: categoriesLoading } = useSelector((state) => state.productCategories);
+  const { categories: productCategories, isLoading: categoriesLoading } = useSelector((state) => state.productCategories); // Corrected destructuring
 
   const [formData, setFormData] = useState({
     name: '',

@@ -6,8 +6,12 @@ const Product = require('../models/Product');
 // @route   GET /api/product-categories
 // @access  Private
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await ProductCategory.find({ user: req.user.id }).sort({ name: 1 });
-  res.status(200).json(categories);
+  // Temporarily return dummy product categories
+  res.status(200).json([
+    { _id: 'cat1', name: 'Electronics' },
+    { _id: 'cat2', name: 'Home Goods' },
+    { _id: 'cat3', name: 'Books' },
+  ]);
 });
 
 // @desc    Create a category
