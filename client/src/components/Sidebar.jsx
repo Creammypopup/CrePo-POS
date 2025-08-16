@@ -1,5 +1,5 @@
 // client/src/components/Sidebar.jsx
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { menuData } from '../menuData.jsx';

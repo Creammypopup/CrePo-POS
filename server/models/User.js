@@ -19,14 +19,14 @@ const userSchema = new mongoose.Schema(
       required: [true, 'กรุณาใส่รหัสผ่าน'],
       minlength: 6,
     },
-    permissions: {
+    role: { // Added role field
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+      required: true, // A user must have a role
+    },
+    permissions: { // Permissions will be populated from the role
       type: [String],
-      // กำหนดสิทธิ์เริ่มต้นสำหรับผู้ใช้ใหม่
-      default: [
-        PERMISSIONS.PRODUCTS_VIEW,
-        PERMISSIONS.CATEGORIES_VIEW,
-        PERMISSIONS.SUPPLIERS_VIEW,
-      ],
+      default: [], // No default permissions here, derived from role
     },
   },
   { timestamps: true }
@@ -39,6 +39,18 @@ userSchema.pre('save', async function (next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Add a pre-save hook to populate permissions from the role
+userSchema.pre('save', async function (next) {
+  if (this.isModified('role') || this.isNew) { // Only run if role is modified or new user
+    const Role = mongoose.model('Role'); // Get the Role model
+    const roleDoc = await Role.findById(this.role);
+    if (roleDoc) {
+      this.permissions = roleDoc.permissions;
+    }
+  }
+  next();
 });
 
 // Method: เปรียบเทียบรหัสผ่านที่ป้อนเข้ามากับรหัสผ่านใน DB

@@ -14,6 +14,7 @@ module.exports = {
   rules: {
     'react/prop-types': 'off', // Disabled prop-types rule
     'no-unused-vars': 'warn', // Setting to warn instead of error to be less intrusive
+    'react/react-in-jsx-scope': 'off', // Disable for new JSX transform
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },

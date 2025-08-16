@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from 'react-modal';
-import { FaTimes, FaWeightHanging, FaDollarSign } from 'react-icons/fa';
+import { FaTimes, FaWeightHanging, FaDollarSign, FaPlus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../../utils/formatUtils';
 

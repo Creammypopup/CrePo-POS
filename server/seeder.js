@@ -48,7 +48,8 @@ const importData = async () => {
                 name: 'ผู้ดูแลระบบ',
                 username: 'POP',
                 password: await createPasswordHash('123456'),
-                role: adminRole._id
+                role: adminRole._id,
+                permissions: adminRole.permissions
             }
         ]);
         const adminUser = users[0];

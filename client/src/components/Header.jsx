@@ -1,5 +1,5 @@
 // client/src/components/Header.jsx
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { FaSignOutAlt, FaUserCircle, FaBell } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
